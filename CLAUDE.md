@@ -1,0 +1,50 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Tổng quan
+
+Backend **NestJS 11** cho nền tảng đọc truyện chữ, thay dần Supabase của web (`../web-novel-platform`) và app (`../mobile-novel-platform`). Đợt này **chỉ làm trong repo này**; web và mobile giữ nguyên, sẽ chuyển sang gọi BE ở các đợt sau. Người dùng giao tiếp bằng tiếng Việt; tài liệu viết bằng tiếng Việt.
+
+- Thiết kế tổng thể: [documents/thiet-ke-tong-the.md](documents/thiet-ke-tong-the.md) — đọc trước khi làm phần mới.
+- Lộ trình và tiến độ: [documents/lo-trinh.md](documents/lo-trinh.md).
+- **Cách làm:** từng phần nhỏ. Trước mỗi phần viết plan `documents/plan-<số>-<tên>.md` (mục tiêu, công việc, kiểm tra), làm xong thì đánh dấu ✅ ở plan và ở lộ trình.
+- Nghiệp vụ gốc (luật, giới hạn, mã lỗi) lấy từ `../web-novel-platform/documents/thiet-ke-database.md` (mục 3 bảng, 4 luật và mã lỗi, 5 quyền). BE viết lại các luật đó trong code (không RLS, không `auth.uid()`), giữ tên bảng, cột và UUID để sau này chuyển dữ liệu từ Supabase.
+
+## Lệnh
+
+```bash
+npm run dev              # dev, cổng 4000, /docs là Swagger
+npm run build            # nest build (SWC) → dist/
+npm run typecheck        # tsc --noEmit
+npm run lint             # oxlint
+npm run format           # prettier --write .
+npm test                 # unit (src/**/*.spec.ts)
+npm run test:e2e         # e2e (test/**/*.e2e-spec.ts)
+npx vitest run src/core/errors/to-api-error.spec.ts   # một file
+npm run openapi:export   # ghi openapi.json
+```
+
+## Kiến trúc
+
+- **Khởi động:** `src/bootstrap.ts` (`createApp`, `configureApp`) gom mọi cấu hình app: requestId, body limit 1 MB, helmet, CORS, versioning `/v1`, Swagger. `main.ts`, test e2e và `cli/export-openapi.ts` đều đi qua đây để test chạy đúng như production.
+- **Cấu hình:** `config/env.schema.ts` (zod), sai env thì dừng khi khởi động. Đọc qua `AppConfig.get('KEY')`, không đọc `process.env` trực tiếp. Thêm biến thì sửa cả schema, `.env.example` và test của schema. Khi `NODE_ENV=test` không đọc file `.env` (biến test đặt trong `vitest.config.ts`).
+- **Ngữ cảnh request:** `core/context`: `requestIdMiddleware` đặt `req.id` (nhận `x-request-id` hợp lệ của client hoặc tự sinh) và trả lại header; `nestjs-cls` giữ id cho filter và service; `nestjs-pino` ghi log JSON có `requestId`, ẩn `authorization`, cookie, mật khẩu, token.
+- **Lỗi:**
+  - Service ném `AppError(code, details?)`.
+  - `AllExceptionsFilter` (toàn cục) đổi mọi lỗi qua `toApiError` thành `{ code, message, details?, requestId }`. Gồm: lỗi zod → `validation_failed` với `details.issues`, `HttpException` theo status, lỗi body-parser, lỗi lạ → 500 không lộ chi tiết.
+  - `message` tiếng Anh cho dev; client hiển thị tiếng Việt theo `code`.
+  - **Mã mới thêm vào `core/errors/error-codes.ts`.**
+- **Validate và OpenAPI:** DTO là `class X extends createZodDto(schema)` (nestjs-zod), `ZodValidationPipe` toàn cục; Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`).
+- **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
+- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt cạnh code, e2e đặt ở `test/<tên>/`.
+
+## Quy ước
+
+- Tên nhánh git tiếng Anh (kebab-case); commit message và tài liệu tiếng Việt.
+- **Mỗi commit tăng version:** `npm version patch --no-git-tag-version` rồi đưa `package.json`, `package-lock.json` vào chính commit đó.
+- Import alias `@/` → `src/`: cấu hình ở `tsconfig.json` (`paths`), `.swcrc` (build) và `vitest.config.ts`. TypeScript 6 bỏ `baseUrl` nên `paths` viết tương đối (`./src/*`); SWC cần `baseUrl` trong `.swcrc`.
+- Build bằng SWC (`nest-cli.json` → `.swcrc`, `stripLeadingPaths`), đầu ra `dist/main.js`. Kiểm tra kiểu tách riêng (`npm run typecheck`).
+- Prettier: không chấm phẩy, nháy đơn, `printWidth` 100. oxlint cho phép class rỗng có decorator (module Nest).
+- Test: vitest với `globals`, `unplugin-swc` (decorator metadata của Nest). Tên test tiếng Việt, mô tả hành vi.
+- Không log hay trả ra ngoài thông tin nhạy cảm (token, mật khẩu, email trong log lỗi).
