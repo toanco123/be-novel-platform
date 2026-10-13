@@ -28,7 +28,7 @@
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ. Lỗi luôn có dạng { code, message, details?, requestId }.",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "contact": {}
   },
   "tags": [],
