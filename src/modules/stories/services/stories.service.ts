@@ -13,6 +13,7 @@ import type { StoryDto } from '../dto/story.dto'
 import { StoriesMapper } from '../stories.mapper'
 import { StoriesRepository } from '../repositories/stories.repository'
 import { StoryRankingRepository } from '../repositories/story-ranking.repository'
+import { StoryAccessService } from './story-access.service'
 import { canViewStory } from '../stories.rules'
 
 @Injectable()
@@ -21,6 +22,7 @@ export class StoriesService {
     private readonly stories: StoriesRepository,
     private readonly ranking: StoryRankingRepository,
     private readonly mapper: StoriesMapper,
+    private readonly access: StoryAccessService,
   ) {}
 
   /** Danh sách truyện công khai có chương, theo bộ lọc */
@@ -61,8 +63,7 @@ export class StoriesService {
     { limit }: RelatedQueryDto,
     actor: Actor | undefined,
   ): Promise<StoryDto[]> {
-    const story = await this.stories.findAccessBySlug(slug)
-    if (!story || !canViewStory(story, actor)) throw new AppException('not_found')
+    const story = await this.access.visible(slug, actor)
     const ids = await this.ranking.related(story.id, story.ownerId, limit)
     return (await this.stories.cardsByIds(ids)).map((row) => this.mapper.toStory(row))
   }

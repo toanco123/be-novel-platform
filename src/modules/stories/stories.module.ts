@@ -7,6 +7,7 @@ import { StoriesRepository } from './repositories/stories.repository'
 import { StoryRankingRepository } from './repositories/story-ranking.repository'
 import { CuratedStoriesService } from './services/curated-stories.service'
 import { StoriesService } from './services/stories.service'
+import { StoryAccessService } from './services/story-access.service'
 import { StoryRankingService } from './services/story-ranking.service'
 import { StorySearchService } from './services/story-search.service'
 import { StoriesMapper } from './stories.mapper'
@@ -18,11 +19,12 @@ import { StoriesMapper } from './stories.mapper'
     CuratedStoriesService,
     StorySearchService,
     StoryRankingService,
+    StoryAccessService,
     StoriesRepository,
     StoryRankingRepository,
     StoriesMapper,
   ],
   // Chương (và các module đọc sau) tìm truyện, xét quyền xem, dựng thẻ truyện qua đây
-  exports: [StoriesRepository, StoriesMapper],
+  exports: [StoriesRepository, StoriesMapper, StoryAccessService],
 })
 export class StoriesModule {}

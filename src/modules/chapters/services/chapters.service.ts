@@ -7,6 +7,7 @@ import { pageWindow } from '@/common/pagination/page'
 import type { Page } from '@/common/pagination/pagination.types'
 import { StoriesMapper } from '@/modules/stories/stories.mapper'
 import { StoriesRepository } from '@/modules/stories/repositories/stories.repository'
+import { StoryAccessService } from '@/modules/stories/services/story-access.service'
 import { canViewStory } from '@/modules/stories/stories.rules'
 import { toChapter, toChapterSummary, toReaderStory } from '../chapters.mapper'
 import type { ChapterContentsQueryDto } from '../dto/chapter-contents-query.dto'
@@ -21,6 +22,7 @@ export class ChaptersService {
     private readonly stories: StoriesRepository,
     private readonly storiesMapper: StoriesMapper,
     private readonly chapters: ChaptersRepository,
+    private readonly access: StoryAccessService,
   ) {}
 
   /** Mục lục (chương đã xuất bản). Truyện không xem được → not_found */
@@ -29,8 +31,7 @@ export class ChaptersService {
     query: ChapterListQueryDto,
     actor: Actor | undefined,
   ): Promise<Page<ChapterSummaryDto>> {
-    const story = await this.stories.findAccessBySlug(slug)
-    if (!story || !canViewStory(story, actor)) throw new AppException('not_found')
+    const story = await this.access.visible(slug, actor)
     const filter = { storyId: story.id, from: query.from, order: query.order }
     const [rows, total] = await Promise.all([
       this.chapters.list(filter, pageWindow(query)),

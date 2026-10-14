@@ -2,11 +2,10 @@
 // được (canViewStory / isVisibleStory); truyện bị ẩn sau khi đọc thì tạm không hiện.
 import { Injectable } from '@nestjs/common'
 import type { Actor } from '@/common/auth/auth.types'
-import { AppException } from '@/common/errors/app.exception'
 import { truncateChars } from '@/common/utils/truncate'
 import { StoriesRepository } from '@/modules/stories/repositories/stories.repository'
+import { StoryAccessService } from '@/modules/stories/services/story-access.service'
 import { StoriesMapper } from '@/modules/stories/stories.mapper'
-import { canViewStory } from '@/modules/stories/stories.rules'
 import type { HistoryItemDto } from '../dto/history-item.dto'
 import type { MergeHistoryEntryDto } from '../dto/merge-history-entry.dto'
 import type { ReadingProgressDto } from '../dto/reading-progress.dto'
@@ -21,12 +20,13 @@ export class HistoryService {
     private readonly history: HistoryRepository,
     private readonly stories: StoriesRepository,
     private readonly storiesMapper: StoriesMapper,
+    private readonly access: StoryAccessService,
   ) {}
 
   /** Ghi chỗ đọc dở. Truyện không xem được → not_found */
   async save(actor: Actor, slug: string, input: SaveProgressDto): Promise<ReadingProgressDto> {
-    const storyId = await this.visibleStoryId(actor, slug)
-    const row = await this.history.save(actor.id, storyId, {
+    const story = await this.access.visible(slug, actor)
+    const row = await this.history.save(actor.id, story.id, {
       chapter: input.chapter,
       chapterTitle: truncateChars(input.chapterTitle ?? '', HISTORY_TITLE_LENGTH),
       progress: input.progress,
@@ -36,8 +36,8 @@ export class HistoryService {
 
   /** Chỗ đọc dở của một truyện; chưa đọc → null. Truyện không xem được → not_found */
   async get(actor: Actor, slug: string): Promise<ReadingProgressDto | null> {
-    const storyId = await this.visibleStoryId(actor, slug)
-    const row = await this.history.find(actor.id, storyId)
+    const story = await this.access.visible(slug, actor)
+    const row = await this.history.find(actor.id, story.id)
     return row ? toReadingProgress(slug, row) : null
   }
 
@@ -75,11 +75,5 @@ export class HistoryService {
         readAt: new Date(Math.min(e.readAt ? Date.parse(e.readAt) : now, now)).toISOString(),
       })),
     )
-  }
-
-  private async visibleStoryId(actor: Actor, slug: string) {
-    const story = await this.stories.findAccessBySlug(slug)
-    if (!story || !canViewStory(story, actor)) throw new AppException('not_found')
-    return story.id
   }
 }

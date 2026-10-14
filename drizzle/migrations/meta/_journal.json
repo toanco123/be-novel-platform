@@ -92,6 +92,20 @@
       "when": 1791962902146,
       "tag": "0012_follows_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791963216661,
+      "tag": "0013_ratings",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791963217198,
+      "tag": "0014_ratings_triggers",
+      "breakpoints": true
     }
   ]
 }
