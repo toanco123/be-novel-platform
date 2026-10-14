@@ -71,6 +71,7 @@ jobs:
           REDIS_URL=redis://redis.example.com:6379
           SMTP_URL=smtps://user:pass@smtp.example.com:465
           APP_WEB_URL=https://web.example.com
+          IP_HASH_SECRET=ci-ip-hash-secret-0123456789abcdef
           API_PUBLIC_URL=https://api.example.com
           S3_ENDPOINT=https://account.r2.cloudflarestorage.com
           S3_PUBLIC_URL=https://img.example.com

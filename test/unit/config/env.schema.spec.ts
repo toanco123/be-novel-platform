@@ -68,7 +68,7 @@ test('biến sai thì dừng và báo rõ biến nào', () => {
   )
 })
 
-test('production thiếu khóa JWT, SMTP, link web thì dừng; có đủ thì qua', () => {
+test('production thiếu khóa JWT, khóa băm IP, SMTP, link web thì dừng; có đủ thì qua', () => {
   const production = {
     DATABASE_URL,
     REDIS_URL,
@@ -80,8 +80,12 @@ test('production thiếu khóa JWT, SMTP, link web thì dừng; có đủ thì q
     API_PUBLIC_URL: 'https://api.novel.example.com',
     S3_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
     S3_PUBLIC_URL: 'https://img.novel.example.com',
+    IP_HASH_SECRET: 'x'.repeat(32),
   }
   expect(validateEnv(production).NODE_ENV).toBe('production')
+  const { IP_HASH_SECRET: _ipSecret, ...noIpSecret } = production
+  expect(() => validateEnv(noIpSecret)).toThrow(/IP_HASH_SECRET/)
+  expect(() => validateEnv({ ...production, IP_HASH_SECRET: 'ngan' })).toThrow(/IP_HASH_SECRET/)
   const { JWT_PRIVATE_KEY: _key, ...noJwt } = production
   expect(() => validateEnv(noJwt)).toThrow(/JWT_PRIVATE_KEY/)
   // Để mặc định của dev (localhost) thì dừng

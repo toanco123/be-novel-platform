@@ -1,4 +1,4 @@
-// Kiểu enum của báo cáo: giá trị giống Supabase (migration init_extensions_profiles,
+// Kiểu enum của báo cáo, báo lỗi: giá trị giống Supabase (migration init_extensions_profiles,
 // comment_replies_and_reports).
 import { pgEnum } from 'drizzle-orm/pg-core'
 
@@ -10,5 +10,14 @@ export const commentReportReason = pgEnum('comment_report_reason', [
   'spam',
   'offensive',
   'spoiler',
+  'other',
+])
+
+/** Lý do báo lỗi chương */
+export const reportReason = pgEnum('report_reason', [
+  'typo',
+  'missing',
+  'order',
+  'violation',
   'other',
 ])
