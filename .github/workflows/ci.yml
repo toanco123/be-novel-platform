@@ -41,7 +41,7 @@ jobs:
           fi
 
   e2e:
-    name: Test e2e (Postgres, Redis, Mailpit thật)
+    name: Test e2e (Postgres, Redis, Mailpit, RustFS thật)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
