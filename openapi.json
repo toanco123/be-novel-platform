@@ -4027,12 +4027,649 @@
           "chapters"
         ]
       }
+    },
+    "/v1/me/history": {
+      "get": {
+        "description": "Mới đọc trước; chỉ truyện còn xem được (truyện bị ẩn tạm không hiện).",
+        "operationId": "HistoryController_list_v1",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HistoryItemDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lịch sử đọc",
+        "tags": [
+          "library"
+        ]
+      },
+      "delete": {
+        "operationId": "HistoryController_clear_v1",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Đã xóa"
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Xóa hết lịch sử đọc",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/v1/me/history/merge": {
+      "post": {
+        "description": "Mỗi truyện lấy lần đọc mới nhất, chỉ ghi đè khi mới hơn trên máy chủ. Slug không có hoặc truyện không xem được thì bỏ qua.",
+        "operationId": "HistoryController_merge_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Đã gộp"
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gộp lịch sử lúc còn là khách",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/v1/me/history/{slug}": {
+      "get": {
+        "description": "Chưa đọc → data: null.",
+        "operationId": "HistoryController_get_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "nullable": true,
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ReadingProgressDto"
+                        }
+                      ]
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Chỗ đọc dở của một truyện",
+        "tags": [
+          "library"
+        ]
+      },
+      "put": {
+        "description": "Gửi khi mở chương (không có progress: giữ tiến độ cũ nếu vẫn chương đó) và khi cuộn. Truyện không xem được → 404.",
+        "operationId": "HistoryController_save_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProgressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReadingProgressDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Lưu chỗ đọc dở",
+        "tags": [
+          "library"
+        ]
+      },
+      "delete": {
+        "operationId": "HistoryController_remove_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Đã xóa (chưa có cũng vậy)"
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Xóa một truyện khỏi lịch sử",
+        "tags": [
+          "library"
+        ]
+      }
     }
   },
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.25",
+    "version": "0.0.26",
     "contact": {}
   },
   "tags": [
@@ -5109,6 +5746,128 @@
           "publishedAt",
           "prev",
           "next"
+        ]
+      },
+      "ReadingProgressDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "example": "thanh-xuan-vuon-truong"
+          },
+          "chapter": {
+            "type": "number",
+            "example": 12
+          },
+          "chapterTitle": {
+            "type": "string",
+            "example": "Gặp lại"
+          },
+          "progress": {
+            "type": "number",
+            "example": 0.42,
+            "description": "Tỉ lệ đã cuộn trong chương, 0–1"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "slug",
+          "chapter",
+          "chapterTitle",
+          "progress",
+          "readAt"
+        ]
+      },
+      "HistoryItemDto": {
+        "type": "object",
+        "properties": {
+          "story": {
+            "$ref": "#/components/schemas/StoryDto"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/ReadingProgressDto"
+          }
+        },
+        "required": [
+          "story",
+          "progress"
+        ]
+      },
+      "MergeHistoryEntryDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "example": "thanh-xuan-vuon-truong"
+          },
+          "chapter": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 99999
+          },
+          "chapterTitle": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Sau hiện tại hoặc bỏ trống: coi là bây giờ"
+          }
+        },
+        "required": [
+          "slug",
+          "chapter"
+        ]
+      },
+      "MergeHistoryDto": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MergeHistoryEntryDto"
+            }
+          }
+        },
+        "required": [
+          "entries"
+        ]
+      },
+      "SaveProgressDto": {
+        "type": "object",
+        "properties": {
+          "chapter": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 99999,
+            "example": 12
+          },
+          "chapterTitle": {
+            "type": "string",
+            "maxLength": 1000,
+            "example": "Gặp lại",
+            "description": "Lưu tối đa 120 ký tự"
+          },
+          "progress": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "example": 0.42,
+            "description": "Tỉ lệ đã cuộn. Bỏ trống: giữ tiến độ cũ nếu vẫn chương đó, đổi chương thì về 0"
+          }
+        },
+        "required": [
+          "chapter"
         ]
       }
     }

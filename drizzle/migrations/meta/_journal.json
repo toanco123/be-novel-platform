@@ -71,6 +71,13 @@
       "when": 1791960004852,
       "tag": "0009_catalog_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791962581694,
+      "tag": "0010_reading_history",
+      "breakpoints": true
     }
   ]
 }

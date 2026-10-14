@@ -6,6 +6,8 @@ export type ResponseDtoOptions = {
   description?: string
   /** Service trả mảng (không phân trang): data là mảng các `dto` */
   isArray?: boolean
+  /** Service có thể trả null (vd chưa có dữ liệu): data là `dto` hoặc null */
+  nullable?: boolean
 }
 
 /** Thông tin kèm theo mọi response thành công */
