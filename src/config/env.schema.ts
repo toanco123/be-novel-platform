@@ -35,6 +35,12 @@ export const envSchema = z.object({
   DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   /** Câu lệnh chạy quá lâu thì Postgres hủy (lỗi 57014 → mã timeout) */
   DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(100).default(15_000),
+
+  /** redis://[:pass@]host:port[/db] hoặc rediss:// (TLS): rate limit và hàng đợi */
+  REDIS_URL: z.string().regex(/^rediss?:\/\//, 'Phải là URL redis:// hoặc rediss://'),
+  /** Chặn spam thô toàn API: tối đa THROTTLE_LIMIT request mỗi THROTTLE_TTL_SECONDS giây */
+  THROTTLE_LIMIT: z.coerce.number().int().min(1).default(300),
+  THROTTLE_TTL_SECONDS: z.coerce.number().int().min(1).default(60),
 })
 
 export type Env = z.infer<typeof envSchema>

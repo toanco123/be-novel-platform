@@ -2,6 +2,7 @@ import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common'
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger'
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus'
 import { DbHealthIndicator } from '@/infra/database/db.health'
+import { RedisHealthIndicator } from '@/infra/redis/redis.module'
 
 /** Health check cho load balancer / Docker; không có tiền tố phiên bản (/health/...) */
 @ApiTags('health')
@@ -10,6 +11,7 @@ export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly db: DbHealthIndicator,
+    private readonly redis: RedisHealthIndicator,
   ) {}
 
   /** App còn chạy (không kiểm tra phụ thuộc): dùng cho liveness, không khởi động lại vì DB chậm */
@@ -19,13 +21,13 @@ export class HealthController {
     return { status: 'ok' as const }
   }
 
-  /** Sẵn sàng nhận request: DB trả lời được (phần 3 thêm Redis) */
+  /** Sẵn sàng nhận request: DB và Redis đều trả lời được */
   @Get('ready')
   @HealthCheck()
   @ApiServiceUnavailableResponse({
     description: 'Một phụ thuộc không trả lời (code: service_unavailable)',
   })
   ready() {
-    return this.health.check([() => this.db.check('database')])
+    return this.health.check([() => this.db.check('database'), () => this.redis.check('redis')])
   }
 }

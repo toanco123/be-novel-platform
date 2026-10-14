@@ -23,7 +23,8 @@ npm test                 # unit (src/**/*.spec.ts)
 npm run test:e2e         # e2e (test/**/*.e2e-spec.ts)
 npx vitest run src/core/errors/to-api-error.spec.ts   # một file
 npm run openapi:export   # ghi openapi.json
-npm run db:up            # Postgres 17 (docker-compose, cổng 5433); db:down để tắt
+npm run db:up            # Postgres 17 (cổng 5433) + Redis 7.4 (cổng 6380) bằng docker-compose; db:down để tắt
+npm run dev:worker       # process worker (hàng đợi BullMQ)
 npm run db:generate      # sinh migration từ schema Drizzle
 npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.js)
 ```
@@ -46,7 +47,14 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - **Migration:** `npm run db:generate` rồi review SQL trong `drizzle/migrations` (hàm, trigger thì `drizzle-kit generate --custom`). Bảng có `updated_at` thêm trigger `set_updated_at()` trong migration. `db:migrate` là bước riêng khi deploy, app không tự migrate. Sửa schema mà quên generate thì `drizzle-kit generate` sẽ ra file mới (CI kiểm tra).
   - Lỗi Postgres đi qua `pg-error.ts`: `23505` → `conflict` (hoặc mã riêng theo tên constraint trong `CONSTRAINT_CODES`), `23503` → `not_found`, `23514`/`22001` → `validation_failed`, `57014` → `timeout`.
   - `/health/ready` kiểm tra DB (503 `service_unavailable` khi hỏng).
-- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17 bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
+- **Redis, rate limit, hàng đợi** (plan `documents/plan-03-redis-rate-limit-queue.md`):
+  - `infra/redis`: client `@Inject(REDIS) redis: Redis` (ioredis) dùng chung cho rate limit và health check.
+  - **Throttler toàn cục** (`AppThrottlerGuard`, lưu trên Redis): chặn spam thô, `THROTTLE_LIMIT` request mỗi `THROTTLE_TTL_SECONDS` giây. Đếm theo `req.user.id`, khách thì theo IP; bỏ qua `/health`. Route cần giới hạn riêng dùng `@Throttle({ default: { limit, ttl } })` hoặc `@SkipThrottle()`.
+  - **Hạn mức nghiệp vụ** dùng `RateLimitService.consume(key, { limit, windowSeconds })`: cửa sổ trượt bằng script Lua; hết lượt thì ném `AppError('rate_limited', { retryAfterSeconds })`. Có thêm `peek` (xem, không tính) và `reset`. Key đặt theo `<domain>:<hành động>:<id>`.
+  - **Hàng đợi** BullMQ (`infra/queue`): tên hàng đợi và job ở `queues.ts`; module đẩy job thì `BullModule.registerQueue` + `@InjectQueue`. Processor (`@Processor`, `extends WorkerHost`) **chỉ khai báo trong `WorkerModule`**, để API không tự xử lý job. Mặc định thử lại 3 lần, backoff mũ.
+  - Worker: `src/worker.ts` (`createWorker()`, `createApplicationContext`, không có HTTP), tắt gọn bằng `enableShutdownHooks`.
+  - `/health/ready` kiểm tra DB và Redis.
+- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17 và Redis bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
 - **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt cạnh code, e2e đặt ở `test/<tên>/`.
 

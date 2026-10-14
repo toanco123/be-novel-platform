@@ -1,4 +1,4 @@
-# Dịch vụ cho môi trường dev (npm run db:up). Các phần sau thêm Redis, MinIO, Mailpit.
+# Dịch vụ cho môi trường dev (npm run db:up). Các phần sau thêm MinIO, Mailpit.
 name: novel-platform
 
 services:
@@ -18,5 +18,18 @@ services:
       timeout: 3s
       retries: 10
 
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   db-data:
+  redis-data:
