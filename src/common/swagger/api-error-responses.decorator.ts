@@ -42,6 +42,7 @@ export function ApiErrorResponses(...codes: ErrorCode[]) {
             {
               summary: code,
               value: {
+                statusCode: status,
                 code,
                 message: ERROR_CODES[code].message,
                 ...(EXAMPLE_DETAILS[code] && { details: EXAMPLE_DETAILS[code] }),

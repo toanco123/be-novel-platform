@@ -67,3 +67,9 @@ Thay quyết định "không bọc response" của thiết kế tổng thể (m�
 - **Kiểm tra:**
   - e2e đọc `body.data`.
   - Test quét `openapi.json`: mọi route `/v1` trả 200 / 201 phải có schema `{ data, meta }`, để bắt route quên `@ResponseDto`.
+
+## Bổ sung: `statusCode` trong body (người dùng yêu cầu, 14/10/2026) ✅
+
+- Thành công: `{ statusCode, data, meta: { requestId } }`. Lỗi: `{ statusCode, code, message, details?, requestId }`.
+- `statusCode` luôn trùng HTTP status: interceptor đọc `res.statusCode` (Nest đặt status, kể cả `@HttpCode`, trước khi chạy interceptor), filter lấy từ `toApiError`.
+- 204 vẫn body trống.

@@ -85,6 +85,7 @@ test('/health/live trả ok, không có tiền tố phiên bản', async () => {
 test('route không có: 404 not_found, requestId khớp header client gửi', async () => {
   const res = await http().get('/v1/khong-co').set('x-request-id', 'req-123').expect(404)
   expect(res.body).toEqual({
+    statusCode: 404,
     code: 'not_found',
     message: 'Resource not found',
     requestId: 'req-123',
@@ -110,6 +111,7 @@ test('body sai: 400 validation_failed kèm issue; đúng thì qua', async () => 
 test('@ResponseDto: bọc { data, meta }, chỉ có trường khai báo, lọc cả object con và mảng', async () => {
   const res = await http().get('/v1/test-only/serialize').expect(200)
   expect(res.body).toEqual({
+    statusCode: 200,
     data: { id: '1', item: { name: 'a' }, items: [{ name: 'b' }] },
     meta: { requestId: res.headers['x-request-id'] },
   })
@@ -131,9 +133,14 @@ test('JSON hỏng: 400 bad_request; body quá 1 MB: 413 payload_too_large', asyn
 
 test('AppException giữ mã và details; lỗi lạ thành 500 không lộ chi tiết', async () => {
   const conflict = await http().get('/v1/test-only/conflict').expect(409)
-  expect(conflict.body).toMatchObject({ code: 'conflict', details: { reason: 'test' } })
+  expect(conflict.body).toMatchObject({
+    statusCode: 409,
+    code: 'conflict',
+    details: { reason: 'test' },
+  })
   const boom = await http().get('/v1/test-only/boom').expect(500)
   expect(boom.body).toEqual({
+    statusCode: 500,
     code: 'internal_error',
     message: 'Internal server error',
     requestId: expect.any(String),
@@ -160,7 +167,7 @@ test('/openapi.json: route cần đăng nhập có bearer, nullable đúng dạn
   expect(JSON.stringify(body)).not.toMatch(/"type":\[/)
 })
 
-test('/openapi.json: mọi route /v1 trả dữ liệu đều có dạng { data, meta } (đã gắn @ResponseDto)', async () => {
+test('/openapi.json: mọi route /v1 trả dữ liệu đều có dạng { statusCode, data, meta } (đã gắn @ResponseDto)', async () => {
   const { body } = await http().get('/openapi.json').expect(200)
   const missing: string[] = []
   for (const [path, operations] of Object.entries<Record<string, { responses: object }>>(
@@ -174,11 +181,8 @@ test('/openapi.json: mọi route /v1 trả dữ liệu đều có dạng { data,
         const schema = (
           response as { content?: Record<string, { schema?: { properties?: object } }> }
         ).content?.['application/json']?.schema
-        if (
-          !schema?.properties ||
-          !('data' in schema.properties) ||
-          !('meta' in schema.properties)
-        ) {
+        const props = schema?.properties ?? {}
+        if (!('statusCode' in props) || !('data' in props) || !('meta' in props)) {
           missing.push(`${method.toUpperCase()} ${path} ${status}`)
         }
       }

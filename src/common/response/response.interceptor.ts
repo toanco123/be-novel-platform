@@ -1,5 +1,5 @@
 // Đầu ra của route có @ResponseDto: lọc theo DTO (chỉ trường có @ApiField) rồi bọc
-// { data, meta: { requestId } }. Route không có @ResponseDto (health, 204) giữ nguyên.
+// { statusCode, data, meta: { requestId } }. Route không có @ResponseDto (health, 204) giữ nguyên.
 import {
   type CallHandler,
   type ExecutionContext,
@@ -8,6 +8,7 @@ import {
   type Type,
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
+import type { Response } from 'express'
 import { ClsService } from 'nestjs-cls'
 import { map, type Observable } from 'rxjs'
 import { RESPONSE_DTO } from './response.constants'
@@ -27,8 +28,11 @@ export class ResponseInterceptor implements NestInterceptor {
       context.getClass(),
     ])
     if (!dto) return next.handle()
+    const res = context.switchToHttp().getResponse<Response>()
     return next.handle().pipe(
       map((value): ResponseEnvelope<unknown> => ({
+        // Nest đặt status (mặc định hoặc @HttpCode) trước khi chạy interceptor
+        statusCode: res.statusCode,
         data: serializeDto(dto, value),
         meta: { requestId: this.cls.getId() },
       })),

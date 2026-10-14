@@ -75,7 +75,7 @@ src/
     http/                 #   thông tin client gọi API (web / mobile, IP, user agent)
     rate-limit/           #   throttler toàn cục, RateLimitService
     swagger/              #   dựng /docs, @ApiErrorResponses
-    response/             #   đầu ra: lọc theo DTO và bọc { data, meta } (@ResponseDto, @ApiField)
+    response/             #   đầu ra: lọc theo DTO và bọc { statusCode, data, meta } (@ResponseDto, @ApiField)
     validation/           #   kiểm tra đầu vào: ValidationPipe, @Trim, @NormalizeEmail
     utils/                #   hàm tiện ích thuần (withTimeout)
   infra/                  # hạ tầng
@@ -207,7 +207,7 @@ export class LoginDto {
 
 **DTO đầu ra** (response): mỗi trường dùng `@ApiField({...})` (`@ApiFieldOptional` cho trường tùy chọn) thay cho `@ApiProperty`. Route trả dữ liệu **bắt buộc** gắn `@ResponseDto(Dto)` thay cho `@ApiOkResponse`:
 
-- Response bọc `{ data, meta }` (xem [Dạng response](#dạng-response)); `data` **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
+- Response bọc `{ statusCode, data, meta }` (xem [Dạng response](#dạng-response)); `data` **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
 - Swagger ghi luôn schema response; status khác 200 thì truyền thêm, vd `@ResponseDto(AuthSessionDto, { status: 201 })`.
 - Giá trị có thể null: `@ApiField({ type: String, nullable: true })`.
 
@@ -266,26 +266,27 @@ Chi tiết: [documents/plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md)
 
 ## Dạng response
 
-Response thành công có dạng chung **`{ data, meta }`** (chốt 14/10/2026):
+Response thành công có dạng chung **`{ statusCode, data, meta }`** (chốt 14/10/2026); `statusCode` luôn trùng HTTP status:
 
 ```json
 {
+  "statusCode": 200,
   "data": { "id": "...", "displayName": "Linh", "avatarUrl": null },
   "meta": { "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22" }
 }
 ```
 
-| Trường hợp                   | Trả về                                                                                   |
-| ---------------------------- | ---------------------------------------------------------------------------------------- |
-| Thành công, có dữ liệu       | `{ data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`) |
-| Danh sách (từ phần 7)        | `{ data: [...], meta: { total, page, pageCount, requestId } }`                           |
-| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                           |
-| Lỗi                          | `{ code, message, details?, requestId }`, status 4xx / 5xx, không bọc (xem [Lỗi](#lỗi))  |
-| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc   |
+| Trường hợp                   | Trả về                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Thành công, có dữ liệu       | `{ statusCode, data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`) |
+| Danh sách (từ phần 7)        | `{ statusCode, data: [...], meta: { total, page, pageCount, requestId } }`                           |
+| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                       |
+| Lỗi                          | `{ statusCode, code, message, details?, requestId }`, status 4xx / 5xx (xem [Lỗi](#lỗi))             |
+| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc               |
 
 - Bọc và lọc làm tự động ở `ResponseInterceptor` (`common/response/`) cho route có `@ResponseDto`; controller, service chỉ trả DTO.
 - Mọi response có header `x-request-id`, trùng `meta.requestId` hoặc `requestId` của lỗi.
-- Test e2e quét `openapi.json`: route `/v1` nào trả 200 / 201 mà không có dạng `{ data, meta }` (quên `@ResponseDto`) thì test lỗi.
+- Test e2e quét `openapi.json`: route `/v1` nào trả 200 / 201 mà không có dạng `{ statusCode, data, meta }` (quên `@ResponseDto`) thì test lỗi.
 
 ## Lỗi
 
@@ -299,7 +300,7 @@ Mọi thứ về lỗi nằm ở `src/common/errors/`, dùng chung cho API và w
 | `pg-error.ts`                         | Lỗi Postgres → mã lỗi (`23505` trùng, `23503` khóa ngoại, `57014` quá giờ...)  |
 | `validation-exception.factory.ts`     | Lỗi class-validator → `validation_failed` kèm `details.issues`                 |
 | `to-api-error.ts`                     | Mọi loại lỗi → một dạng chung `{ status, code, message, details? }`            |
-| `to-error-response.ts`                | Dạng chung → body trả cho client (thêm `requestId`)                            |
+| `to-error-response.ts`                | Dạng chung → body trả cho client (thêm `statusCode`, `requestId`)              |
 | `all-exceptions.filter.ts`            | Filter toàn cục: trả body lỗi, lỗi 5xx thì ghi log                             |
 | `error-logger.service.ts`             | `ErrorLogger`: ghi log lỗi theo cấu trúc chung                                 |
 | `error-response.dto.ts`               | `ErrorResponseDto` cho Swagger                                                 |
@@ -309,6 +310,7 @@ Mọi thứ về lỗi nằm ở `src/common/errors/`, dùng chung cho API và w
 
 ```json
 {
+  "statusCode": 400,
   "code": "validation_failed",
   "message": "Request validation failed",
   "details": {
@@ -318,6 +320,7 @@ Mọi thứ về lỗi nằm ở `src/common/errors/`, dùng chung cho API và w
 }
 ```
 
+- `statusCode` trùng HTTP status.
 - `code` ổn định, client dựa vào đó để hiển thị lời tiếng Việt. Danh sách mã ở `src/common/errors/error-code.ts`.
 - `message` tiếng Anh, chỉ để dev đọc. Lỗi 5xx không lộ chi tiết (luôn là `Internal server error`).
 - Lỗi validate: `details.issues[].code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...), `path` là tên trường (trường lồng nhau nối bằng dấu chấm, vd `items.1.name`).

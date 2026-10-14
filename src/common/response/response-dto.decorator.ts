@@ -6,7 +6,7 @@ import type { ResponseDtoOptions } from './response.types'
 
 /**
  * Route trả về `dto`: ResponseInterceptor lọc theo DTO (chỉ trường có @ApiField) rồi bọc
- * { data, meta }; Swagger ghi đúng schema đó. Vd @ResponseDto(MeDto),
+ * { statusCode, data, meta }; Swagger ghi đúng schema đó. Vd @ResponseDto(MeDto),
  * @ResponseDto(AuthSessionDto, { status: 201 })
  */
 export const ResponseDto = (dto: Type, { status = 200, description }: ResponseDtoOptions = {}) =>
@@ -18,8 +18,9 @@ export const ResponseDto = (dto: Type, { status = 200, description }: ResponseDt
       description,
       schema: {
         type: 'object',
-        required: ['data', 'meta'],
+        required: ['statusCode', 'data', 'meta'],
         properties: {
+          statusCode: { type: 'integer', example: status },
           data: { $ref: getSchemaPath(dto) },
           meta: { $ref: getSchemaPath(ResponseMetaDto) },
         },

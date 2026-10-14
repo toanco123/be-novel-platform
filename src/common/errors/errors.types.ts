@@ -19,6 +19,8 @@ export type BodyParserError = { type?: unknown; status?: unknown }
 
 /** Body lỗi trả cho client (mọi lỗi cùng một dạng) */
 export type ErrorResponse = {
+  /** Trùng HTTP status của response */
+  statusCode: number
   code: ErrorCode
   message: string
   details?: Record<string, unknown>

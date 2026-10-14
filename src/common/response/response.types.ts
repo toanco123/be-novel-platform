@@ -7,5 +7,5 @@ export type ResponseDtoOptions = {
 /** Thông tin kèm theo mọi response thành công */
 export type ResponseMeta = { requestId: string }
 
-/** Dạng chung của response thành công */
-export type ResponseEnvelope<T> = { data: T; meta: ResponseMeta }
+/** Dạng chung của response thành công; statusCode trùng HTTP status */
+export type ResponseEnvelope<T> = { statusCode: number; data: T; meta: ResponseMeta }

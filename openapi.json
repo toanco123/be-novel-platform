@@ -228,10 +228,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
+                    "statusCode",
                     "data",
                     "meta"
                   ],
                   "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
                     "data": {
                       "$ref": "#/components/schemas/AuthSessionDto"
                     },
@@ -254,6 +259,7 @@
                   "validation_failed": {
                     "summary": "validation_failed",
                     "value": {
+                      "statusCode": 400,
                       "code": "validation_failed",
                       "message": "Request validation failed",
                       "details": {
@@ -283,6 +289,7 @@
                   "email_taken": {
                     "summary": "email_taken",
                     "value": {
+                      "statusCode": 409,
                       "code": "email_taken",
                       "message": "Email is already registered",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -303,6 +310,7 @@
                   "rate_limited": {
                     "summary": "rate_limited",
                     "value": {
+                      "statusCode": 429,
                       "code": "rate_limited",
                       "message": "Too many requests, try again later",
                       "details": {
@@ -358,10 +366,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
+                    "statusCode",
                     "data",
                     "meta"
                   ],
                   "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
                     "data": {
                       "$ref": "#/components/schemas/AuthSessionDto"
                     },
@@ -384,6 +397,7 @@
                   "validation_failed": {
                     "summary": "validation_failed",
                     "value": {
+                      "statusCode": 400,
                       "code": "validation_failed",
                       "message": "Request validation failed",
                       "details": {
@@ -413,6 +427,7 @@
                   "invalid_credentials": {
                     "summary": "invalid_credentials",
                     "value": {
+                      "statusCode": 401,
                       "code": "invalid_credentials",
                       "message": "Email or password is incorrect",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -433,6 +448,7 @@
                   "account_banned": {
                     "summary": "account_banned",
                     "value": {
+                      "statusCode": 403,
                       "code": "account_banned",
                       "message": "This account is banned",
                       "details": {
@@ -456,6 +472,7 @@
                   "rate_limited": {
                     "summary": "rate_limited",
                     "value": {
+                      "statusCode": 429,
                       "code": "rate_limited",
                       "message": "Too many requests, try again later",
                       "details": {
@@ -523,10 +540,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
+                    "statusCode",
                     "data",
                     "meta"
                   ],
                   "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
                     "data": {
                       "$ref": "#/components/schemas/AuthSessionDto"
                     },
@@ -549,6 +571,7 @@
                   "unauthenticated": {
                     "summary": "unauthenticated",
                     "value": {
+                      "statusCode": 401,
                       "code": "unauthenticated",
                       "message": "Authentication required",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -557,6 +580,7 @@
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
+                      "statusCode": 401,
                       "code": "invalid_token",
                       "message": "Token is invalid or expired",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -565,6 +589,7 @@
                   "token_reused": {
                     "summary": "token_reused",
                     "value": {
+                      "statusCode": 401,
                       "code": "token_reused",
                       "message": "Refresh token was already used",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -585,6 +610,7 @@
                   "account_banned": {
                     "summary": "account_banned",
                     "value": {
+                      "statusCode": 403,
                       "code": "account_banned",
                       "message": "This account is banned",
                       "details": {
@@ -661,6 +687,7 @@
                   "unauthenticated": {
                     "summary": "unauthenticated",
                     "value": {
+                      "statusCode": 401,
                       "code": "unauthenticated",
                       "message": "Authentication required",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -669,6 +696,7 @@
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
+                      "statusCode": 401,
                       "code": "invalid_token",
                       "message": "Token is invalid or expired",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -702,10 +730,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
+                    "statusCode",
                     "data",
                     "meta"
                   ],
                   "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
                     "data": {
                       "$ref": "#/components/schemas/MeDto"
                     },
@@ -728,6 +761,7 @@
                   "unauthenticated": {
                     "summary": "unauthenticated",
                     "value": {
+                      "statusCode": 401,
                       "code": "unauthenticated",
                       "message": "Authentication required",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -736,6 +770,7 @@
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
+                      "statusCode": 401,
                       "code": "invalid_token",
                       "message": "Token is invalid or expired",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -756,6 +791,7 @@
                   "not_found": {
                     "summary": "not_found",
                     "value": {
+                      "statusCode": 404,
                       "code": "not_found",
                       "message": "Resource not found",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -797,10 +833,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
+                    "statusCode",
                     "data",
                     "meta"
                   ],
                   "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
                     "data": {
                       "$ref": "#/components/schemas/MeDto"
                     },
@@ -823,6 +864,7 @@
                   "validation_failed": {
                     "summary": "validation_failed",
                     "value": {
+                      "statusCode": 400,
                       "code": "validation_failed",
                       "message": "Request validation failed",
                       "details": {
@@ -852,6 +894,7 @@
                   "unauthenticated": {
                     "summary": "unauthenticated",
                     "value": {
+                      "statusCode": 401,
                       "code": "unauthenticated",
                       "message": "Authentication required",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -860,6 +903,7 @@
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
+                      "statusCode": 401,
                       "code": "invalid_token",
                       "message": "Token is invalid or expired",
                       "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -884,8 +928,8 @@
   },
   "info": {
     "title": "Novel Platform API",
-    "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ code, message, details?, requestId }`; client hiển thị lời theo `code`.",
-    "version": "0.0.13",
+    "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, code, message, details?, requestId }`; client hiển thị lời theo `code`.",
+    "version": "0.0.14",
     "contact": {}
   },
   "tags": [
@@ -1053,6 +1097,11 @@
       "ErrorResponseDto": {
         "type": "object",
         "properties": {
+          "statusCode": {
+            "type": "integer",
+            "description": "Trùng HTTP status của response",
+            "example": 404
+          },
           "code": {
             "example": "not_found",
             "allOf": [
@@ -1075,6 +1124,7 @@
           }
         },
         "required": [
+          "statusCode",
           "code",
           "message",
           "requestId"

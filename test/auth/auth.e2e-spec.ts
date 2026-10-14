@@ -40,6 +40,7 @@ describe('đăng ký', () => {
       .expect(201)
 
     expect(res.body).toEqual({
+      statusCode: 201,
       data: {
         user: {
           id: expect.any(String),
@@ -171,6 +172,8 @@ describe('đăng nhập', () => {
   it('đúng mật khẩu (email khác hoa thường) → 200, ghi last_sign_in_at', async () => {
     const user = await registerUser(app)
     const res = await login(`  ${user.email.toUpperCase()} `, user.password).expect(200)
+    // statusCode trong body trùng HTTP status (login đặt @HttpCode(200))
+    expect(res.body.statusCode).toBe(200)
     expect(res.body.data.user.id).toBe(user.id)
     expect(refreshCookieOf(res)).toBeDefined()
     const [row] = await db.select().from(users).where(eq(users.id, user.id))
@@ -181,7 +184,7 @@ describe('đăng nhập', () => {
     const user = await registerUser(app)
     const wrong = await login(user.email, 'mat-khau-sai').expect(401)
     const missing = await login(uniqueEmail(), 'mat-khau-sai').expect(401)
-    expect(wrong.body.code).toBe('invalid_credentials')
+    expect(wrong.body).toMatchObject({ statusCode: 401, code: 'invalid_credentials' })
     expect(missing.body.code).toBe('invalid_credentials')
     expect(wrong.body.message).toBe(missing.body.message)
   })

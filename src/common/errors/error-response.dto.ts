@@ -4,6 +4,9 @@ import type { ErrorCode } from './errors.types'
 
 /** Dạng lỗi chung của API (hiện trong Swagger) */
 export class ErrorResponseDto {
+  @ApiField({ type: 'integer', description: 'Trùng HTTP status của response', example: 404 })
+  statusCode: number
+
   @ApiField({ enum: Object.keys(ERROR_CODES), enumName: 'ErrorCode', example: 'not_found' })
   code: ErrorCode
 

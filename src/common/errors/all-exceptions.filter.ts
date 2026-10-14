@@ -7,7 +7,7 @@ import { toErrorResponse } from './to-error-response'
 
 /**
  * Mọi lỗi (của service, validate, Nest, body-parser, lỗi lạ) đều trả cùng một dạng:
- * { code, message, details?, requestId }. Lỗi 5xx ghi log đầy đủ (ErrorLogger) nhưng không lộ chi
+ * { statusCode, code, message, details?, requestId }. Lỗi 5xx ghi log đầy đủ (ErrorLogger) nhưng không lộ chi
  * tiết ra ngoài; lỗi 4xx do client, log request của pino-http đã có status.
  */
 @Catch()
