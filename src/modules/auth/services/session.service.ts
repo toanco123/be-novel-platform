@@ -10,7 +10,7 @@ import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
 import type { IssuedSession, RotateCheck, RotateResult } from '../auth.types'
 import { refreshTokenState } from '../refresh-token-state'
-import { SessionsRepository } from '../sessions.repository'
+import { SessionsRepository } from '../repositories/sessions.repository'
 
 @Injectable()
 export class SessionService {
@@ -100,7 +100,12 @@ export class SessionService {
   }
 
   /** Đăng xuất mọi thiết bị (cả khi khóa tài khoản, đổi mật khẩu ở phần sau) */
-  revokeAllForUser(userId: string) {
-    return this.sessions.revokeAllForUser(userId)
+  revokeAllForUser(userId: string, ex?: Executor) {
+    return this.sessions.revokeAllForUser(userId, ex)
+  }
+
+  /** Đăng xuất các thiết bị khác, giữ phiên đang dùng (đổi mật khẩu) */
+  revokeOtherSessions(userId: string, keepSessionId: string, ex?: Executor) {
+    return this.sessions.revokeAllForUserExcept(userId, keepSessionId, ex)
   }
 }

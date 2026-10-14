@@ -10,6 +10,16 @@ export const LOGIN_FAILED_IP_LIMIT: RateLimitOptions = { limit: 20, windowSecond
 /** Hai tab cùng refresh: token vừa bị thay trong khoảng này thì không coi là bị đánh cắp */
 export const REUSE_GRACE_MS = 10_000
 
-/** Cookie refresh token của web: chỉ gửi kèm các request /v1/auth/* */
-export const REFRESH_COOKIE = 'refresh_token'
-export const REFRESH_COOKIE_PATH = '/v1/auth'
+/** Link xác nhận email hết hạn sau 24 giờ, link đặt lại mật khẩu sau 1 giờ */
+export const VERIFY_EMAIL_TTL_MS = 24 * 3600 * 1000
+export const RESET_PASSWORD_TTL_MS = 3600 * 1000
+
+/** Trang của web mở từ link trong email (gốc là APP_WEB_URL, token ở query `token`) */
+export const VERIFY_EMAIL_PATH = '/auth/verify-email'
+export const RESET_PASSWORD_PATH = '/auth/reset-password'
+
+/** Gửi lại thư xác nhận: 3 lần / giờ / người */
+export const RESEND_VERIFICATION_LIMIT: RateLimitOptions = { limit: 3, windowSeconds: 3600 }
+/** Quên mật khẩu: 3 lần / giờ theo email, 10 lần / giờ theo IP */
+export const FORGOT_PASSWORD_EMAIL_LIMIT: RateLimitOptions = { limit: 3, windowSeconds: 3600 }
+export const FORGOT_PASSWORD_IP_LIMIT: RateLimitOptions = { limit: 10, windowSeconds: 3600 }

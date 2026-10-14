@@ -14,7 +14,7 @@ export async function registerUser(
   input: RegisterUserInput = {},
 ): Promise<TestUser> {
   const email = input.email ?? uniqueEmail()
-  const password = input.password ?? 'mat-khau-bi-mat'
+  const password = input.password ?? 'mat-khau-123'
   const ip = uniqueIp()
   const res = await request(app.getHttpServer())
     .post('/v1/auth/register')

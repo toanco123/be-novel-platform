@@ -1,6 +1,7 @@
 import type { AppException } from '@/common/errors/app.exception'
 import type { Tx } from '@/infra/database/database.types'
-import type { MeDto } from '../users/dto/me.dto'
+import type { EmailTokenRow } from '@/infra/database/schema'
+import type { MeDto } from '@/modules/users/dto/me.dto'
 
 /**
  * Trạng thái của refresh token client gửi lên:
@@ -45,4 +46,22 @@ export type AuthResult = {
   expiresIn: number
   refreshToken: string
   refreshExpiresAt: Date
+}
+
+/** Người nhận thư có link (xác nhận email, đặt lại mật khẩu) */
+export type EmailLinkInput = { to: string; displayName: string; url: string }
+
+/** Dòng email_tokens cần để kiểm tra link, kèm email hiện tại của tài khoản */
+export type EmailTokenWithUser = Pick<
+  EmailTokenRow,
+  'id' | 'userId' | 'email' | 'expiresAt' | 'usedAt'
+> & { userEmail: string }
+
+/** Nội dung thư dựng theo khung chung (chữ thuần; khung tự escape khi dựng HTML) */
+export type MailLayoutInput = {
+  title: string
+  greeting: string
+  paragraphs: string[]
+  action: { label: string; url: string }
+  footer: string
 }

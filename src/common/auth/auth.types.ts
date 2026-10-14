@@ -8,6 +8,8 @@ export type Actor = {
   role: Role
   /** Phiên đăng nhập (family_id của refresh token) */
   sessionId: string
+  /** Email đã xác nhận (claim `ev`); xác nhận xong thì refresh để nhận token mới */
+  emailVerified: boolean
 }
 
 export type AuthenticatedRequest = Request & { user?: Actor }

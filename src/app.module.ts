@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { AuthCoreModule } from './common/auth/auth-core.module'
+import { EmailVerifiedGuard } from './common/auth/guards/email-verified.guard'
 import { JwtAuthGuard } from './common/auth/guards/jwt-auth.guard'
 import { RolesGuard } from './common/auth/guards/roles.guard'
+import { CaptchaModule } from './common/captcha/captcha.module'
 import { CommonModule } from './common/common.module'
 import { ContextModule } from './common/context/context.module'
 import { CryptoModule } from './common/crypto/crypto.module'
@@ -11,6 +13,7 @@ import { AppThrottlerGuard } from './common/rate-limit/app-throttler.guard'
 import { RateLimitModule } from './common/rate-limit/rate-limit.module'
 import { AppConfigModule } from './config/app-config.module'
 import { DatabaseModule } from './infra/database/database.module'
+import { MailModule } from './infra/mail/mail.module'
 import { QueueModule } from './infra/queue/queue.module'
 import { RedisModule } from './infra/redis/redis.module'
 import { AuthModule } from './modules/auth/auth.module'
@@ -27,8 +30,10 @@ import { UsersModule } from './modules/users/users.module'
     RedisModule,
     RateLimitModule,
     QueueModule,
+    MailModule,
     AuthCoreModule,
     CryptoModule,
+    CaptchaModule,
     HealthModule,
     AuthModule,
     UsersModule,
@@ -37,6 +42,7 @@ import { UsersModule } from './modules/users/users.module'
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: EmailVerifiedGuard },
     { provide: APP_GUARD, useClass: AppThrottlerGuard },
   ],
 })

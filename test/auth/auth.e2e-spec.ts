@@ -36,7 +36,7 @@ describe('đăng ký', () => {
     const res = await http()
       .post('/v1/auth/register')
       .set('X-Forwarded-For', uniqueIp())
-      .send({ email, password: 'mat-khau-bi-mat', displayName: '  Linh  ' })
+      .send({ email, password: 'mat-khau-123', displayName: '  Linh  ' })
       .expect(201)
 
     expect(res.body).toEqual({
@@ -69,7 +69,7 @@ describe('đăng ký', () => {
       .post('/v1/auth/register')
       .set('X-Forwarded-For', uniqueIp())
       .set('X-Client', 'mobile')
-      .send({ email: uniqueEmail(), password: 'mat-khau-bi-mat', displayName: 'Linh' })
+      .send({ email: uniqueEmail(), password: 'mat-khau-123', displayName: 'Linh' })
       .expect(201)
     expect(res.body.data.refreshToken).toEqual(expect.any(String))
     expect(refreshCookieOf(res)).toBeUndefined()
@@ -79,7 +79,7 @@ describe('đăng ký', () => {
     const res = await http()
       .post('/v1/auth/register')
       .set('X-Forwarded-For', uniqueIp())
-      .send({ email: uniqueEmail(), password: 'mat-khau-bi-mat', display_name: 'Snake' })
+      .send({ email: uniqueEmail(), password: 'mat-khau-123', display_name: 'Snake' })
       .expect(201)
     expect(res.body.data.user.displayName).toBe('Snake')
     expect(Object.keys(res.body.data.user).toSorted()).toEqual([
@@ -132,7 +132,7 @@ describe('đăng ký', () => {
     const res = await http()
       .post('/v1/auth/register')
       .set('X-Forwarded-For', uniqueIp())
-      .send({ email: user.email.toUpperCase(), password: 'mat-khau-khac', displayName: 'Khác' })
+      .send({ email: user.email.toUpperCase(), password: 'mat-khau-khac-1', displayName: 'Khác' })
       .expect(409)
     expect(res.body.error.code).toBe('email_taken')
   })
@@ -140,8 +140,8 @@ describe('đăng ký', () => {
   it('mật khẩu ngắn, email sai, tên quá ngắn → 400 validation_failed', async () => {
     for (const body of [
       { email: uniqueEmail(), password: 'ngan', displayName: 'Linh' },
-      { email: 'khong-phai-email', password: 'mat-khau-bi-mat', displayName: 'Linh' },
-      { email: uniqueEmail(), password: 'mat-khau-bi-mat', displayName: 'L' },
+      { email: 'khong-phai-email', password: 'mat-khau-123', displayName: 'Linh' },
+      { email: uniqueEmail(), password: 'mat-khau-123', displayName: 'L' },
     ]) {
       const res = await http()
         .post('/v1/auth/register')
@@ -158,7 +158,7 @@ describe('đăng ký', () => {
       http()
         .post('/v1/auth/register')
         .set('X-Forwarded-For', ip)
-        .send({ email: uniqueEmail(), password: 'mat-khau-bi-mat', displayName: 'Linh' })
+        .send({ email: uniqueEmail(), password: 'mat-khau-123', displayName: 'Linh' })
     for (let i = 0; i < 5; i++) await register().expect(201)
     const res = await register().expect(429)
     expect(res.body).toMatchObject({

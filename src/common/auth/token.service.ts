@@ -49,7 +49,7 @@ export class TokenService implements OnModuleInit {
   }
 
   async signAccessToken(actor: Actor) {
-    return new SignJWT({ role: actor.role, sid: actor.sessionId })
+    return new SignJWT({ role: actor.role, sid: actor.sessionId, ev: actor.emailVerified })
       .setProtectedHeader({ alg: JWT_ALG, kid: this.config.get('JWT_KEY_ID'), typ: 'JWT' })
       .setSubject(actor.id)
       .setIssuer(this.config.get('JWT_ISSUER'))
@@ -75,7 +75,12 @@ export class TokenService implements OnModuleInit {
       ) {
         throw new AppException('invalid_token')
       }
-      return { id: payload.sub, role: role as Role, sessionId: payload.sid }
+      return {
+        id: payload.sub,
+        role: role as Role,
+        sessionId: payload.sid,
+        emailVerified: payload.ev === true,
+      }
     } catch (error) {
       if (error instanceof AppException) throw error
       if (error instanceof errors.JOSEError) throw new AppException('invalid_token')

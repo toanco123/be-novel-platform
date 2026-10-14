@@ -249,7 +249,7 @@
             }
           },
           "400": {
-            "description": "code: `validation_failed`",
+            "description": "code: `validation_failed`\n\ncode: `invalid_captcha`",
             "content": {
               "application/json": {
                 "schema": {
@@ -272,6 +272,19 @@
                             }
                           ]
                         }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_captcha": {
+                    "summary": "invalid_captcha",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_captcha",
+                        "message": "Captcha verification failed"
                       },
                       "meta": {
                         "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -399,7 +412,7 @@
             }
           },
           "400": {
-            "description": "code: `validation_failed`",
+            "description": "code: `validation_failed`\n\ncode: `invalid_captcha`",
             "content": {
               "application/json": {
                 "schema": {
@@ -422,6 +435,19 @@
                             }
                           ]
                         }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_captcha": {
+                    "summary": "invalid_captcha",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_captcha",
+                        "message": "Captcha verification failed"
                       },
                       "meta": {
                         "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
@@ -770,6 +796,510 @@
         ]
       }
     },
+    "/v1/auth/verify-email": {
+      "post": {
+        "description": "Gửi `token` lấy từ link. Xong thì gọi `/v1/auth/refresh` để access token mới có trạng thái đã xác nhận.",
+        "operationId": "EmailVerificationController_verifyEmail_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "code: `validation_failed`, `invalid_link`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_link": {
+                    "summary": "invalid_link",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_link",
+                        "message": "Link is invalid, expired or already used"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Xác nhận email bằng link trong thư",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/resend-verification": {
+      "post": {
+        "description": "Đã xác nhận thì không gửi. Link cũ hết hiệu lực. Tối đa 3 lần / giờ.",
+        "operationId": "EmailVerificationController_resendVerification_v1",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "statusCode": 429,
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Gửi lại thư xác nhận email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/forgot-password": {
+      "post": {
+        "description": "Luôn 204, không cho biết email có tài khoản hay không. Link hết hạn sau 1 giờ. Tối đa 3 lần / giờ / email, 10 lần / giờ / IP.",
+        "operationId": "AccountPasswordController_forgotPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "code: `validation_failed`\n\ncode: `invalid_captcha`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_captcha": {
+                    "summary": "invalid_captcha",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_captcha",
+                        "message": "Captcha verification failed"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "statusCode": 429,
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Quên mật khẩu: gửi link đặt lại",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/reset-password": {
+      "post": {
+        "description": "Xong thì mọi thiết bị bị đăng xuất; đăng nhập lại bằng mật khẩu mới.",
+        "operationId": "AccountPasswordController_resetPassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "code: `validation_failed`, `invalid_link`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_link": {
+                    "summary": "invalid_link",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_link",
+                        "message": "Link is invalid, expired or already used"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Đặt mật khẩu mới bằng link trong thư",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/change-password": {
+      "post": {
+        "description": "Cần mật khẩu hiện tại. Các thiết bị khác bị đăng xuất, thiết bị này giữ phiên.",
+        "operationId": "AccountPasswordController_changePassword_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "code: `validation_failed`, `same_password`\n\ncode: `invalid_captcha`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "same_password": {
+                    "summary": "same_password",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "same_password",
+                        "message": "New password must differ from the current one"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_captcha": {
+                    "summary": "invalid_captcha",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_captcha",
+                        "message": "Captcha verification failed"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`, `invalid_credentials`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_credentials": {
+                    "summary": "invalid_credentials",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_credentials",
+                        "message": "Email or password is incorrect"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "statusCode": 429,
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Đổi mật khẩu",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeController_me_v1",
@@ -999,13 +1529,167 @@
         "tags": [
           "me"
         ]
+      },
+      "delete": {
+        "description": "Xóa hẳn tài khoản và đăng xuất mọi thiết bị. Tài khoản có mật khẩu gửi `password`; tài khoản chỉ dùng Google / Facebook gửi `confirmEmail` (gõ lại email).",
+        "operationId": "MeController_deleteAccount_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "400": {
+            "description": "code: `validation_failed`\n\ncode: `invalid_captcha`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_captcha": {
+                    "summary": "invalid_captcha",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "invalid_captcha",
+                        "message": "Captcha verification failed"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_credentials`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_credentials": {
+                    "summary": "invalid_credentials",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_credentials",
+                        "message": "Email or password is incorrect"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "statusCode": 429,
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Xóa tài khoản",
+        "tags": [
+          "me"
+        ]
       }
     }
   },
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "contact": {}
   },
   "tags": [
@@ -1124,6 +1808,11 @@
       "RegisterDto": {
         "type": "object",
         "properties": {
+          "captchaToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Token Cloudflare Turnstile; bắt buộc khi server bật captcha (TURNSTILE_SECRET)"
+          },
           "email": {
             "type": "string",
             "format": "email",
@@ -1134,12 +1823,13 @@
             "type": "string",
             "minLength": 8,
             "maxLength": 72,
-            "example": "mat-khau-bi-mat"
+            "example": "matkhau123",
+            "description": "8–72 ký tự, có ít nhất một chữ cái và một chữ số"
           },
           "displayName": {
             "type": "string",
             "minLength": 2,
-            "maxLength": 50,
+            "maxLength": 30,
             "example": "Linh"
           }
         },
@@ -1159,6 +1849,10 @@
           "invalid_credentials",
           "token_reused",
           "account_banned",
+          "email_not_verified",
+          "invalid_link",
+          "same_password",
+          "invalid_captcha",
           "email_taken",
           "forbidden",
           "not_found",
@@ -1219,6 +1913,11 @@
       "LoginDto": {
         "type": "object",
         "properties": {
+          "captchaToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Token Cloudflare Turnstile; bắt buộc khi server bật captcha (TURNSTILE_SECRET)"
+          },
           "email": {
             "type": "string",
             "format": "email",
@@ -1229,7 +1928,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 128,
-            "example": "mat-khau-bi-mat"
+            "example": "matkhau123"
           }
         },
         "required": [
@@ -1247,20 +1946,122 @@
           }
         }
       },
+      "VerifyEmailDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token trong link xác nhận email (query `token`)",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "ForgotPasswordDto": {
+        "type": "object",
+        "properties": {
+          "captchaToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Token Cloudflare Turnstile; bắt buộc khi server bật captcha (TURNSTILE_SECRET)"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "example": "linh@example.com"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "ResetPasswordDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token trong link đặt lại mật khẩu (query `token`)",
+            "maxLength": 256
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 72,
+            "example": "matkhaumoi456",
+            "description": "Mật khẩu mới: 8–72 ký tự, có ít nhất một chữ cái và một chữ số"
+          }
+        },
+        "required": [
+          "token",
+          "password"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "captchaToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Token Cloudflare Turnstile; bắt buộc khi server bật captcha (TURNSTILE_SECRET)"
+          },
+          "currentPassword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "example": "matkhau123"
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 72,
+            "example": "matkhaumoi456",
+            "description": "8–72 ký tự, có ít nhất một chữ cái và một chữ số, khác mật khẩu hiện tại"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
       "UpdateMeDto": {
         "type": "object",
         "properties": {
           "displayName": {
             "type": "string",
             "minLength": 2,
-            "maxLength": 50,
+            "maxLength": 30,
             "example": "Linh Nguyễn",
-            "description": "Tên hiển thị, 2–50 ký tự sau khi bỏ khoảng trắng ở hai đầu"
+            "description": "Tên hiển thị, 2–30 ký tự sau khi bỏ khoảng trắng ở hai đầu"
           }
         },
         "required": [
           "displayName"
         ]
+      },
+      "DeleteAccountDto": {
+        "type": "object",
+        "properties": {
+          "captchaToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Token Cloudflare Turnstile; bắt buộc khi server bật captcha (TURNSTILE_SECRET)"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "example": "matkhau123"
+          },
+          "confirmEmail": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "description": "Gõ lại email của tài khoản (tài khoản không có mật khẩu)"
+          }
+        }
       }
     }
   }

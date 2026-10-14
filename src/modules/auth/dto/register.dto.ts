@@ -1,23 +1,28 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsEmail, IsString, Length, MaxLength } from 'class-validator'
-import { NormalizeEmail, Trim } from '@/common/validation/transform.decorator'
+import { CaptchaDto } from '@/common/captcha/captcha.dto'
+import { IsNewPassword } from '@/common/validation/decorators/new-password.decorator'
+import { NormalizeEmail, Trim } from '@/common/validation/decorators/transform.decorator'
 
-export class RegisterDto {
+export class RegisterDto extends CaptchaDto {
   @ApiProperty({ format: 'email', maxLength: 254, example: 'linh@example.com' })
   @NormalizeEmail()
   @IsEmail()
   @MaxLength(254)
   email: string
 
-  /** Giống form của web: 8–72 ký tự (72 là giới hạn của bcrypt) */
-  @ApiProperty({ minLength: 8, maxLength: 72, example: 'mat-khau-bi-mat' })
-  @IsString()
-  @Length(8, 72)
+  @ApiProperty({
+    minLength: 8,
+    maxLength: 72,
+    example: 'matkhau123',
+    description: '8–72 ký tự, có ít nhất một chữ cái và một chữ số',
+  })
+  @IsNewPassword()
   password: string
 
-  @ApiProperty({ minLength: 2, maxLength: 50, example: 'Linh' })
+  @ApiProperty({ minLength: 2, maxLength: 30, example: 'Linh' })
   @Trim()
   @IsString()
-  @Length(2, 50)
+  @Length(2, 30)
   displayName: string
 }

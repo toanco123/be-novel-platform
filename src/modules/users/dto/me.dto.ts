@@ -1,5 +1,5 @@
-import { ApiField } from '@/common/response/api-field.decorator'
 import type { Role } from '@/common/auth/auth.types'
+import { ApiField } from '@/common/response/api-field.decorator'
 
 /** Hồ sơ của chính mình (không bao giờ có password_hash) */
 export class MeDto {

@@ -1,4 +1,5 @@
-// Hồ sơ công khai (giống bảng profiles của Supabase, cùng id với users), tạo cùng lúc với tài khoản.
+// Hồ sơ công khai: đúng định nghĩa bảng profiles của Supabase (cột, check), cùng id với users; tạo
+// cùng lúc với tài khoản.
 import { sql } from 'drizzle-orm'
 import { check, pgTable, text, uuid } from 'drizzle-orm/pg-core'
 import { timestamps } from './columns'
@@ -14,7 +15,9 @@ export const profiles = pgTable(
     avatarUrl: text(),
     ...timestamps,
   },
+  // Giống Supabase (tên constraint mặc định của Postgres cho check viết cùng cột)
   (t) => [
-    check('profiles_display_name_length', sql`char_length(${t.displayName}) between 2 and 50`),
+    check('profiles_display_name_check', sql`char_length(${t.displayName}) between 1 and 30`),
+    check('profiles_avatar_url_check', sql`char_length(${t.avatarUrl}) <= 2048`),
   ],
 )

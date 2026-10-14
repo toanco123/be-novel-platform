@@ -22,6 +22,20 @@
       "when": 1791942688900,
       "tag": "0002_auth_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791950187395,
+      "tag": "0003_email_tokens",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791950659451,
+      "tag": "0004_profiles_match_supabase",
+      "breakpoints": true
     }
   ]
 }

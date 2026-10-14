@@ -10,3 +10,9 @@ export type TestUser = {
 
 /** Thông tin đăng ký tùy chọn; thiếu thì helper tự sinh */
 export type RegisterUserInput = { email?: string; password?: string; displayName?: string }
+
+/** Một thư trong Mailpit (phần test cần) */
+export type ReceivedMail = { subject: string; text: string; html: string }
+
+/** Kết quả tìm thư của API Mailpit (phần test cần) */
+export type MailpitSearch = { messages: { ID: string; Created: string }[] }

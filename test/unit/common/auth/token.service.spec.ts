@@ -8,6 +8,7 @@ const actor: Actor = {
   id: '6f1c2a54-8a43-4c5e-9b7f-3c8f0d2e1a11',
   role: 'admin',
   sessionId: '0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22',
+  emailVerified: true,
 }
 
 async function createService(overrides: Partial<Env> = {}) {
@@ -36,6 +37,14 @@ describe('TokenService', () => {
     const tokens = await createService()
     const token = await tokens.signAccessToken(actor)
     expect(await tokens.verifyAccessToken(token)).toEqual(actor)
+  })
+
+  it('claim ev mang trạng thái xác nhận email (cả true lẫn false)', async () => {
+    const tokens = await createService()
+    const unverified = { ...actor, emailVerified: false }
+    expect(await tokens.verifyAccessToken(await tokens.signAccessToken(unverified))).toEqual(
+      unverified,
+    )
   })
 
   it('header có alg ES256 và kid', async () => {

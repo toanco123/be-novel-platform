@@ -59,6 +59,18 @@ export const envSchema = z
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
     /** Cookie refresh token chỉ gửi qua HTTPS; mặc định bật ở production */
     COOKIE_SECURE: flag.optional(),
+
+    /** SMTP gửi mail (smtp:// hoặc smtps://); dev: Mailpit của docker-compose */
+    SMTP_URL: z
+      .string()
+      .regex(/^smtps?:\/\//, 'Phải là URL smtp:// hoặc smtps://')
+      .default('smtp://localhost:1025'),
+    /** Người gửi, vd `Web Truyện <no-reply@novel.vn>` */
+    MAIL_FROM: z.string().min(3).default('Web Truyện <no-reply@novel.local>'),
+    /** Gốc của link trong email (trang xác nhận email, đặt lại mật khẩu của web) */
+    APP_WEB_URL: z.url().default('http://localhost:3000'),
+    /** Secret của Cloudflare Turnstile; trống thì tắt captcha */
+    TURNSTILE_SECRET: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && (!env.JWT_PRIVATE_KEY || !env.JWT_PUBLIC_KEY)) {
@@ -67,5 +79,15 @@ export const envSchema = z
         path: ['JWT_PRIVATE_KEY'],
         message: 'Production bắt buộc có JWT_PRIVATE_KEY và JWT_PUBLIC_KEY (npm run keys:generate)',
       })
+    }
+    // Production không được dùng mặc định của dev (Mailpit, localhost)
+    for (const key of ['SMTP_URL', 'APP_WEB_URL'] as const) {
+      if (env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/.test(env[key])) {
+        ctx.addIssue({
+          code: 'custom',
+          path: [key],
+          message: `Production phải đặt ${key} (không dùng localhost)`,
+        })
+      }
     }
   })

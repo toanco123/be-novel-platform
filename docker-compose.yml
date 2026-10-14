@@ -1,4 +1,4 @@
-# Dịch vụ cho môi trường dev (npm run db:up). Các phần sau thêm MinIO, Mailpit.
+# Dịch vụ cho môi trường dev (npm run db:up). Phần sau thêm MinIO.
 name: novel-platform
 
 services:
@@ -26,6 +26,18 @@ services:
       - redis-data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Bắt mọi thư app gửi (SMTP cổng 1025), xem ở http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.31.4
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
       interval: 5s
       timeout: 3s
       retries: 10

@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common'
 import { ApiResponse } from '@nestjs/swagger'
 import type { ErrorCode } from '@/common/errors/errors.types'
-import { ERROR_CODES } from '../errors/error-code'
 import { ErrorResponseDto } from '../errors/dto/error-response.dto'
+import { ERROR_CODES } from '../errors/error-code'
 
 /** `details` mẫu của vài mã lỗi (hiện trong ví dụ của Swagger) */
 const EXAMPLE_DETAILS: Partial<Record<ErrorCode, Record<string, unknown>>> = {

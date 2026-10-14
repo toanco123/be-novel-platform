@@ -24,17 +24,17 @@ Backend NestJS cho nền tảng đọc truyện chữ (web `web-novel-platform`,
 ## Yêu cầu
 
 - Node 24 (`.nvmrc`), npm
-- Docker (OrbStack hoặc Docker Desktop): Postgres và Redis cho dev (docker-compose) và test e2e (Testcontainers)
+- Docker (OrbStack hoặc Docker Desktop): Postgres, Redis, Mailpit cho dev (docker-compose) và test e2e (Testcontainers)
 
 ## Bắt đầu
 
 ```bash
 npm ci
 cp .env.example .env
-npm run db:up          # Postgres 17 (cổng 5433), Redis 7.4 (cổng 6380)
+npm run db:up          # Postgres 17 (cổng 5433), Redis 7.4 (cổng 6380), Mailpit (thư ở http://localhost:8025)
 npm run db:migrate
 npm run dev            # http://localhost:4000, tài liệu API và thử API ở /docs
-npm run dev:worker     # process worker xử lý hàng đợi (terminal khác)
+npm run dev:worker     # process worker xử lý hàng đợi, gửi email (terminal khác)
 ```
 
 ## Lệnh
@@ -68,7 +68,8 @@ src/
   app.constants.ts
   config/                 # biến môi trường: schema (zod), kiểm tra, AppConfig
   common/                 # mọi thứ dùng chung cho nhiều module
-    auth/                 #   access token, guards/, decorators/ (@Public, @Roles, @CurrentUser)
+    auth/                 #   access token, cookie refresh, guards/, decorators/ (@Public, @Roles, @CurrentUser, @RequireVerifiedEmail)
+    captcha/              #   Cloudflare Turnstile (@RequireCaptcha, CaptchaDto)
     context/              #   request id, cấu hình log, CLS
     crypto/               #   băm mật khẩu, token ngẫu nhiên + SHA-256, khóa JWT
     errors/               #   bố cục lỗi chung: mã lỗi, AppException, filter, ErrorLogger
@@ -82,6 +83,7 @@ src/
     database/             #   Postgres + Drizzle, schema/, migration, health
     redis/                #   client Redis dùng chung, health
     queue/                #   BullMQ: tên hàng đợi, processor
+    mail/                 #   hàng đợi mail (API), gửi SMTP bằng nodemailer (worker)
   modules/                # từng domain nghiệp vụ
     auth/                 #   đăng ký, đăng nhập, refresh token, đăng xuất
     users/                #   /v1/me, dữ liệu tài khoản
@@ -99,22 +101,32 @@ Ví dụ một module (`src/modules/auth`):
 
 ```
 auth/
-  auth.module.ts          # khai báo module
-  auth.controller.ts      # HTTP + Swagger, không có luật nghiệp vụ
-  auth.constants.ts       # hạn mức, tên cookie...
-  auth.types.ts           # mọi type / interface của module
-  auth-api.decorator.ts   # decorator Swagger dùng chung trong module
-  sessions.repository.ts  # nơi duy nhất truy vấn bảng refresh_tokens
-  refresh-cookie.ts       # đặt / xóa / đọc cookie refresh token
-  refresh-token-state.ts  # xét trạng thái refresh token (còn dùng được, bị dùng lại...)
-  services/               # có 2 service nên gom vào thư mục
+  auth.module.ts               # khai báo module
+  auth.constants.ts            # hạn mức, hạn link email...
+  auth.types.ts                # mọi type / interface của module
+  auth-api.decorator.ts        # decorator Swagger dùng chung trong module
+  refresh-token-state.ts       # xét trạng thái refresh token (còn dùng được, bị dùng lại...)
+  controllers/                 # 3 controller: chỉ HTTP + Swagger
+    auth.controller.ts         #   đăng ký, đăng nhập, refresh, đăng xuất
+    email-verification.controller.ts
+    account-password.controller.ts
+  services/                    # luật nghiệp vụ
     auth.service.ts
     session.service.ts
-  dto/                    # mỗi DTO một file
+    email-token.service.ts
+    email-verification.service.ts
+    account-password.service.ts
+  repositories/                # nơi duy nhất truy vấn bảng của module
+    sessions.repository.ts
+    email-tokens.repository.ts
+  templates/                   # nội dung email
+    mail-layout.template.ts
+    verify-email.template.ts
+    reset-password.template.ts
+  dto/                         # mỗi DTO một file
     register.dto.ts
     login.dto.ts
-    refresh-token.dto.ts
-    auth-session.dto.ts
+    ...
 ```
 
 ## Quy ước code
@@ -185,7 +197,7 @@ Ví dụ: `modules/auth/services/`, `common/auth/guards/`, `common/auth/decorato
 
 **Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`; gửi cả hai thì lấy camelCase). Server đổi về camelCase trước khi validate (`common/utils/case-keys.ts`), nên DTO và code luôn viết camelCase. Response luôn camelCase.
 
-**DTO đầu vào** (body, query): class theo kiểu chuẩn của Nest, mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger.
+**DTO đầu vào** (body, query): class theo kiểu chuẩn của Nest, mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 30)`...) và `@ApiProperty({...})` cho Swagger.
 
 - Khai báo `email: string`, **không** dùng `!`. Trường tùy chọn `refreshToken?: string` kèm `@IsOptional()` và `@ApiPropertyOptional()`. (`tsconfig` tắt `strictPropertyInitialization` để viết được như vậy.)
 - Chuẩn hóa trước khi kiểm tra: `@Trim()`, `@NormalizeEmail()` (`common/validation/transform.decorator.ts`).
@@ -262,7 +274,28 @@ me(@CurrentUser() actor: Actor) {
   - Web nhận trong cookie HttpOnly `refresh_token` (path `/v1/auth`).
   - Mobile gửi header `X-Client: mobile` để nhận trong body, rồi gửi lại trong body của `/v1/auth/refresh`.
 
-Chi tiết: [documents/plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md).
+- **Email chưa xác nhận** vẫn đăng nhập được; route thao tác viết gắn `@RequireVerifiedEmail()` (403 `email_not_verified`). Xác nhận xong, client gọi refresh để access token mới có trạng thái đã xác nhận (claim `ev`).
+- **Mật khẩu mới** (đăng ký, đặt lại, đổi): 8–72 ký tự, có chữ và số (`@IsNewPassword()`, lỗi `hasLetter` / `hasDigit`).
+- **Captcha Turnstile** cho đăng ký, đăng nhập, quên mật khẩu, đổi mật khẩu, xóa tài khoản: body gửi `captchaToken`. Không đặt `TURNSTILE_SECRET` thì tắt.
+
+| Endpoint                                                             | Việc                                                                                           |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `POST /v1/auth/register`, `login`, `refresh`, `logout`, `logout-all` | Phiên đăng nhập                                                                                |
+| `POST /v1/auth/verify-email`                                         | `{ token }` từ link trong thư                                                                  |
+| `POST /v1/auth/resend-verification`                                  | Gửi lại thư xác nhận (cần đăng nhập)                                                           |
+| `POST /v1/auth/forgot-password`                                      | `{ email }` → luôn 204, có tài khoản thì gửi link đặt lại (1 giờ)                              |
+| `POST /v1/auth/reset-password`                                       | `{ token, password }` → đăng xuất mọi thiết bị                                                 |
+| `POST /v1/auth/change-password`                                      | `{ currentPassword, newPassword }` → đăng xuất các thiết bị khác                               |
+| `GET` / `PATCH` / `DELETE /v1/me`                                    | Hồ sơ, sửa tên, xóa tài khoản (`password` hoặc `confirmEmail` với tài khoản không có mật khẩu) |
+
+Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05-email.md](documents/plan-05-email.md).
+
+## Email
+
+- API dựng thư rồi đẩy vào hàng đợi `mail`; process worker (`npm run dev:worker`) gửi qua SMTP (`SMTP_URL`), lỗi thì thử lại 3 lần. Không chạy worker thì thư nằm chờ trong hàng đợi.
+- Dev: Mailpit bắt mọi thư, xem ở http://localhost:8025. Production: SMTP của nhà cung cấp (Resend, SES, Brevo...).
+- Link trong thư về trang của web: `APP_WEB_URL/auth/verify-email?token=…`, `APP_WEB_URL/auth/reset-password?token=…`. Token lưu dạng SHA-256 (bảng `email_tokens`), dùng một lần.
+- Nội dung thư (tiếng Việt, HTML + chữ thuần) ở `src/modules/auth/templates/`.
 
 ## Dạng response
 

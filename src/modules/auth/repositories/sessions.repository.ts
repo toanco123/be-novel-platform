@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, ne } from 'drizzle-orm'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor, Tx } from '@/infra/database/database.types'
 import { refreshTokens } from '@/infra/database/schema'
-import type { NewRefreshToken } from './auth.types'
+import type { NewRefreshToken } from '../auth.types'
 
 /** Nơi duy nhất truy vấn bảng refresh_tokens */
 @Injectable()
@@ -55,5 +55,19 @@ export class SessionsRepository {
       .update(refreshTokens)
       .set({ revokedAt: new Date() })
       .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)))
+  }
+
+  /** Thu hồi mọi phiên của người dùng trừ phiên `keepFamilyId` (đổi mật khẩu) */
+  async revokeAllForUserExcept(userId: string, keepFamilyId: string, ex: Executor = this.db) {
+    await ex
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(
+        and(
+          eq(refreshTokens.userId, userId),
+          ne(refreshTokens.familyId, keepFamilyId),
+          isNull(refreshTokens.revokedAt),
+        ),
+      )
   }
 }

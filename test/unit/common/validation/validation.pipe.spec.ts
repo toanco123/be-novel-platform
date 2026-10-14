@@ -41,7 +41,7 @@ describe('ValidationPipe toàn cục', () => {
     const result = await pipe.transform(
       {
         email: '  Linh@Example.COM ',
-        password: 'mat-khau-bi-mat',
+        password: 'mat-khau-123',
         displayName: '  Linh ',
         role: 'admin',
       },
@@ -50,19 +50,19 @@ describe('ValidationPipe toàn cục', () => {
     expect(result).toBeInstanceOf(RegisterDto)
     expect({ ...result }).toEqual({
       email: 'linh@example.com',
-      password: 'mat-khau-bi-mat',
+      password: 'mat-khau-123',
       displayName: 'Linh',
     })
   })
 
   it('nhận snake_case, đổi về camelCase trước khi validate (body và query)', async () => {
     const result = await pipe.transform(
-      { email: 'a@b.co', password: 'mat-khau-bi-mat', display_name: '  Linh ' },
+      { email: 'a@b.co', password: 'mat-khau-123', display_name: '  Linh ' },
       body(RegisterDto),
     )
     expect({ ...result }).toEqual({
       email: 'a@b.co',
-      password: 'mat-khau-bi-mat',
+      password: 'mat-khau-123',
       displayName: 'Linh',
     })
     const query = await pipe.transform(
@@ -74,7 +74,7 @@ describe('ValidationPipe toàn cục', () => {
 
   it('lỗi validate báo tên trường dạng camelCase', async () => {
     const issues = await validationError(
-      { email: 'a@b.co', password: 'mat-khau-bi-mat', display_name: 'L' },
+      { email: 'a@b.co', password: 'mat-khau-123', display_name: 'L' },
       RegisterDto,
     )
     expect(issues).toEqual([expect.objectContaining({ path: 'displayName', code: 'isLength' })])
@@ -96,7 +96,7 @@ describe('ValidationPipe toàn cục', () => {
 
   it('tên chỉ có khoảng trắng → sai độ dài (trim trước khi validate)', async () => {
     const issues = await validationError(
-      { email: 'a@b.co', password: 'mat-khau-bi-mat', displayName: '   ' },
+      { email: 'a@b.co', password: 'mat-khau-123', displayName: '   ' },
       RegisterDto,
     )
     expect(issues).toEqual([expect.objectContaining({ path: 'displayName', code: 'isLength' })])
@@ -118,6 +118,19 @@ describe('ValidationPipe toàn cục', () => {
   it('không gửi body với DTO toàn trường tùy chọn: qua, thành DTO rỗng', async () => {
     expect(await pipe.transform(undefined, body(RefreshTokenDto))).toEqual(new RefreshTokenDto())
     expect(await pipe.transform({}, body(RefreshTokenDto))).toBeInstanceOf(RefreshTokenDto)
+  })
+
+  it('mật khẩu mới phải có chữ và số (mã lỗi riêng hasLetter, hasDigit)', async () => {
+    const base = { email: 'a@b.co', displayName: 'Linh' }
+    expect(await validationError({ ...base, password: 'chikhongcoso' }, RegisterDto)).toEqual([
+      expect.objectContaining({ path: 'password', code: 'hasDigit' }),
+    ])
+    expect(await validationError({ ...base, password: '1234567890' }, RegisterDto)).toEqual([
+      expect.objectContaining({ path: 'password', code: 'hasLetter' }),
+    ])
+    expect(
+      await pipe.transform({ ...base, password: 'Mậtkhẩu9' }, body(RegisterDto)),
+    ).toMatchObject({ password: 'Mậtkhẩu9' })
   })
 
   it('đăng nhập không bắt mật khẩu tối thiểu 8 ký tự (user cũ của Supabase)', async () => {

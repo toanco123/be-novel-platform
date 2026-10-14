@@ -23,7 +23,7 @@ import { QUEUES } from './queue.constants'
         },
       }),
     }),
-    BullModule.registerQueue({ name: QUEUES.system }),
+    BullModule.registerQueue({ name: QUEUES.system }, { name: QUEUES.mail }),
   ],
   exports: [BullModule],
 })

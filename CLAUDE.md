@@ -10,6 +10,7 @@ Backend **NestJS 11** cho nền tảng đọc truyện chữ, thay dần Supabas
 - Lộ trình và tiến độ: [documents/lo-trinh.md](documents/lo-trinh.md).
 - **Cách làm:** từng phần nhỏ. Trước mỗi phần viết plan `documents/plan-<số>-<tên>.md` (mục tiêu, công việc, kiểm tra), làm xong thì đánh dấu ✅ ở plan và ở lộ trình.
 - Nghiệp vụ gốc (luật, giới hạn, mã lỗi) lấy từ `../web-novel-platform/documents/thiet-ke-database.md` (mục 3 bảng, 4 luật và mã lỗi, 5 quyền). BE viết lại các luật đó trong code (không RLS, không `auth.uid()`), giữ tên bảng, cột và UUID để sau này chuyển dữ liệu từ Supabase.
+- **Bảng DB lấy từ Supabase** (người dùng yêu cầu 14/10/2026): bảng nào đã có trên Supabase thì lấy đúng định nghĩa (cột, kiểu, check, tên constraint) từ `../web-novel-platform/supabase/migrations/` (migration sau có thể sửa bảng, đọc hết). Bảng chưa có trên Supabase (vd `users`, `refresh_tokens`, `email_tokens` thay schema `auth` của Supabase) thì BE tự thiết kế.
 
 ## Tổ chức code (bắt buộc)
 
@@ -56,7 +57,7 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - `message` tiếng Anh cho dev; client hiển thị tiếng Việt theo `code`.
   - **Ghi log lỗi luôn qua `ErrorLogger.log(error, context?)`** (filter, worker, service): cùng cấu trúc `{ error: { code, status, message, details? }, err, requestId, userId, ...context }`; 5xx mức error, còn lại warn.
 - **Validate và OpenAPI:**
-  - **DTO là class dùng class-validator + class-transformer:** mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger (không dùng plugin CLI của Nest vì build bằng SWC). Khai báo `email: string`, không có `!`.
+  - **DTO là class dùng class-validator + class-transformer:** mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 30)`...) và `@ApiProperty({...})` cho Swagger (không dùng plugin CLI của Nest vì build bằng SWC). Khai báo `email: string`, không có `!`.
   - `AppValidationPipe` toàn cục (`common/validation/validation.pipe.ts`): đổi khóa snake_case của body / query sang camelCase (`common/utils/case-keys.ts`), bỏ trường lạ (`whitelist`), chạy `@Transform` (`Trim()`, `NormalizeEmail()` trong `common/validation/transform.decorator.ts`), **không** đổi kiểu ngầm. Lỗi → 400 `validation_failed`, `details.issues = [{ path, code, message }]` với `code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...).
   - **Đầu ra:** `ResponseInterceptor` toàn cục + `@ResponseDto(Dto)` (`common/response/`): lọc chỉ trường có `@ApiField` (= `@Expose` + `@ApiProperty`, tự thêm `@Type` cho DTO lồng) rồi bọc `{ statusCode, data, meta }`.
   - zod chỉ còn dùng cho biến môi trường (`config/env.schema.ts`).
@@ -77,16 +78,22 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - Worker: `src/worker.ts` (`createWorker()`, `createApplicationContext`, không có HTTP), tắt gọn bằng `enableShutdownHooks`.
   - `/health/ready` kiểm tra DB và Redis.
 - **Auth** (plan `documents/plan-04-auth-co-ban.md`):
-  - **Guard toàn cục** đăng ký ở `AppModule`, theo thứ tự `JwtAuthGuard` → `RolesGuard` → `AppThrottlerGuard`.
+  - **Guard toàn cục** đăng ký ở `AppModule`, theo thứ tự `JwtAuthGuard` → `RolesGuard` → `EmailVerifiedGuard` → `AppThrottlerGuard`.
     - Mặc định mọi route cần access token. `@Public()` cho khách; `@Public({ ignoreToken: true })` bỏ qua cả header Authorization (route của auth).
     - Token sai hoặc hết hạn → 401 `invalid_token`, kể cả ở route `@Public()`.
     - `@Roles('admin')` sai vai trò → 403 `forbidden`.
-  - **Người gọi:** `@CurrentUser() actor: Actor` (`{ id, role, sessionId }`), cũng có trong CLS (`actor`). Log có `userId`.
+    - `@RequireVerifiedEmail()` cho thao tác viết: chưa xác nhận email → 403 `email_not_verified` (đọc claim `ev` của access token, không truy vấn DB).
+    - `@RequireCaptcha()` (`common/captcha`) cho form đăng ký, đăng nhập, quên / đổi mật khẩu, xóa tài khoản: body kế thừa `CaptchaDto` (`captchaToken`); không đặt `TURNSTILE_SECRET` thì tắt.
+  - **Người gọi:** `@CurrentUser() actor: Actor` (`{ id, role, sessionId, emailVerified }`), cũng có trong CLS (`actor`). Log có `userId`.
   - **Access token:** JWT ES256 (`common/auth/token.service.ts`, khóa ở `common/crypto/jwt-keys.ts`), không truy vấn DB mỗi request. Khóa tài khoản thì thu hồi refresh token, người bị khóa mất quyền chậm nhất sau 15 phút.
   - **Refresh token** (`modules/auth`): DB chỉ lưu SHA-256; mỗi phiên là một họ token (`family_id` = `sessionId`), xoay vòng mỗi lần dùng, dùng lại token cũ thì thu hồi cả họ. Web nhận qua cookie `refresh_token`, mobile qua body (`X-Client: mobile`).
   - **Mật khẩu:** `PasswordService` (`common/crypto`): argon2id; hash bcrypt cũ (Supabase) đăng nhập đúng thì băm lại. Token bí mật gửi cho client (refresh token, sau này link email) sinh bằng `randomToken()`, DB lưu `hashToken()` (`common/crypto/secure-token.ts`).
-  - **Dữ liệu tài khoản:** `UsersRepository` (`modules/users`) là nơi duy nhất truy vấn `users`, `profiles`.
-- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17 và Redis bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
+  - **Dữ liệu tài khoản:** `UsersRepository` (`modules/users`) là nơi duy nhất truy vấn `users`, `profiles`. Kiểm tra mật khẩu hiện tại trước thao tác nhạy cảm (đổi mật khẩu, xóa tài khoản) qua `PasswordConfirmationService` (sai 5 lần / 15 phút → `rate_limited`).
+- **Email** (plan `documents/plan-05-email.md`):
+  - API dựng thư (template ở `modules/auth/templates/`, khung chung `mail-layout.template.ts`, chữ người dùng nhập luôn qua `escapeHtml`) rồi đẩy vào hàng đợi `mail` bằng `MailQueueService` (`infra/mail`). Worker gửi qua SMTP (`MailerService`, `MailProcessor`), lỗi thì thử lại và ghi `ErrorLogger`.
+  - Link trong thư: `EmailTokenService` (`createLink` / `consume`), bảng `email_tokens` lưu SHA-256, dùng một lần; link sai, hết hạn, đã dùng → 400 `invalid_link`.
+  - Dev xem thư ở Mailpit (http://localhost:8025); test e2e đọc thư qua API của Mailpit (`test/helpers/mailpit.ts`, cần chạy `createWorker()` trong file test).
+- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17, Redis và Mailpit bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
   - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).

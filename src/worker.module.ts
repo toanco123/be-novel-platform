@@ -5,12 +5,14 @@ import { ContextModule } from './common/context/context.module'
 import { ErrorsModule } from './common/errors/errors.module'
 import { AppConfigModule } from './config/app-config.module'
 import { DatabaseModule } from './infra/database/database.module'
+import { MailProcessor } from './infra/mail/mail.processor'
+import { MailerService } from './infra/mail/services/mailer.service'
 import { QueueModule } from './infra/queue/queue.module'
 import { SystemProcessor } from './infra/queue/system.processor'
 import { RedisModule } from './infra/redis/redis.module'
 
 @Module({
   imports: [AppConfigModule, ContextModule, ErrorsModule, DatabaseModule, RedisModule, QueueModule],
-  providers: [SystemProcessor],
+  providers: [SystemProcessor, MailerService, MailProcessor],
 })
 export class WorkerModule {}

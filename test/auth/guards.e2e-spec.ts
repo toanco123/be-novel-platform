@@ -8,6 +8,7 @@ import { AppModule } from '@/app.module'
 import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
 import { Public } from '@/common/auth/decorators/public.decorator'
+import { RequireVerifiedEmail } from '@/common/auth/decorators/require-verified-email.decorator'
 import { Roles } from '@/common/auth/decorators/roles.decorator'
 import { TokenService } from '@/common/auth/token.service'
 import { DB } from '@/infra/database/database.constants'
@@ -32,6 +33,12 @@ class TestAuthController {
   @Get('admin')
   @Roles('admin')
   admin() {
+    return { ok: true }
+  }
+
+  @Get('verified')
+  @RequireVerifiedEmail()
+  verifiedOnly() {
     return { ok: true }
   }
 
@@ -75,7 +82,12 @@ it('route mặc định: không có token → 401 unauthenticated', async () => 
 it('token đúng → gắn người gọi { id, role, sessionId }', async () => {
   const user = await registerUser(app)
   const res = await http().get('/v1/test-auth/private').set(bearer(user.accessToken)).expect(200)
-  expect(res.body.actor).toEqual({ id: user.id, role: 'user', sessionId: expect.any(String) })
+  expect(res.body.actor).toEqual({
+    id: user.id,
+    role: 'user',
+    sessionId: expect.any(String),
+    emailVerified: false,
+  })
 })
 
 it('token rác, sai scheme, hết hạn → 401 invalid_token', async () => {
@@ -90,7 +102,7 @@ it('token rác, sai scheme, hết hạn → 401 invalid_token', async () => {
   vi.setSystemTime(Date.now() - 3_600_000)
   const expired = await app
     .get(TokenService)
-    .signAccessToken({ id: user.id, role: 'user', sessionId: 'old' })
+    .signAccessToken({ id: user.id, role: 'user', sessionId: 'old', emailVerified: false })
   vi.useRealTimers()
   const res = await http().get('/v1/test-auth/private').set(bearer(expired)).expect(401)
   expect(res.body.error.code).toBe('invalid_token')
@@ -131,6 +143,25 @@ it('throttler đếm theo người dùng (đổi IP không qua được), ngư�
   await hit(a.accessToken, uniqueIp()).expect(200)
   expect((await hit(a.accessToken, uniqueIp()).expect(429)).body.error.code).toBe('rate_limited')
   await hit(b.accessToken, ip).expect(200)
+})
+
+it('@RequireVerifiedEmail: chưa xác nhận → 403 email_not_verified; xác nhận rồi refresh → 200', async () => {
+  const user = await registerUser(app)
+  const res = await http().get('/v1/test-auth/verified').set(bearer(user.accessToken)).expect(403)
+  expect(res.body.error.code).toBe('email_not_verified')
+
+  await db.update(users).set({ emailVerifiedAt: new Date() }).where(eq(users.id, user.id))
+  // Token cũ chưa có ev = true; refresh để nhận token mới
+  await http().get('/v1/test-auth/verified').set(bearer(user.accessToken)).expect(403)
+  const refreshed = await http()
+    .post('/v1/auth/refresh')
+    .set('X-Client', 'mobile')
+    .send({ refreshToken: user.refreshToken })
+    .expect(200)
+  await http()
+    .get('/v1/test-auth/verified')
+    .set(bearer(refreshed.body.data.accessToken))
+    .expect(200)
 })
 
 it('health check không cần đăng nhập', async () => {

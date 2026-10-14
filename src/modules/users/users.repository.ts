@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
 import { profiles, users } from '@/infra/database/schema'
@@ -21,21 +21,12 @@ export class UsersRepository {
   }
 
   async findWithProfile(id: string, ex: Executor = this.db): Promise<UserWithProfile | null> {
-    const [row] = await ex
-      .select({
-        id: users.id,
-        email: users.email,
-        role: users.role,
-        emailVerifiedAt: users.emailVerifiedAt,
-        bannedUntil: users.bannedUntil,
-        createdAt: users.createdAt,
-        displayName: profiles.displayName,
-        avatarUrl: profiles.avatarUrl,
-      })
-      .from(users)
-      .innerJoin(profiles, eq(profiles.id, users.id))
-      .where(eq(users.id, id))
-      .limit(1)
+    const [row] = await this.selectWithProfile(ex).where(eq(users.id, id)).limit(1)
+    return row ?? null
+  }
+
+  async findWithProfileByEmail(email: string, ex: Executor = this.db) {
+    const [row] = await this.selectWithProfile(ex).where(eq(users.email, email)).limit(1)
     return row ?? null
   }
 
@@ -59,5 +50,33 @@ export class UsersRepository {
 
   async updateDisplayName(id: string, displayName: string, ex: Executor = this.db) {
     await ex.update(profiles).set({ displayName }).where(eq(profiles.id, id))
+  }
+
+  async markEmailVerified(id: string, ex: Executor = this.db) {
+    await ex
+      .update(users)
+      .set({ emailVerifiedAt: new Date() })
+      .where(and(eq(users.id, id), isNull(users.emailVerifiedAt)))
+  }
+
+  /** Xóa tài khoản; hồ sơ, refresh token, link email xóa theo (cascade) */
+  async delete(id: string, ex: Executor = this.db) {
+    await ex.delete(users).where(eq(users.id, id))
+  }
+
+  private selectWithProfile(ex: Executor) {
+    return ex
+      .select({
+        id: users.id,
+        email: users.email,
+        role: users.role,
+        emailVerifiedAt: users.emailVerifiedAt,
+        bannedUntil: users.bannedUntil,
+        createdAt: users.createdAt,
+        displayName: profiles.displayName,
+        avatarUrl: profiles.avatarUrl,
+      })
+      .from(users)
+      .innerJoin(profiles, eq(profiles.id, users.id))
   }
 }

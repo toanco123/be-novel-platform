@@ -140,7 +140,7 @@ describe('refresh (web, cookie)', () => {
       .set('X-Forwarded-For', uniqueIp())
       .send({
         email: `web-${Date.now()}@example.test`,
-        password: 'mat-khau-bi-mat',
+        password: 'mat-khau-123',
         displayName: 'Web',
       })
       .expect(201)

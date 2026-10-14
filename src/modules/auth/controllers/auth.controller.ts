@@ -4,19 +4,24 @@ import type { Request, Response } from 'express'
 import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
 import { Public } from '@/common/auth/decorators/public.decorator'
+import {
+  clearRefreshCookie,
+  readRefreshToken,
+  setRefreshCookie,
+} from '@/common/auth/refresh-cookie'
+import { RequireCaptcha } from '@/common/captcha/require-captcha.decorator'
 import { AppException } from '@/common/errors/app.exception'
 import { clientMeta, isMobileClient } from '@/common/http/request-client'
 import { ResponseDto } from '@/common/response/response-dto.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
 import { AppConfig } from '@/config/app-config.service'
-import { ApiClientHeader, ApiRefreshTokenBody, ApiSessionOperation } from './auth-api.decorator'
-import type { AuthResult } from './auth.types'
-import { AuthSessionDto } from './dto/auth-session.dto'
-import { LoginDto } from './dto/login.dto'
-import { RefreshTokenDto } from './dto/refresh-token.dto'
-import { RegisterDto } from './dto/register.dto'
-import { clearRefreshCookie, readRefreshToken, setRefreshCookie } from './refresh-cookie'
-import { AuthService } from './services/auth.service'
+import { ApiClientHeader, ApiRefreshTokenBody, ApiSessionOperation } from '../auth-api.decorator'
+import type { AuthResult } from '../auth.types'
+import { AuthSessionDto } from '../dto/auth-session.dto'
+import { LoginDto } from '../dto/login.dto'
+import { RefreshTokenDto } from '../dto/refresh-token.dto'
+import { RegisterDto } from '../dto/register.dto'
+import { AuthService } from '../services/auth.service'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -28,6 +33,7 @@ export class AuthController {
 
   @Post('register')
   @Public({ ignoreToken: true })
+  @RequireCaptcha()
   @ApiSessionOperation('Đăng ký bằng email + mật khẩu')
   @ApiClientHeader()
   @ResponseDto(AuthSessionDto, { status: 201 })
@@ -43,6 +49,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(200)
   @Public({ ignoreToken: true })
+  @RequireCaptcha()
   @ApiSessionOperation('Đăng nhập')
   @ApiClientHeader()
   @ResponseDto(AuthSessionDto)

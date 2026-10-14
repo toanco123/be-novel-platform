@@ -14,3 +14,9 @@ export type NewUserWithProfile = {
   passwordHash: string | null
   displayName: string
 }
+
+/** Tài khoản cần kiểm tra mật khẩu hiện tại */
+export type PasswordOwner = Pick<UserRow, 'id' | 'passwordHash'>
+
+/** Xác nhận xóa tài khoản: có mật khẩu thì nhập mật khẩu, không có thì gõ lại email */
+export type DeleteAccountInput = { password?: string; confirmEmail?: string }

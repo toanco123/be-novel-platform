@@ -15,6 +15,7 @@ import { LOGIN_FAILED_EMAIL_LIMIT, LOGIN_FAILED_IP_LIMIT, REGISTER_LIMIT } from 
 import type { AuthResult, IssuedSession } from '../auth.types'
 import type { LoginDto } from '../dto/login.dto'
 import type { RegisterDto } from '../dto/register.dto'
+import { EmailVerificationService } from './email-verification.service'
 import { SessionService } from './session.service'
 
 @Injectable()
@@ -26,18 +27,27 @@ export class AuthService {
     private readonly sessions: SessionService,
     private readonly tokens: TokenService,
     private readonly rateLimit: RateLimitService,
+    private readonly emailVerification: EmailVerificationService,
   ) {}
 
-  /** Tạo tài khoản + hồ sơ và đăng nhập luôn. Email trùng (không phân biệt hoa thường) → email_taken */
+  /**
+   * Tạo tài khoản + hồ sơ, đăng nhập luôn và gửi thư xác nhận email. Email trùng (không phân biệt hoa
+   * thường) → email_taken
+   */
   async register(input: RegisterDto, meta: ClientMeta): Promise<AuthResult> {
     await this.rateLimit.consume(`auth:register:ip:${meta.ip ?? 'unknown'}`, REGISTER_LIMIT)
     const passwordHash = await this.passwords.hash(input.password)
-    const session = await this.db.transaction(async (tx) => {
-      const user = await this.users.createWithProfile(
+    const { user, session } = await this.db.transaction(async (tx) => {
+      const created = await this.users.createWithProfile(
         { email: input.email, passwordHash, displayName: input.displayName },
         tx,
       )
-      return this.sessions.create(user.id, meta, tx)
+      return { user: created, session: await this.sessions.create(created.id, meta, tx) }
+    })
+    await this.emailVerification.sendAfterRegister({
+      id: user.id,
+      email: user.email,
+      displayName: input.displayName,
     })
     return this.issue(session)
   }
@@ -112,6 +122,7 @@ export class AuthService {
       id: user.id,
       role: user.role,
       sessionId: session.sessionId,
+      emailVerified: user.emailVerifiedAt !== null,
     })
     return {
       user: toMe(user),

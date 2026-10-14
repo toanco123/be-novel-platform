@@ -24,6 +24,9 @@ test('mặc định hợp lý khi chỉ đặt biến bắt buộc', () => {
     JWT_AUDIENCE: 'novel-clients',
     ACCESS_TOKEN_TTL_SECONDS: 900,
     REFRESH_TOKEN_TTL_DAYS: 30,
+    SMTP_URL: 'smtp://localhost:1025',
+    MAIL_FROM: 'Web Truyện <no-reply@novel.local>',
+    APP_WEB_URL: 'http://localhost:3000',
   })
 })
 
@@ -56,19 +59,29 @@ test('biến sai thì dừng và báo rõ biến nào', () => {
   )
 })
 
-test('production thiếu khóa JWT thì dừng; có đủ thì qua', () => {
-  expect(() => validateEnv({ DATABASE_URL, REDIS_URL, NODE_ENV: 'production' })).toThrow(
-    /JWT_PRIVATE_KEY/,
+test('production thiếu khóa JWT, SMTP, link web thì dừng; có đủ thì qua', () => {
+  const production = {
+    DATABASE_URL,
+    REDIS_URL,
+    NODE_ENV: 'production',
+    JWT_PRIVATE_KEY: 'pem',
+    JWT_PUBLIC_KEY: 'pem',
+    SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
+    APP_WEB_URL: 'https://novel.example.com',
+  }
+  expect(validateEnv(production).NODE_ENV).toBe('production')
+  const { JWT_PRIVATE_KEY: _key, ...noJwt } = production
+  expect(() => validateEnv(noJwt)).toThrow(/JWT_PRIVATE_KEY/)
+  // Để mặc định của dev (localhost) thì dừng
+  const { SMTP_URL: _smtp, APP_WEB_URL: _web, ...devDefaults } = production
+  expect(() => validateEnv(devDefaults)).toThrow(/SMTP_URL[\s\S]*APP_WEB_URL/)
+})
+
+test('SMTP_URL, APP_WEB_URL sai dạng thì dừng', () => {
+  expect(() => validateEnv({ DATABASE_URL, REDIS_URL, SMTP_URL: 'http://x' })).toThrow(/SMTP_URL/)
+  expect(() => validateEnv({ DATABASE_URL, REDIS_URL, APP_WEB_URL: 'khong-phai-url' })).toThrow(
+    /APP_WEB_URL/,
   )
-  expect(
-    validateEnv({
-      DATABASE_URL,
-      REDIS_URL,
-      NODE_ENV: 'production',
-      JWT_PRIVATE_KEY: 'pem',
-      JWT_PUBLIC_KEY: 'pem',
-    }).NODE_ENV,
-  ).toBe('production')
 })
 
 test('biến để trống trong .env coi như không đặt', () => {

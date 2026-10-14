@@ -5,5 +5,8 @@ declare module 'vitest' {
   export interface ProvidedContext {
     databaseUrl: string
     redisUrl: string
+    smtpUrl: string
+    /** API của Mailpit (đọc thư app gửi) */
+    mailpitUrl: string
   }
 }
