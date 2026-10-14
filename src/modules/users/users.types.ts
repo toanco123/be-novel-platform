@@ -13,6 +13,10 @@ export type NewUserWithProfile = {
   /** null: tài khoản chỉ đăng nhập bằng OAuth */
   passwordHash: string | null
   displayName: string
+  /** Ảnh của provider (tài khoản tạo từ mạng xã hội) */
+  avatarUrl?: string | null
+  /** Provider đã xác minh email */
+  emailVerified?: boolean
 }
 
 /** Tài khoản cần kiểm tra mật khẩu hiện tại */

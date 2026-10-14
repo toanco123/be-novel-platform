@@ -152,6 +152,7 @@ Không viết lẫn nhiều việc trong một file. Tên file nói rõ file đ�
 | `*.guard.ts`, `*.pipe.ts`, `*.filter.ts`, `*.middleware.ts` | Một guard / pipe / filter / middleware                                         |
 | `*.health.ts`, `*.lifecycle.ts`, `*.processor.ts`           | Health indicator, đóng kết nối khi tắt app, xử lý job                          |
 | `*.options.ts`, `*.script.ts`                               | Cấu hình truyền cho thư viện (vd log), script (vd Lua của Redis)               |
+| `*.client.ts`                                               | Gọi API bên ngoài (vd Google, Facebook, Apple)                                 |
 | Không hậu tố (`refresh-cookie.ts`...)                       | Một nhóm hàm nhỏ cùng một việc, tên file là việc đó                            |
 
 - Mỗi file một class (service, controller, guard, DTO...).
@@ -302,8 +303,28 @@ Trước khi push nên chạy ở máy: `npm run lint && npm run typecheck && np
 | `POST /v1/auth/reset-password`                                       | `{ token, password }` → đăng xuất mọi thiết bị                                                 |
 | `POST /v1/auth/change-password`                                      | `{ currentPassword, newPassword }` → đăng xuất các thiết bị khác                               |
 | `GET` / `PATCH` / `DELETE /v1/me`                                    | Hồ sơ, sửa tên, xóa tài khoản (`password` hoặc `confirmEmail` với tài khoản không có mật khẩu) |
+| `GET /v1/auth/oauth/providers`                                       | Provider mạng xã hội đang bật                                                                  |
+| `GET /v1/auth/oauth/:provider/authorize`                             | Google / Facebook: chuyển trang đăng nhập (web và app), `?redirect_to=&code_challenge=`        |
+| `POST /v1/auth/oauth/exchange`                                       | `{ code, codeVerifier }` sau khi quay về `redirect_to?code=`                                   |
+| `POST /v1/auth/oauth/apple/token`                                    | Apple (app): `{ idToken, nonce, displayName? }`                                                |
 
 Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05-email.md](documents/plan-05-email.md).
+
+## Đăng nhập mạng xã hội
+
+- **Google, Facebook** (web và app): luồng chuyển trang có PKCE như Supabase.
+  1. Client tạo `codeVerifier` bí mật, mở `/v1/auth/oauth/:provider/authorize?redirect_to=…&code_challenge=…`.
+  2. Đăng nhập xong, provider quay về BE. BE chuyển về `redirect_to?code=…` (mã dùng một lần, 60 giây) hoặc `?error=<mã lỗi>`.
+  3. Client gọi `POST /v1/auth/oauth/exchange { code, codeVerifier }` để nhận phiên.
+  - `redirect_to` phải là `APP_WEB_URL` hoặc tiền tố trong `OAUTH_REDIRECT_URLS` (vd deep link `webtruyen://`).
+- **Apple** (app iOS): gửi id token và nonce tới `/v1/auth/oauth/apple/token`.
+- **Tài khoản:**
+  - Cùng người ở provider → cùng tài khoản.
+  - Email provider đã xác minh trùng tài khoản email → liên kết. Tài khoản đó chưa xác nhận email thì bỏ mật khẩu cũ, thu hồi phiên cũ.
+  - Chưa có → tạo tài khoản không mật khẩu (tên, ảnh lấy giống trigger của Supabase).
+- **Cấu hình:**
+  - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`, `APPLE_CLIENT_IDS`. Thiếu thì provider đó tắt (`provider_disabled`).
+  - Ở Google / Facebook khai báo redirect URI `<API_PUBLIC_URL>/v1/auth/oauth/<provider>/callback`.
 
 ## Email
 

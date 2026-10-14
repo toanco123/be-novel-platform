@@ -110,6 +110,15 @@ export class AuthService {
     return this.sessions.revokeAllForUser(userId)
   }
 
+  /** Mở phiên cho người dùng đã xác định danh tính (đăng nhập mạng xã hội); bị khóa → account_banned */
+  async signIn(userId: string, meta: ClientMeta): Promise<AuthResult> {
+    const session = await this.db.transaction(async (tx) => {
+      await this.users.markSignedIn(userId, tx)
+      return this.sessions.create(userId, meta, tx)
+    })
+    return this.issue(session)
+  }
+
   /** Ký access token cho phiên (vai trò lấy mới từ DB) */
   private async issue(session: IssuedSession): Promise<AuthResult> {
     const user = await this.users.findWithProfile(session.userId)

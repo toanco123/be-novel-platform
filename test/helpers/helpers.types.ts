@@ -16,3 +16,6 @@ export type ReceivedMail = { subject: string; text: string; html: string }
 
 /** Kết quả tìm thư của API Mailpit (phần test cần) */
 export type MailpitSearch = { messages: { ID: string; Created: string }[] }
+
+/** Thay một provider của app bằng bản giả khi dựng app test */
+export type ProviderOverride = { provide: unknown; useValue: unknown }

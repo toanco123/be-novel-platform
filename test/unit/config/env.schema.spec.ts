@@ -27,6 +27,9 @@ test('mặc định hợp lý khi chỉ đặt biến bắt buộc', () => {
     SMTP_URL: 'smtp://localhost:1025',
     MAIL_FROM: 'Web Truyện <no-reply@novel.local>',
     APP_WEB_URL: 'http://localhost:3000',
+    API_PUBLIC_URL: 'http://localhost:4000',
+    OAUTH_REDIRECT_URLS: [],
+    APPLE_CLIENT_IDS: [],
   })
 })
 
@@ -68,6 +71,7 @@ test('production thiếu khóa JWT, SMTP, link web thì dừng; có đủ thì q
     JWT_PUBLIC_KEY: 'pem',
     SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
     APP_WEB_URL: 'https://novel.example.com',
+    API_PUBLIC_URL: 'https://api.novel.example.com',
   }
   expect(validateEnv(production).NODE_ENV).toBe('production')
   const { JWT_PRIVATE_KEY: _key, ...noJwt } = production
