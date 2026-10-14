@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common'
 import type { StoryDto } from '../dto/story.dto'
 import { CURATED_FALLBACK } from '../stories.constants'
 import { StoriesMapper } from '../stories.mapper'
-import { StoriesRepository } from '../stories.repository'
+import { StoriesRepository } from '../repositories/stories.repository'
 import type { CuratedList } from '../stories.types'
 
 @Injectable()

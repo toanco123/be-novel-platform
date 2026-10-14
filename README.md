@@ -95,7 +95,7 @@ src/
     auth/                 #   đăng ký, đăng nhập, refresh token, đăng xuất
     users/                #   /v1/me, dữ liệu tài khoản
     genres/               #   thể loại (module mẫu cho các module sau)
-    stories/              #   truyện cho người đọc: chi tiết, danh sách có lọc, truyện chọn tay (tìm kiếm, xếp hạng ở phần sau)
+    stories/              #   truyện cho người đọc: chi tiết, danh sách có lọc, truyện chọn tay, tìm kiếm, xếp hạng, liên quan
     chapters/             #   chương cho người đọc: mục lục, đọc chương, tải nhiều chương, ghi lượt đọc
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
@@ -326,15 +326,15 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 `src/modules/genres` làm đủ mọi lớp; module mới làm theo khuôn này. Bảng `genres` lấy đúng từ Supabase.
 
-| Endpoint               | Việc                                                                                                                                                                   |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /v1/genres`       | Danh sách (công khai, phân trang): thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo. Mỗi thể loại có `storyCount` (số truyện công khai có chương) |
-| `GET /v1/genres/:slug` | Một thể loại                                                                                                                                                           |
-| `POST /v1/genres`      | Tạo (đã xác nhận email): trùng tên → 409 `genre_exists` kèm thể loại đang có; tối đa 10 / ngày (quản trị viên không giới hạn)                                          |
+| Endpoint               | Việc                                                                                                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /v1/genres`       | Danh sách (công khai, phân trang): thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo. Mỗi thể loại có `storyCount` (số truyện công khai có chương). `?q=`: tìm theo tên, không dấu |
+| `GET /v1/genres/:slug` | Một thể loại                                                                                                                                                                                           |
+| `POST /v1/genres`      | Tạo (đã xác nhận email): trùng tên → 409 `genre_exists` kèm thể loại đang có; tối đa 10 / ngày (quản trị viên không giới hạn)                                                                          |
 
 ## Truyện, chương (đọc công khai)
 
-Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md), [plan-10-chuong-nguoi-doc.md](documents/plan-10-chuong-nguoi-doc.md), [plan-11-danh-sach-truyen.md](documents/plan-11-danh-sach-truyen.md)).
+Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md), [plan-10-chuong-nguoi-doc.md](documents/plan-10-chuong-nguoi-doc.md), [plan-11-danh-sach-truyen.md](documents/plan-11-danh-sach-truyen.md), [plan-12-tim-kiem-xep-hang.md](documents/plan-12-tim-kiem-xep-hang.md)).
 
 - **Bảng lấy đúng từ Supabase:** `stories`, `story_genres`, `chapters`, `story_stats`, `chapter_views`, `curated_stories` (cột, check, tên constraint, index).
   - Khác: bỏ `default auth.uid()`; extension `unaccent`, `pg_trgm` ở schema `public`.
@@ -350,6 +350,9 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 | `GET /v1/stories`                                      | Danh sách truyện công khai có chương (phân trang, `Cache-Control: public, max-age=60`): lọc `status`, `genre`, `length` (`short` < 50, `medium` 50–200, `long` > 200 chương), `author` (`author.slug`); `sort=updated\|views\|rating\|newest` |
 | `GET /v1/curated-stories?list=featured\|editor_pick`   | Truyện chọn tay cho trang chủ; chưa chọn thì tự chọn (4 truyện đọc nhiều nhất / 8 truyện điểm cao nhất)                                                                                                                                       |
 | `GET /v1/stories/:slug`                                | Chi tiết truyện: tác giả (bút danh), thể loại theo thứ tự, URL bìa, số liệu, chương mới nhất, chương hẹn giờ                                                                                                                                  |
+| `GET /v1/stories/:slug/related?limit=`                 | Truyện liên quan: nhiều thể loại trùng nhất, rồi đọc nhiều; bỏ truyện cùng chủ                                                                                                                                                                |
+| `GET /v1/search?q=`                                    | Tìm theo tên truyện / tác giả, không dấu (điểm như `search_stories` của Supabase), phân trang                                                                                                                                                 |
+| `GET /v1/ranking?by=&period=&limit=`                   | Bảng xếp hạng: `views` (7 / 30 ngày giờ Việt Nam hoặc tất cả), `rating` (điểm có trọng số), `follows`                                                                                                                                         |
 | `GET /v1/stories/:slug/chapters`                       | Mục lục (phân trang): `order=asc\|desc`, `from` (chỉ chương có số ≥ `from`; `meta.total` là số chương từ đó)                                                                                                                                  |
 | `GET /v1/stories/:slug/chapters/:number`               | Một chương: nội dung, thông tin truyện, chương trước / sau                                                                                                                                                                                    |
 | `GET /v1/stories/:slug/chapters/contents?from=&count=` | Tối đa 20 chương liên tiếp từ `from` (tải trước, đọc offline)                                                                                                                                                                                 |

@@ -69,3 +69,12 @@ export type StoryListFilter = {
   author?: AuthorRef
   sort: StorySort
 }
+
+/** Tiêu chí bảng xếp hạng (phiếu đề cử thêm ở đợt Phần thưởng) */
+export type RankingCriterion = 'views' | 'rating' | 'follows'
+
+/** Kỳ xếp hạng; chỉ có tác dụng với lượt đọc */
+export type RankingPeriod = 'week' | 'month' | 'all'
+
+/** Một dòng bảng xếp hạng: truyện và giá trị theo tiêu chí */
+export type RankedStoryRow = { storyId: string; value: number }

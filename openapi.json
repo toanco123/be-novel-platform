@@ -2183,7 +2183,7 @@
     },
     "/v1/genres": {
       "get": {
-        "description": "Thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo.",
+        "description": "Thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo. `q`: tìm theo tên (không dấu).",
         "operationId": "GenresController_list_v1",
         "parameters": [
           {
@@ -2205,6 +2205,17 @@
               "maximum": 100,
               "default": 20,
               "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ thể loại có slug chứa slugify(q) (không phân biệt dấu). Chỉ có ký tự đặc biệt → trang rỗng",
+            "schema": {
+              "maxLength": 100,
+              "example": "ngon tinh",
+              "type": "string"
             }
           }
         ],
@@ -2841,6 +2852,153 @@
         ]
       }
     },
+    "/v1/stories/{slug}/related": {
+      "get": {
+        "description": "Truyện công khai nhiều thể loại trùng nhất, rồi nhiều lượt đọc nhất; bỏ truyện cùng chủ truyện. Truyện gốc không xem được → 404.",
+        "operationId": "StoriesController_related_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 6,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Truyện liên quan",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
     "/v1/curated-stories": {
       "get": {
         "description": "Theo thứ tự quản trị viên chọn, chỉ truyện công khai có chương. Chưa chọn thì tự chọn: featured là 4 truyện nhiều lượt đọc nhất, editor_pick là 8 truyện điểm cao nhất.",
@@ -2952,6 +3110,285 @@
           }
         },
         "summary": "Truyện chọn tay cho trang chủ",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
+    "/v1/search": {
+      "get": {
+        "description": "Theo tên truyện hoặc tác giả, không phân biệt dấu. Điểm: tên bắt đầu bằng từ khóa > tên chứa từ khóa > tên chứa đủ các từ > tên tác giả chứa từ khóa; cùng điểm thì đọc nhiều trước. Gợi ý nhanh: `pageSize=5`.",
+        "operationId": "SearchController_list_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "Không phân biệt dấu, hoa thường. Chỉ có ký tự đặc biệt → trang rỗng",
+            "schema": {
+              "maxLength": 100,
+              "example": "dau pha",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Tìm truyện",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
+    "/v1/ranking": {
+      "get": {
+        "description": "Truyện công khai có chương. views: lượt đọc 7 / 30 ngày gần nhất (giờ Việt Nam) hoặc tổng; rating: điểm có trọng số (value là điểm trung bình thật); follows: người theo dõi. Chỉ truyện có số liệu > 0.",
+        "operationId": "RankingController_list_v1",
+        "parameters": [
+          {
+            "name": "by",
+            "required": false,
+            "in": "query",
+            "description": "views: lượt đọc; rating: điểm (có trọng số); follows: người theo dõi",
+            "schema": {
+              "default": "views",
+              "type": "string",
+              "enum": [
+                "views",
+                "rating",
+                "follows"
+              ]
+            }
+          },
+          {
+            "name": "period",
+            "required": false,
+            "in": "query",
+            "description": "Chỉ áp dụng cho lượt đọc: 7 / 30 ngày gần nhất (giờ Việt Nam) hoặc tất cả",
+            "schema": {
+              "default": "week",
+              "type": "string",
+              "enum": [
+                "week",
+                "month",
+                "all"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RankedStoryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Bảng xếp hạng",
         "tags": [
           "stories"
         ]
@@ -3595,7 +4032,7 @@
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.24",
+    "version": "0.0.25",
     "contact": {}
   },
   "tags": [
@@ -4518,6 +4955,23 @@
           "updatedAt",
           "followerCount",
           "ratingCounts"
+        ]
+      },
+      "RankedStoryDto": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "example": 1520,
+            "description": "Lượt đọc trong kỳ / điểm trung bình thật / số người theo dõi, theo tiêu chí"
+          },
+          "story": {
+            "$ref": "#/components/schemas/StoryDto"
+          }
+        },
+        "required": [
+          "value",
+          "story"
         ]
       },
       "ChapterSummaryDto": {

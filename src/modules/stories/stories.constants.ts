@@ -1,4 +1,10 @@
-import type { CuratedList, StoryLength, StorySort } from './stories.types'
+import type {
+  CuratedList,
+  RankingCriterion,
+  RankingPeriod,
+  StoryLength,
+  StorySort,
+} from './stories.types'
 
 /** Thư mục ảnh bìa trong bucket (stories.cover_path là đường dẫn bên trong, như Supabase Storage) */
 export const COVERS_PREFIX = 'covers'
@@ -32,3 +38,24 @@ export const CURATED_FALLBACK: Record<CuratedList, { sort: StorySort; limit: num
   // Điểm cao nhất, nhiều lượt chấm, rồi mới đăng
   editor_pick: { sort: 'rating', limit: 8 },
 }
+
+/** Từ khóa tìm kiếm tối đa 100 ký tự */
+export const MAX_SEARCH_QUERY = 100
+
+export const RANKING_CRITERIA = ['views', 'rating', 'follows'] as const satisfies RankingCriterion[]
+export const RANKING_PERIODS = ['week', 'month', 'all'] as const satisfies RankingPeriod[]
+
+/** Số ngày của kỳ xếp hạng theo lượt đọc (giờ Việt Nam, tính cả hôm nay) */
+export const RANKING_PERIOD_DAYS = { week: 7, month: 30 } as const
+
+/**
+ * Xếp theo điểm có trọng số: thêm 50 lượt chấm "ảo" bằng điểm trung bình chung, để truyện ít lượt chấm
+ * không vượt truyện nhiều lượt (như story_ranking của Supabase)
+ */
+export const RATING_PRIOR = 50
+
+export const DEFAULT_RANKING_LIMIT = 50
+export const MAX_RANKING_LIMIT = 100
+
+export const DEFAULT_RELATED_LIMIT = 6
+export const MAX_RELATED_LIMIT = 50

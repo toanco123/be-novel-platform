@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { and, asc, between, count, desc, eq, gt, lt, type SQL, sql } from 'drizzle-orm'
+import { and, asc, between, count, desc, eq, gt, inArray, lt, type SQL, sql } from 'drizzle-orm'
 import type { PageWindow } from '@/common/pagination/pagination.types'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
@@ -11,12 +11,12 @@ import {
   storyGenres,
   storyStats,
 } from '@/infra/database/schema'
-import { isPublicStory } from './public-story'
+import { isPublicStory } from '../public-story'
 import {
   CARD_DESCRIPTION_LENGTH,
   LONG_STORY_MIN_CHAPTERS,
   SHORT_STORY_MAX_CHAPTERS,
-} from './stories.constants'
+} from '../stories.constants'
 import type {
   AuthorRef,
   CuratedList,
@@ -26,7 +26,7 @@ import type {
   StoryListFilter,
   StoryLength,
   StorySort,
-} from './stories.types'
+} from '../stories.types'
 
 /** createdAt của thẻ truyện: lần đầu công khai, chưa công khai thì lúc tạo (như story_cards) */
 const cardCreatedAt = sql<Date>`coalesce(${stories.publishedAt}, ${stories.createdAt})`
@@ -62,6 +62,23 @@ const sameAuthor = ({ ownerId, authorKey }: AuthorRef) =>
 
 const hasGenre = (slug: string) =>
   sql`exists (select 1 from ${storyGenres} where ${storyGenres.storyId} = ${stories.id} and ${storyGenres.genreSlug} = ${slug})`
+
+/**
+ * Điểm khớp từ khóa `q` (đã slugify) như search_stories của Supabase, so không dấu trên search_title:
+ * 4 tên bắt đầu bằng từ khóa, 3 tên chứa từ khóa, 2 tên chứa đủ các từ, 1 tên tác giả hiển thị chứa từ
+ * khóa, 0 không khớp. `q` chỉ có [a-z0-9-] nên không có ký tự đặc biệt của LIKE. Câu truy vấn phải
+ * join profiles.
+ */
+const searchScore = (q: string) => sql<number>`case
+  when ${stories.searchTitle} like ${q} || '%' then 4
+  when strpos(${stories.searchTitle}, ${q}) > 0 then 3
+  when (
+    select bool_and(strpos(${stories.searchTitle}, w) > 0)
+    from unnest(string_to_array(${q}, '-')) as w
+  ) then 2
+  when strpos(slugify(coalesce(${stories.authorName}, ${profiles.displayName})), ${q}) > 0 then 1
+  else 0
+end`
 
 /** Nơi duy nhất truy vấn stories, story_stats, story_genres cho người đọc (module khác dùng qua export) */
 @Injectable()
@@ -110,6 +127,36 @@ export class StoriesRepository {
       .from(stories)
       .innerJoin(storyStats, eq(storyStats.storyId, stories.id))
       .where(this.listWhere(filter))
+    return row!.total
+  }
+
+  /** Thẻ truyện theo id, giữ đúng thứ tự `ids` (truyện không còn thì bỏ qua) */
+  async cardsByIds(ids: string[], ex: Executor = this.db): Promise<StoryCardRow[]> {
+    if (!ids.length) return []
+    const rows = await this.selectCards(ex, { fullDescription: false }).where(
+      inArray(stories.id, ids),
+    )
+    const byId = new Map(rows.map((row) => [row.id, row]))
+    return ids.flatMap((id) => byId.get(id) ?? [])
+  }
+
+  /** Một trang kết quả tìm `q` (đã slugify, khác rỗng): điểm cao trước, rồi đọc nhiều */
+  async search(q: string, { offset, limit }: PageWindow, ex: Executor = this.db) {
+    const score = searchScore(q)
+    return this.selectCards(ex, { fullDescription: false })
+      .where(and(isPublicStory(), sql`${score} > 0`))
+      .orderBy(desc(score), desc(storyStats.viewCount), asc(stories.id))
+      .limit(limit)
+      .offset(offset)
+  }
+
+  async searchCount(q: string, ex: Executor = this.db) {
+    const [row] = await ex
+      .select({ total: count() })
+      .from(stories)
+      .innerJoin(profiles, eq(profiles.id, stories.ownerId))
+      .innerJoin(storyStats, eq(storyStats.storyId, stories.id))
+      .where(and(isPublicStory(), sql`${searchScore(q)} > 0`))
     return row!.total
   }
 
