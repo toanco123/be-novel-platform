@@ -108,3 +108,4 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
 - Prettier: không chấm phẩy, nháy đơn, `printWidth` 100. oxlint cho phép class rỗng có decorator (module Nest).
 - Test: vitest với `globals`, `unplugin-swc` (decorator metadata của Nest). Tên test tiếng Việt, mô tả hành vi.
 - Không log hay trả ra ngoài thông tin nhạy cảm (token, mật khẩu, email trong log lỗi).
+- **CI** (`.github/workflows/ci.yml`, plan `documents/plan-05-1-ci.md`): push `main` / pull request chạy lint, format, typecheck, build, test unit, kiểm tra migration khớp schema, test e2e (gồm `test/openapi.e2e-spec.ts`: `openapi.json` phải khớp API). Đổi API thì chạy `npm run openapi:export` (sau khi tăng version) rồi commit file.

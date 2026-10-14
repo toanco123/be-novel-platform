@@ -1,0 +1,55 @@
+# Kiểm tra mỗi lần push lên main và mỗi pull request (plan documents/plan-05-1-ci.md)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Một nhánh chỉ chạy lượt mới nhất
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, typecheck, build, test unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+      - name: Migration khớp schema Drizzle
+        run: |
+          npx drizzle-kit generate
+          if [ -n "$(git status --porcelain -- drizzle)" ]; then
+            git status --porcelain -- drizzle
+            echo "::error::Schema Drizzle đổi mà chưa có migration: chạy npm run db:generate, review SQL rồi commit"
+            exit 1
+          fi
+
+  e2e:
+    name: Test e2e (Postgres, Redis, Mailpit thật)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Testcontainers dùng Docker có sẵn trên ubuntu-latest
+      - run: npm run test:e2e

@@ -1,5 +1,7 @@
 # be-novel-platform
 
+[![CI](https://github.com/toanco123/be-novel-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/toanco123/be-novel-platform/actions/workflows/ci.yml)
+
 Backend NestJS cho nền tảng đọc truyện chữ (web `web-novel-platform`, app `mobile-novel-platform`). Mục tiêu: thay Supabase bằng backend riêng (Postgres + Drizzle, auth riêng, lưu ảnh S3/R2), làm dần từng phần.
 
 - Thiết kế tổng thể: [documents/thiet-ke-tong-the.md](documents/thiet-ke-tong-the.md)
@@ -258,6 +260,19 @@ me(@CurrentUser() actor: Actor) {
 - Tên nhánh git tiếng Anh (kebab-case); commit message, comment và tài liệu tiếng Việt.
 - Mỗi commit tăng version: `npm version patch --no-git-tag-version`, đưa `package.json`, `package-lock.json` vào chính commit đó.
 - Không log hay trả ra ngoài thông tin nhạy cảm (token, mật khẩu, cookie).
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) chạy mỗi lần push lên `main` và mỗi pull request, hai job song song:
+
+- **Kiểm tra:**
+  - lint, format, typecheck, build, test unit;
+  - schema Drizzle đổi mà chưa có migration thì lỗi (chạy `npm run db:generate` rồi commit).
+- **Test e2e:**
+  - Postgres, Redis, Mailpit thật qua Testcontainers;
+  - có cả test so `openapi.json` với API hiện tại: đổi API thì chạy `npm run openapi:export` rồi commit file.
+
+Trước khi push nên chạy ở máy: `npm run lint && npm run typecheck && npm run test:all`.
 
 ## Thử API trên Swagger (`/docs`)
 

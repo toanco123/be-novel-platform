@@ -14,9 +14,10 @@ Cách làm: chia thành từng phần nhỏ. Mỗi phần có plan riêng trong 
 | 4    | Auth cơ bản: users, profiles, đăng ký, đăng nhập, refresh token xoay vòng, đăng xuất, guard, `/v1/me`                                                                | [plan-04-auth-co-ban.md](plan-04-auth-co-ban.md)                       | ✅         |
 | 4.1  | Kiểm soát đầu vào, đầu ra: body / query nhận camelCase lẫn snake_case, response chỉ có trường khai báo trong DTO (`@ResponseDto`, `@ApiField`)                       | [plan-04-1-dau-vao-dau-ra.md](plan-04-1-dau-vao-dau-ra.md)             | 🚧         |
 | 5    | Email: Mailpit, hàng đợi mail, xác nhận email, quên và đặt lại mật khẩu, đổi mật khẩu, captcha Turnstile                                                             | [plan-05-email.md](plan-05-email.md)                                   | ✅         |
+| 5.1  | CI GitHub Actions: lint, format, typecheck, build, test unit, e2e (Testcontainers); kiểm tra migration và `openapi.json` khớp code                                   | [plan-05-1-ci.md](plan-05-1-ci.md)                                     | 🚧         |
 | 6    | OAuth: Google và Facebook (web, redirect + PKCE), id token cho mobile (Google, Apple, Facebook)                                                                      |                                                                        |            |
 | 7    | Module mẫu `genres` (đủ mọi lớp, làm khuôn cho các module sau)                                                                                                       |                                                                        |            |
-| 8    | Storage S3/MinIO, Dockerfile, CI GitHub Actions, README, CLAUDE.md hoàn chỉnh; đẩy lên GitHub                                                                        |                                                                        |            |
+| 8    | Storage S3/MinIO, Dockerfile (+ docker build trong CI), README, CLAUDE.md hoàn chỉnh                                                                                 |                                                                        |            |
 
 ## Các đợt sau
 
