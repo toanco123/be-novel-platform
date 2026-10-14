@@ -192,7 +192,7 @@ Làm đủ mọi lớp và luật như web đang có:
 ### 3.6 Quy ước khác (ghi ở `documents/quy-uoc-api.md`)
 
 - **Đường dẫn và phiên bản:** `/v1/...`, kebab-case, đi theo slug. Health check không có phiên bản: `/health/live`, `/health/ready` (DB + Redis).
-- **Định dạng:** không bọc response; JSON camelCase; ngày giờ là chuỗi ISO UTC.
+- **Định dạng:** không bọc response; JSON camelCase; ngày giờ là chuỗi ISO UTC. **Đổi 14/10/2026:** response thành công bọc `{ data, meta }` (xem `plan-04-1-dau-vao-dau-ra.md`, README mục Dạng response).
 - **Phân trang:** `?page&pageSize` → `Page<T> = { items, total, page, pageCount }` (giống web).
 - **HTTP:** `helmet`; CORS theo `CORS_ORIGINS`; `trust proxy` theo env; body tối đa 1 MB; tắt app gọn gàng khi có tín hiệu dừng.
 - **Throttler toàn cục:** 300 request/phút (theo user, khách thì theo IP). Hạn mức nghiệp vụ nằm trong service.

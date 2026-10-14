@@ -23,12 +23,12 @@ export async function registerUser(
     .send({ email, password, displayName: input.displayName ?? 'Người thử' })
     .expect(201)
   return {
-    id: res.body.user.id,
+    id: res.body.data.user.id,
     email,
     password,
     ip,
-    accessToken: res.body.accessToken,
-    refreshToken: res.body.refreshToken,
+    accessToken: res.body.data.accessToken,
+    refreshToken: res.body.data.refreshToken,
   }
 }
 

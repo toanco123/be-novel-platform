@@ -75,7 +75,7 @@ src/
     http/                 #   thông tin client gọi API (web / mobile, IP, user agent)
     rate-limit/           #   throttler toàn cục, RateLimitService
     swagger/              #   dựng /docs, @ApiErrorResponses
-    response/             #   lọc đầu ra theo DTO: @ResponseDto, @ApiField
+    response/             #   đầu ra: lọc theo DTO và bọc { data, meta } (@ResponseDto, @ApiField)
     validation/           #   kiểm tra đầu vào: ValidationPipe, @Trim, @NormalizeEmail
     utils/                #   hàm tiện ích thuần (withTimeout)
   infra/                  # hạ tầng
@@ -205,9 +205,9 @@ export class LoginDto {
 }
 ```
 
-**DTO đầu ra** (response): mỗi trường dùng `@ApiField({...})` (`@ApiFieldOptional` cho trường tùy chọn) thay cho `@ApiProperty`. Route trả dữ liệu gắn `@ResponseDto(Dto)` thay cho `@ApiOkResponse`:
+**DTO đầu ra** (response): mỗi trường dùng `@ApiField({...})` (`@ApiFieldOptional` cho trường tùy chọn) thay cho `@ApiProperty`. Route trả dữ liệu **bắt buộc** gắn `@ResponseDto(Dto)` thay cho `@ApiOkResponse`:
 
-- Response **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
+- Response bọc `{ data, meta }` (xem [Dạng response](#dạng-response)); `data` **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
 - Swagger ghi luôn schema response; status khác 200 thì truyền thêm, vd `@ResponseDto(AuthSessionDto, { status: 201 })`.
 - Giá trị có thể null: `@ApiField({ type: String, nullable: true })`.
 
@@ -266,16 +266,26 @@ Chi tiết: [documents/plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md)
 
 ## Dạng response
 
-Response thành công **không bọc** trong lớp ngoài (`{ data, success }`...): trả thẳng DTO, HTTP status cho biết thành công hay lỗi (đã chốt 14/10/2026).
+Response thành công có dạng chung **`{ data, meta }`** (chốt 14/10/2026):
 
-| Trường hợp                   | Trả về                                                                                                                 |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Thành công, có dữ liệu       | DTO của route (`@ResponseDto(Dto)`), status 200 / 201. Vd `GET /v1/me` → `{ "id": "...", "displayName": "Linh", ... }` |
-| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                                         |
-| Danh sách (từ phần 7)        | `{ items, total, page, pageCount }` (giống `Page<T>` của web)                                                          |
-| Lỗi                          | `{ code, message, details?, requestId }`, status 4xx / 5xx (xem [Lỗi](#lỗi))                                           |
+```json
+{
+  "data": { "id": "...", "displayName": "Linh", "avatarUrl": null },
+  "meta": { "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22" }
+}
+```
 
-Mọi response có header `x-request-id`; body lỗi có thêm `requestId` để báo lỗi.
+| Trường hợp                   | Trả về                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------- |
+| Thành công, có dữ liệu       | `{ data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`) |
+| Danh sách (từ phần 7)        | `{ data: [...], meta: { total, page, pageCount, requestId } }`                           |
+| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                           |
+| Lỗi                          | `{ code, message, details?, requestId }`, status 4xx / 5xx, không bọc (xem [Lỗi](#lỗi))  |
+| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc   |
+
+- Bọc và lọc làm tự động ở `ResponseInterceptor` (`common/response/`) cho route có `@ResponseDto`; controller, service chỉ trả DTO.
+- Mọi response có header `x-request-id`, trùng `meta.requestId` hoặc `requestId` của lỗi.
+- Test e2e quét `openapi.json`: route `/v1` nào trả 200 / 201 mà không có dạng `{ data, meta }` (quên `@ResponseDto`) thì test lỗi.
 
 ## Lỗi
 

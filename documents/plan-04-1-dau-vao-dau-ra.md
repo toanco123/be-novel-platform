@@ -1,6 +1,6 @@
 # Phần 4.1: Kiểm soát đầu vào, đầu ra
 
-Trạng thái: ✅ xong (14/10/2026).
+Trạng thái: ✅ xong (14/10/2026). Bổ sung bọc response `{ data, meta }`: ✅ (14/10/2026).
 
 **Khác so với plan:** pipe validate thành class `AppValidationPipe` (kế thừa `ValidationPipe`, đổi khóa trước khi gọi `transform` gốc) thay cho hàm `createValidationPipe`. OpenAPI không đổi schema, chỉ thêm một dòng mô tả về tên trường.
 
@@ -49,3 +49,21 @@ Người dùng hỏi có nên thêm decorator kiểm soát đầu vào, đầu r
 ## Commit
 
 "Đầu vào nhận camelCase / snake_case, đầu ra lọc theo DTO (@ResponseDto, @ApiField)".
+
+## Bổ sung: bọc response `{ data, meta }` (người dùng chọn, 14/10/2026)
+
+Thay quyết định "không bọc response" của thiết kế tổng thể (mục 3.6).
+
+- **Route có `@ResponseDto(Dto)`** trả `{ data: <DTO đã lọc>, meta: { requestId } }`.
+- **Danh sách** (làm cùng phân trang ở phần 7): `{ data: [...], meta: { total, page, pageCount, requestId } }`.
+- **Giữ nguyên:**
+  - Lỗi vẫn `{ code, message, details?, requestId }`, không bọc.
+  - 204 (đăng xuất) body trống.
+  - `/health/*` giữ dạng của terminus cho Docker và load balancer.
+- **Cách làm:**
+  - `ResponseInterceptor` (`common/response/`) thay `ClassSerializerInterceptor`: lọc theo DTO (chỉ trường có `@ApiField`) rồi bọc.
+  - `@ResponseDto` ghi metadata và schema Swagger dạng `{ data: $ref Dto, meta: $ref ResponseMetaDto }`.
+- **Swagger UI:** script tự điền token đọc `data.accessToken`.
+- **Kiểm tra:**
+  - e2e đọc `body.data`.
+  - Test quét `openapi.json`: mọi route `/v1` trả 200 / 201 phải có schema `{ data, meta }`, để bắt route quên `@ResponseDto`.

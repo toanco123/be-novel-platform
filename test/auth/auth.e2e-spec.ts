@@ -40,17 +40,20 @@ describe('đăng ký', () => {
       .expect(201)
 
     expect(res.body).toEqual({
-      user: {
-        id: expect.any(String),
-        email,
-        displayName: 'Linh',
-        avatarUrl: null,
-        role: 'user',
-        emailVerified: false,
-        createdAt: expect.any(String),
+      data: {
+        user: {
+          id: expect.any(String),
+          email,
+          displayName: 'Linh',
+          avatarUrl: null,
+          role: 'user',
+          emailVerified: false,
+          createdAt: expect.any(String),
+        },
+        accessToken: expect.any(String),
+        expiresIn: 900,
       },
-      accessToken: expect.any(String),
-      expiresIn: 900,
+      meta: { requestId: res.headers['x-request-id'] },
     })
     const cookie = refreshCookieOf(res)
     expect(cookie).toBeDefined()
@@ -67,7 +70,7 @@ describe('đăng ký', () => {
       .set('X-Client', 'mobile')
       .send({ email: uniqueEmail(), password: 'mat-khau-bi-mat', displayName: 'Linh' })
       .expect(201)
-    expect(res.body.refreshToken).toEqual(expect.any(String))
+    expect(res.body.data.refreshToken).toEqual(expect.any(String))
     expect(refreshCookieOf(res)).toBeUndefined()
   })
 
@@ -77,8 +80,8 @@ describe('đăng ký', () => {
       .set('X-Forwarded-For', uniqueIp())
       .send({ email: uniqueEmail(), password: 'mat-khau-bi-mat', display_name: 'Snake' })
       .expect(201)
-    expect(res.body.user.displayName).toBe('Snake')
-    expect(Object.keys(res.body.user).toSorted()).toEqual([
+    expect(res.body.data.user.displayName).toBe('Snake')
+    expect(Object.keys(res.body.data.user).toSorted()).toEqual([
       'avatarUrl',
       'createdAt',
       'displayName',
@@ -95,9 +98,9 @@ describe('đăng ký', () => {
       .get('/v1/me')
       .set('Authorization', `Bearer ${user.accessToken}`)
       .expect(200)
-    expect(me.body).toMatchObject({ id: user.id, email: user.email, displayName: 'Tên cũ' })
+    expect(me.body.data).toMatchObject({ id: user.id, email: user.email, displayName: 'Tên cũ' })
     // Chỉ các trường của MeDto (không có bannedUntil, passwordHash...)
-    expect(Object.keys(me.body).toSorted()).toEqual([
+    expect(Object.keys(me.body.data).toSorted()).toEqual([
       'avatarUrl',
       'createdAt',
       'displayName',
@@ -113,7 +116,7 @@ describe('đăng ký', () => {
       .set('Authorization', `Bearer ${user.accessToken}`)
       .send({ displayName: '  Tên mới  ' })
       .expect(200)
-    expect(updated.body.displayName).toBe('Tên mới')
+    expect(updated.body.data.displayName).toBe('Tên mới')
 
     const tooShort = await http()
       .patch('/v1/me')
@@ -168,7 +171,7 @@ describe('đăng nhập', () => {
   it('đúng mật khẩu (email khác hoa thường) → 200, ghi last_sign_in_at', async () => {
     const user = await registerUser(app)
     const res = await login(`  ${user.email.toUpperCase()} `, user.password).expect(200)
-    expect(res.body.user.id).toBe(user.id)
+    expect(res.body.data.user.id).toBe(user.id)
     expect(refreshCookieOf(res)).toBeDefined()
     const [row] = await db.select().from(users).where(eq(users.id, user.id))
     expect(row!.lastSignInAt).toBeInstanceOf(Date)

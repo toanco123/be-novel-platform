@@ -35,13 +35,19 @@ describe('refresh (mobile, token trong body)', () => {
     const user = await registerUser(app)
     const res = await refreshMobile(user.refreshToken).expect(200)
     expect(res.body).toMatchObject({
-      user: { id: user.id },
-      accessToken: expect.any(String),
-      refreshToken: expect.any(String),
-      expiresIn: 900,
+      data: {
+        user: { id: user.id },
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
+        expiresIn: 900,
+      },
+      meta: { requestId: expect.any(String) },
     })
-    expect(res.body.refreshToken).not.toBe(user.refreshToken)
-    await http().get('/v1/me').set('Authorization', `Bearer ${res.body.accessToken}`).expect(200)
+    expect(res.body.data.refreshToken).not.toBe(user.refreshToken)
+    await http()
+      .get('/v1/me')
+      .set('Authorization', `Bearer ${res.body.data.accessToken}`)
+      .expect(200)
 
     // DB chỉ có hash, cùng họ, hạn giữ nguyên
     const rows = await db
@@ -52,7 +58,7 @@ describe('refresh (mobile, token trong body)', () => {
     expect(rows).toHaveLength(2)
     expect(rows.map((r) => r.tokenHash)).toEqual([
       hashToken(user.refreshToken),
-      hashToken(res.body.refreshToken),
+      hashToken(res.body.data.refreshToken),
     ])
     expect(rows[1]!.familyId).toBe(rows[0]!.familyId)
     expect(rows[1]!.expiresAt).toEqual(rows[0]!.expiresAt)
@@ -66,20 +72,20 @@ describe('refresh (mobile, token trong body)', () => {
       .set('X-Client', 'mobile')
       .send({ refresh_token: user.refreshToken })
       .expect(200)
-    expect(res.body.refreshToken).toEqual(expect.any(String))
+    expect(res.body.data.refreshToken).toEqual(expect.any(String))
   })
 
   it('dùng lại token cũ ngay (hai tab): token_reused, phiên vẫn còn', async () => {
     const user = await registerUser(app)
-    const next = (await refreshMobile(user.refreshToken).expect(200)).body.refreshToken
+    const next = (await refreshMobile(user.refreshToken).expect(200)).body.data.refreshToken
     expect((await refreshMobile(user.refreshToken).expect(401)).body.code).toBe('token_reused')
     await refreshMobile(next).expect(200)
   })
 
   it('dùng lại token cũ sau ân hạn: token_reused và cả phiên bị thu hồi', async () => {
     const user = await registerUser(app)
-    const second = (await refreshMobile(user.refreshToken).expect(200)).body.refreshToken
-    const third = (await refreshMobile(second).expect(200)).body.refreshToken
+    const second = (await refreshMobile(user.refreshToken).expect(200)).body.data.refreshToken
+    const third = (await refreshMobile(second).expect(200)).body.data.refreshToken
     await ageRevocation(user.refreshToken, 60_000)
 
     expect((await refreshMobile(user.refreshToken).expect(401)).body.code).toBe('token_reused')
@@ -98,7 +104,7 @@ describe('refresh (mobile, token trong body)', () => {
     await refreshMobile(user.refreshToken).expect(200)
     await ageRevocation(user.refreshToken, 60_000)
     await refreshMobile(user.refreshToken).expect(401)
-    await refreshMobile(login.body.refreshToken).expect(200)
+    await refreshMobile(login.body.data.refreshToken).expect(200)
   })
 
   it('token rác, hết hạn → invalid_token; không gửi token → unauthenticated', async () => {
@@ -138,7 +144,7 @@ describe('refresh (web, cookie)', () => {
       .post('/v1/auth/refresh')
       .set('Cookie', first.split(';')[0]!)
       .expect(200)
-    expect(res.body.refreshToken).toBeUndefined()
+    expect(res.body.data.refreshToken).toBeUndefined()
     const second = refreshCookieOf(res)!
     expect(cookieValue(second)).not.toBe(cookieValue(first))
     expect(second).toMatch(/HttpOnly/)
@@ -186,7 +192,7 @@ describe('đăng xuất', () => {
       .set('Authorization', `Bearer ${user.accessToken}`)
       .expect(204)
     await refreshMobile(user.refreshToken).expect(401)
-    await refreshMobile(other.body.refreshToken).expect(401)
+    await refreshMobile(other.body.data.refreshToken).expect(401)
   })
 
   it('logout-all cần đăng nhập', async () => {

@@ -107,9 +107,12 @@ test('body sai: 400 validation_failed kèm issue; đúng thì qua', async () => 
     .expect(201, { name: 'Linh' })
 })
 
-test('@ResponseDto: response chỉ có trường khai báo, lọc cả object con và mảng', async () => {
+test('@ResponseDto: bọc { data, meta }, chỉ có trường khai báo, lọc cả object con và mảng', async () => {
   const res = await http().get('/v1/test-only/serialize').expect(200)
-  expect(res.body).toEqual({ id: '1', item: { name: 'a' }, items: [{ name: 'b' }] })
+  expect(res.body).toEqual({
+    data: { id: '1', item: { name: 'a' }, items: [{ name: 'b' }] },
+    meta: { requestId: res.headers['x-request-id'] },
+  })
 })
 
 test('JSON hỏng: 400 bad_request; body quá 1 MB: 413 payload_too_large', async () => {
@@ -155,6 +158,33 @@ test('/openapi.json: route cần đăng nhập có bearer, nullable đúng dạn
     nullable: true,
   })
   expect(JSON.stringify(body)).not.toMatch(/"type":\[/)
+})
+
+test('/openapi.json: mọi route /v1 trả dữ liệu đều có dạng { data, meta } (đã gắn @ResponseDto)', async () => {
+  const { body } = await http().get('/openapi.json').expect(200)
+  const missing: string[] = []
+  for (const [path, operations] of Object.entries<Record<string, { responses: object }>>(
+    body.paths,
+  )) {
+    // Chỉ xét route thật của app (bỏ route test-only của file này)
+    if (!path.startsWith('/v1/') || path.startsWith('/v1/test-only/')) continue
+    for (const [method, operation] of Object.entries(operations)) {
+      for (const [status, response] of Object.entries(operation.responses)) {
+        if (status !== '200' && status !== '201') continue
+        const schema = (
+          response as { content?: Record<string, { schema?: { properties?: object } }> }
+        ).content?.['application/json']?.schema
+        if (
+          !schema?.properties ||
+          !('data' in schema.properties) ||
+          !('meta' in schema.properties)
+        ) {
+          missing.push(`${method.toUpperCase()} ${path} ${status}`)
+        }
+      }
+    }
+  }
+  expect(missing).toEqual([])
 })
 
 test('CORS: origin trong danh sách được phép, origin lạ không có header cho phép', async () => {

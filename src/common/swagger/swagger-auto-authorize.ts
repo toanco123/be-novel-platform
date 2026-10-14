@@ -7,7 +7,7 @@ import type { SwaggerResponse, SwaggerUi } from './swagger.types'
 export function autoAuthorize(res: SwaggerResponse) {
   try {
     const ui = (globalThis as { ui?: SwaggerUi }).ui
-    const token = res.obj?.accessToken
+    const token = res.obj?.data?.accessToken
     if (
       ui &&
       res.ok &&

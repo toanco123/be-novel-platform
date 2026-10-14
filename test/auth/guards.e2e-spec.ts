@@ -116,8 +116,8 @@ it('@Roles("admin"): user thường → 403 forbidden, admin → 200', async () 
     .set('X-Forwarded-For', uniqueIp())
     .send({ email: user.email, password: user.password })
     .expect(200)
-  expect(login.body.user.role).toBe('admin')
-  await http().get('/v1/test-auth/admin').set(bearer(login.body.accessToken)).expect(200)
+  expect(login.body.data.user.role).toBe('admin')
+  await http().get('/v1/test-auth/admin').set(bearer(login.body.data.accessToken)).expect(200)
 })
 
 it('throttler đếm theo người dùng (đổi IP không qua được), người khác cùng IP không bị ảnh hưởng', async () => {
