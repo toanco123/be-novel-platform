@@ -1,21 +1,21 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { ApiField, ApiFieldOptional } from '@/common/response/api-field.decorator'
 import { MeDto } from '@/modules/users/dto/me.dto'
 
 /** Phiên đăng nhập trả cho client (register, login, refresh) */
 export class AuthSessionDto {
-  @ApiProperty({ type: MeDto })
+  @ApiField({ type: MeDto })
   user: MeDto
 
-  @ApiProperty({
+  @ApiField({
     description: 'JWT gửi kèm mọi request: Authorization: Bearer <accessToken>',
     example: 'eyJhbGciOiJFUzI1NiIsImtpZCI6ImRldiIsInR5cCI6IkpXVCJ9...',
   })
   accessToken: string
 
-  @ApiProperty({ type: 'integer', description: 'Access token còn hiệu lực (giây)', example: 900 })
+  @ApiField({ type: 'integer', description: 'Access token còn hiệu lực (giây)', example: 900 })
   expiresIn: number
 
-  @ApiPropertyOptional({
+  @ApiFieldOptional({
     description: 'Chỉ có khi gửi header X-Client: mobile; web nhận trong cookie HttpOnly',
   })
   refreshToken?: string

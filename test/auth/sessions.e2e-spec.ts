@@ -59,6 +59,16 @@ describe('refresh (mobile, token trong body)', () => {
     expect(rows[0]).toMatchObject({ revokedAt: expect.any(Date), replacedById: rows[1]!.id })
   })
 
+  it('body snake_case (refresh_token) cũng được', async () => {
+    const user = await registerUser(app)
+    const res = await http()
+      .post('/v1/auth/refresh')
+      .set('X-Client', 'mobile')
+      .send({ refresh_token: user.refreshToken })
+      .expect(200)
+    expect(res.body.refreshToken).toEqual(expect.any(String))
+  })
+
   it('dùng lại token cũ ngay (hai tab): token_reused, phiên vẫn còn', async () => {
     const user = await registerUser(app)
     const next = (await refreshMobile(user.refreshToken).expect(200)).body.refreshToken

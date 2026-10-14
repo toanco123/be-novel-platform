@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common'
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
+import { ResponseDto } from '@/common/response/response-dto.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
 import { MeDto } from './dto/me.dto'
 import { UpdateMeDto } from './dto/update-me.dto'
@@ -16,7 +17,7 @@ export class MeController {
 
   @Get()
   @ApiOperation({ summary: 'Hồ sơ của tôi' })
-  @ApiOkResponse({ type: MeDto })
+  @ResponseDto(MeDto)
   @ApiErrorResponses('not_found')
   me(@CurrentUser() actor: Actor) {
     return this.users.getMe(actor.id)
@@ -24,7 +25,7 @@ export class MeController {
 
   @Patch()
   @ApiOperation({ summary: 'Sửa tên hiển thị' })
-  @ApiOkResponse({ type: MeDto })
+  @ResponseDto(MeDto)
   @ApiErrorResponses('validation_failed')
   update(@CurrentUser() actor: Actor, @Body() body: UpdateMeDto) {
     return this.users.updateDisplayName(actor.id, body.displayName)

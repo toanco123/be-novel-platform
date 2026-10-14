@@ -71,6 +71,24 @@ describe('đăng ký', () => {
     expect(refreshCookieOf(res)).toBeUndefined()
   })
 
+  it('body snake_case (display_name) cũng được; response luôn camelCase', async () => {
+    const res = await http()
+      .post('/v1/auth/register')
+      .set('X-Forwarded-For', uniqueIp())
+      .send({ email: uniqueEmail(), password: 'mat-khau-bi-mat', display_name: 'Snake' })
+      .expect(201)
+    expect(res.body.user.displayName).toBe('Snake')
+    expect(Object.keys(res.body.user).toSorted()).toEqual([
+      'avatarUrl',
+      'createdAt',
+      'displayName',
+      'email',
+      'emailVerified',
+      'id',
+      'role',
+    ])
+  })
+
   it('đăng ký → /v1/me → sửa tên hiển thị', async () => {
     const user = await registerUser(app, { displayName: 'Tên cũ' })
     const me = await http()
@@ -78,6 +96,16 @@ describe('đăng ký', () => {
       .set('Authorization', `Bearer ${user.accessToken}`)
       .expect(200)
     expect(me.body).toMatchObject({ id: user.id, email: user.email, displayName: 'Tên cũ' })
+    // Chỉ các trường của MeDto (không có bannedUntil, passwordHash...)
+    expect(Object.keys(me.body).toSorted()).toEqual([
+      'avatarUrl',
+      'createdAt',
+      'displayName',
+      'email',
+      'emailVerified',
+      'id',
+      'role',
+    ])
     expectNoSecrets(me.body)
 
     const updated = await http()

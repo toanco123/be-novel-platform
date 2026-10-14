@@ -2,12 +2,12 @@ import type { ArgumentMetadata } from '@nestjs/common'
 import { Type } from 'class-transformer'
 import { IsInt, IsString, Length, ValidateNested } from 'class-validator'
 import { AppException } from '@/common/errors/app.exception'
-import { createValidationPipe } from '@/common/validation/validation.pipe'
+import { AppValidationPipe } from '@/common/validation/validation.pipe'
 import { LoginDto } from '@/modules/auth/dto/login.dto'
 import { RefreshTokenDto } from '@/modules/auth/dto/refresh-token.dto'
 import { RegisterDto } from '@/modules/auth/dto/register.dto'
 
-const pipe = createValidationPipe()
+const pipe = new AppValidationPipe()
 const body = (metatype: ArgumentMetadata['metatype']): ArgumentMetadata => ({
   type: 'body',
   metatype,
@@ -53,6 +53,31 @@ describe('ValidationPipe toàn cục', () => {
       password: 'mat-khau-bi-mat',
       displayName: 'Linh',
     })
+  })
+
+  it('nhận snake_case, đổi về camelCase trước khi validate (body và query)', async () => {
+    const result = await pipe.transform(
+      { email: 'a@b.co', password: 'mat-khau-bi-mat', display_name: '  Linh ' },
+      body(RegisterDto),
+    )
+    expect({ ...result }).toEqual({
+      email: 'a@b.co',
+      password: 'mat-khau-bi-mat',
+      displayName: 'Linh',
+    })
+    const query = await pipe.transform(
+      { refresh_token: 'abc' },
+      { type: 'query', metatype: RefreshTokenDto },
+    )
+    expect({ ...query }).toEqual({ refreshToken: 'abc' })
+  })
+
+  it('lỗi validate báo tên trường dạng camelCase', async () => {
+    const issues = await validationError(
+      { email: 'a@b.co', password: 'mat-khau-bi-mat', display_name: 'L' },
+      RegisterDto,
+    )
+    expect(issues).toEqual([expect.objectContaining({ path: 'displayName', code: 'isLength' })])
   })
 
   it('sai thì validation_failed, mỗi lỗi { path, code, message }', async () => {

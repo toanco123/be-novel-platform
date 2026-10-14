@@ -20,6 +20,7 @@ Chi tiết và ví dụ: mục **Quy ước code** trong [README.md](README.md).
 - **Hằng số, token inject, hạn mức** trong `*.constants.ts`.
 - **Dùng chung thì vào `src/common/<mảng>/`** (`auth`, `context`, `crypto`, `errors`, `http`, `rate-limit`, `swagger`, `validation`, `utils`); chỉ một module dùng thì để trong module. Provider dùng chung khai báo trong module `@Global()` của mảng (`CryptoModule`, `ErrorsModule`).
 - **DTO kiểu chuẩn của Nest:** `email: string`, không dùng `!` (`strictPropertyInitialization` tắt).
+- **Đầu vào** nhận cả camelCase lẫn snake_case (pipe đổi về camelCase trước khi validate); **đầu ra** luôn camelCase. DTO trả về dùng `@ApiField` cho mỗi trường; route trả dữ liệu dùng `@ResponseDto(Dto)` (response chỉ có trường có `@ApiField`, kể cả object con).
 - **Từ 2 file cùng loại trở lên trong một thư mục** thì gom vào thư mục con số nhiều: `services/`, `repositories/`, `types/`, `guards/`, `decorators/`, `dto/`. Ngoại lệ: `app.module.ts`, `worker.module.ts` ở `src/`.
 - **Import:** cùng thư mục hoặc lên một cấp trong cùng nhánh thì đường dẫn tương đối; xa hơn dùng `@/`. Test luôn dùng `@/`.
 - **Test unit** ở `test/unit/`, cùng cấu trúc thư mục với `src/`; e2e ở `test/<tên module>/`.
@@ -55,9 +56,10 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - **Ghi log lỗi luôn qua `ErrorLogger.log(error, context?)`** (filter, worker, service): cùng cấu trúc `{ error: { code, status, message, details? }, err, requestId, userId, ...context }`; 5xx mức error, còn lại warn.
 - **Validate và OpenAPI:**
   - **DTO là class dùng class-validator + class-transformer:** mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger (không dùng plugin CLI của Nest vì build bằng SWC). Khai báo `email: string`, không có `!`.
-  - `ValidationPipe` toàn cục (`common/validation/validation.pipe.ts`): bỏ trường lạ (`whitelist`), chạy `@Transform` (`Trim()`, `NormalizeEmail()` trong `common/validation/transform.decorator.ts`), **không** đổi kiểu ngầm. Lỗi → 400 `validation_failed`, `details.issues = [{ path, code, message }]` với `code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...).
+  - `AppValidationPipe` toàn cục (`common/validation/validation.pipe.ts`): đổi khóa snake_case của body / query sang camelCase (`common/utils/case-keys.ts`), bỏ trường lạ (`whitelist`), chạy `@Transform` (`Trim()`, `NormalizeEmail()` trong `common/validation/transform.decorator.ts`), **không** đổi kiểu ngầm. Lỗi → 400 `validation_failed`, `details.issues = [{ path, code, message }]` với `code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...).
+  - **Đầu ra:** `ClassSerializerInterceptor` toàn cục + `@ResponseDto(Dto)` (`common/response/`): chỉ trả trường có `@ApiField` (= `@Expose` + `@ApiProperty`, tự thêm `@Type` cho DTO lồng).
   - zod chỉ còn dùng cho biến môi trường (`config/env.schema.ts`).
-  - Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`). Mỗi endpoint có `@ApiOperation({ summary })` tiếng Việt, `@ApiErrorResponses(...codes)` (`common/swagger/api-error-responses.decorator.ts`) liệt kê mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
+  - Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`). Mỗi endpoint có `@ApiOperation({ summary })` tiếng Việt, `@ResponseDto(Dto)` cho response, `@ApiErrorResponses(...codes)` (`common/swagger/api-error-responses.decorator.ts`) liệt kê mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
   - Trên `/docs`, gọi register / login / refresh xong thì access token tự điền vào nút Authorize.
 - **Database** (`src/infra/database`, plan `documents/plan-02-database.md`):
   - Một pool postgres.js; inject `@Inject(DB) db: Db` (Drizzle, `casing: 'snake_case'`). Token `DB` ở `database.constants.ts`; kiểu `Db`, `Tx` (transaction), `Executor` (= `Db | Tx`, cho repository) ở `database.types.ts`.

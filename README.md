@@ -75,7 +75,8 @@ src/
     http/                 #   thông tin client gọi API (web / mobile, IP, user agent)
     rate-limit/           #   throttler toàn cục, RateLimitService
     swagger/              #   dựng /docs, @ApiErrorResponses
-    validation/           #   ValidationPipe, @Trim, @NormalizeEmail
+    response/             #   lọc đầu ra theo DTO: @ResponseDto, @ApiField
+    validation/           #   kiểm tra đầu vào: ValidationPipe, @Trim, @NormalizeEmail
     utils/                #   hàm tiện ích thuần (withTimeout)
   infra/                  # hạ tầng
     database/             #   Postgres + Drizzle, schema/, migration, health
@@ -180,27 +181,51 @@ Ví dụ: `modules/auth/services/`, `common/auth/guards/`, `common/auth/decorato
 - Test luôn import bằng `@/`.
 - Thứ tự import: thư viện Node (`node:`), package, `@/`, `../`, `./`; trong mỗi nhóm theo bảng chữ cái.
 
-### 6. DTO và validate
+### 6. DTO: đầu vào, đầu ra
 
-- DTO là class theo kiểu chuẩn của Nest, mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger. Trường khai báo `email: string`, **không** dùng `!`; trường tùy chọn `refreshToken?: string` kèm `@IsOptional()` và `@ApiPropertyOptional()`. (`tsconfig` tắt `strictPropertyInitialization` để viết được như vậy.)
+**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`; gửi cả hai thì lấy camelCase). Server đổi về camelCase trước khi validate (`common/utils/case-keys.ts`), nên DTO và code luôn viết camelCase. Response luôn camelCase.
 
-  ```ts
-  export class LoginDto {
-    @ApiProperty({ format: 'email', example: 'linh@example.com' })
-    @NormalizeEmail()
-    @IsEmail()
-    email: string
+**DTO đầu vào** (body, query): class theo kiểu chuẩn của Nest, mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger.
 
-    @ApiProperty({ minLength: 1, maxLength: 128 })
-    @IsString()
-    @Length(1, 128)
-    password: string
-  }
-  ```
-
+- Khai báo `email: string`, **không** dùng `!`. Trường tùy chọn `refreshToken?: string` kèm `@IsOptional()` và `@ApiPropertyOptional()`. (`tsconfig` tắt `strictPropertyInitialization` để viết được như vậy.)
 - Chuẩn hóa trước khi kiểm tra: `@Trim()`, `@NormalizeEmail()` (`common/validation/transform.decorator.ts`).
-- `ValidationPipe` toàn cục: bỏ trường lạ, không tự đổi kiểu ngầm (`"5"` không thành số). Sai thì 400 `validation_failed` (xem [Body lỗi trả cho client](#body-lỗi-trả-cho-client)).
-- DTO trả về (vd `MeDto`) cũng là class có `@ApiProperty`; giá trị có thể null khai báo `@ApiProperty({ type: String, nullable: true })`.
+- `ValidationPipe` toàn cục: bỏ trường lạ (không báo lỗi), không tự đổi kiểu ngầm (`"5"` không thành số). Sai thì 400 `validation_failed` (xem [Body lỗi trả cho client](#body-lỗi-trả-cho-client)).
+
+```ts
+export class LoginDto {
+  @ApiProperty({ format: 'email', example: 'linh@example.com' })
+  @NormalizeEmail()
+  @IsEmail()
+  email: string
+
+  @ApiProperty({ minLength: 1, maxLength: 128 })
+  @IsString()
+  @Length(1, 128)
+  password: string
+}
+```
+
+**DTO đầu ra** (response): mỗi trường dùng `@ApiField({...})` (`@ApiFieldOptional` cho trường tùy chọn) thay cho `@ApiProperty`. Route trả dữ liệu gắn `@ResponseDto(Dto)` thay cho `@ApiOkResponse`:
+
+- Response **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
+- Swagger ghi luôn schema response; status khác 200 thì truyền thêm, vd `@ResponseDto(AuthSessionDto, { status: 201 })`.
+- Giá trị có thể null: `@ApiField({ type: String, nullable: true })`.
+
+```ts
+export class MeDto {
+  @ApiField({ format: 'uuid' })
+  id: string
+
+  @ApiField({ type: String, nullable: true })
+  avatarUrl: string | null
+}
+
+@Get()
+@ResponseDto(MeDto)
+me(@CurrentUser() actor: Actor) {
+  return this.users.getMe(actor.id)
+}
+```
 
 ### 7. Module domain
 

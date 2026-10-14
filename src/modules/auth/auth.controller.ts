@@ -1,18 +1,12 @@
 import { Body, Controller, HttpCode, Post, Req, Res } from '@nestjs/common'
-import {
-  ApiBearerAuth,
-  ApiCreatedResponse,
-  ApiNoContentResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger'
+import { ApiBearerAuth, ApiNoContentResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { Request, Response } from 'express'
 import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
 import { Public } from '@/common/auth/decorators/public.decorator'
 import { AppException } from '@/common/errors/app.exception'
 import { clientMeta, isMobileClient } from '@/common/http/request-client'
+import { ResponseDto } from '@/common/response/response-dto.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
 import { AppConfig } from '@/config/app-config.service'
 import { ApiClientHeader, ApiRefreshTokenBody, ApiSessionOperation } from './auth-api.decorator'
@@ -36,7 +30,7 @@ export class AuthController {
   @Public({ ignoreToken: true })
   @ApiSessionOperation('Đăng ký bằng email + mật khẩu')
   @ApiClientHeader()
-  @ApiCreatedResponse({ type: AuthSessionDto })
+  @ResponseDto(AuthSessionDto, { status: 201 })
   @ApiErrorResponses('validation_failed', 'email_taken', 'rate_limited')
   async register(
     @Body() body: RegisterDto,
@@ -51,7 +45,7 @@ export class AuthController {
   @Public({ ignoreToken: true })
   @ApiSessionOperation('Đăng nhập')
   @ApiClientHeader()
-  @ApiOkResponse({ type: AuthSessionDto })
+  @ResponseDto(AuthSessionDto)
   @ApiErrorResponses('validation_failed', 'invalid_credentials', 'account_banned', 'rate_limited')
   async login(
     @Body() body: LoginDto,
@@ -72,7 +66,7 @@ export class AuthController {
   })
   @ApiClientHeader()
   @ApiRefreshTokenBody()
-  @ApiOkResponse({ type: AuthSessionDto })
+  @ResponseDto(AuthSessionDto)
   @ApiErrorResponses('unauthenticated', 'invalid_token', 'token_reused', 'account_banned')
   async refresh(
     @Body() body: RefreshTokenDto,

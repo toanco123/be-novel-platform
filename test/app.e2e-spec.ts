@@ -7,6 +7,8 @@ import request from 'supertest'
 import { AppModule } from '@/app.module'
 import { Public } from '@/common/auth/decorators/public.decorator'
 import { AppException } from '@/common/errors/app.exception'
+import { ApiField } from '@/common/response/api-field.decorator'
+import { ResponseDto } from '@/common/response/response-dto.decorator'
 import { createTestApp } from './helpers/app'
 
 class EchoDto {
@@ -15,12 +17,40 @@ class EchoDto {
   name: string
 }
 
+class ItemOutDto {
+  @ApiField()
+  name: string
+}
+
+class SecretOutDto {
+  @ApiField()
+  id: string
+
+  @ApiField({ type: ItemOutDto })
+  item: ItemOutDto
+
+  @ApiField({ type: [ItemOutDto] })
+  items: ItemOutDto[]
+}
+
 @Public()
 @Controller('test-only')
 class TestOnlyController {
   @Post('echo')
   echo(@Body() body: EchoDto) {
     return body
+  }
+
+  /** Trả thừa trường (kể cả trong object con, mảng): response chỉ còn trường có @ApiField */
+  @Get('serialize')
+  @ResponseDto(SecretOutDto)
+  serialize() {
+    return {
+      id: '1',
+      passwordHash: 'khong-duoc-lo',
+      item: { name: 'a', secret: 'x' },
+      items: [{ name: 'b', token: 'y' }],
+    }
   }
 
   @Get('boom')
@@ -75,6 +105,11 @@ test('body sai: 400 validation_failed kèm issue; đúng thì qua', async () => 
     .post('/v1/test-only/echo')
     .send({ name: 'Linh', role: 'admin' })
     .expect(201, { name: 'Linh' })
+})
+
+test('@ResponseDto: response chỉ có trường khai báo, lọc cả object con và mảng', async () => {
+  const res = await http().get('/v1/test-only/serialize').expect(200)
+  expect(res.body).toEqual({ id: '1', item: { name: 'a' }, items: [{ name: 'b' }] })
 })
 
 test('JSON hỏng: 400 bad_request; body quá 1 MB: 413 payload_too_large', async () => {

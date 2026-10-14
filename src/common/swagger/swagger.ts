@@ -12,6 +12,8 @@ const DESCRIPTION = `Backend của nền tảng đọc truyện chữ.
 **Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi
 \`POST /v1/auth/refresh\` (cookie refresh token đã có sẵn trên trình duyệt).
 
+**Tên trường:** body / query nhận cả camelCase lẫn snake_case (\`displayName\` hay \`display_name\`); response luôn camelCase.
+
 **Lỗi** luôn có dạng \`{ code, message, details?, requestId }\`; client hiển thị lời theo \`code\`.`
 
 /** Tài liệu OpenAPI của app (schema lấy từ @ApiProperty của DTO) */
