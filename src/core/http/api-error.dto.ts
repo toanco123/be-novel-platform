@@ -1,13 +1,17 @@
-import { z } from 'zod'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { ERROR_CODES, type ErrorCode } from '../errors/error-codes'
-import { createZodDto } from './zod-dto'
 
 /** Dạng lỗi chung của API (hiện trong Swagger) */
-export const apiErrorSchema = z.object({
-  code: z.enum(Object.keys(ERROR_CODES) as [ErrorCode, ...ErrorCode[]]),
-  message: z.string(),
-  details: z.record(z.string(), z.unknown()).optional(),
-  requestId: z.string(),
-})
+export class ApiErrorDto {
+  @ApiProperty({ enum: Object.keys(ERROR_CODES), enumName: 'ErrorCode', example: 'not_found' })
+  code!: ErrorCode
 
-export class ApiErrorDto extends createZodDto(apiErrorSchema) {}
+  @ApiProperty({ description: 'Tiếng Anh, cho dev đọc; client hiển thị lời theo code' })
+  message!: string
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  details?: Record<string, unknown>
+
+  @ApiProperty({ example: '0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22' })
+  requestId!: string
+}

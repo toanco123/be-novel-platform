@@ -1,6 +1,4 @@
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from '@nestjs/common'
-import { ZodValidationException } from 'nestjs-zod'
-import { z } from 'zod'
 import { AppError } from '@/core/errors/app-error'
 import { toApiError } from '@/core/errors/to-api-error'
 
@@ -11,16 +9,6 @@ test('AppError giữ đúng mã, status và details', () => {
     message: 'Conflict with the current state',
     details: { slug: 'ngon-tinh' },
   })
-})
-
-test('lỗi zod thành validation_failed kèm danh sách issue theo đường dẫn', () => {
-  const result = z.object({ name: z.string().min(2), age: z.number() }).safeParse({ name: 'a' })
-  const error = toApiError(new ZodValidationException(result.error!))
-  expect(error).toMatchObject({ status: 400, code: 'validation_failed' })
-  expect(error.details?.issues).toEqual([
-    expect.objectContaining({ path: 'name', code: 'too_small' }),
-    expect.objectContaining({ path: 'age', code: 'invalid_type' }),
-  ])
 })
 
 test('HttpException theo status', () => {

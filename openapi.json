@@ -825,7 +825,7 @@
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Lỗi** luôn có dạng `{ code, message, details?, requestId }`; client hiển thị lời theo `code`.",
-    "version": "0.0.5",
+    "version": "0.0.7",
     "contact": {}
   },
   "tags": [
@@ -857,10 +857,10 @@
         "type": "object",
         "properties": {
           "email": {
+            "type": "string",
             "format": "email",
             "maxLength": 254,
-            "example": "linh@example.com",
-            "type": "string"
+            "example": "linh@example.com"
           },
           "password": {
             "type": "string",
@@ -881,55 +881,59 @@
           "displayName"
         ]
       },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "linh@example.com"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Linh"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true,
+            "example": null
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "example": "user"
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "false cho tới khi xác nhận email (phần 5)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "avatarUrl",
+          "role",
+          "emailVerified",
+          "createdAt"
+        ]
+      },
       "AuthSessionDto": {
         "type": "object",
         "properties": {
           "user": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "email": {
-                "type": "string",
-                "format": "email",
-                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
-              },
-              "displayName": {
-                "type": "string",
-                "example": "Linh"
-              },
-              "avatarUrl": {
-                "type": "string",
-                "nullable": true
-              },
-              "role": {
-                "type": "string",
-                "enum": [
-                  "user",
-                  "admin"
-                ]
-              },
-              "emailVerified": {
-                "type": "boolean"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-              }
-            },
-            "required": [
-              "id",
-              "email",
-              "displayName",
-              "avatarUrl",
-              "role",
-              "emailVerified",
-              "createdAt"
-            ]
+            "$ref": "#/components/schemas/MeDto"
           },
           "accessToken": {
             "type": "string",
@@ -938,14 +942,12 @@
           },
           "expiresIn": {
             "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991,
             "description": "Access token còn hiệu lực (giây)",
             "example": 900
           },
           "refreshToken": {
-            "description": "Chỉ có khi gửi header X-Client: mobile; web nhận trong cookie HttpOnly",
-            "type": "string"
+            "type": "string",
+            "description": "Chỉ có khi gửi header X-Client: mobile; web nhận trong cookie HttpOnly"
           }
         },
         "required": [
@@ -954,39 +956,49 @@
           "expiresIn"
         ]
       },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "bad_request",
+          "validation_failed",
+          "unauthenticated",
+          "invalid_token",
+          "invalid_credentials",
+          "token_reused",
+          "account_banned",
+          "email_taken",
+          "forbidden",
+          "not_found",
+          "conflict",
+          "payload_too_large",
+          "rate_limited",
+          "internal_error",
+          "timeout",
+          "service_unavailable"
+        ]
+      },
       "ApiErrorDto": {
         "type": "object",
         "properties": {
           "code": {
-            "type": "string",
-            "enum": [
-              "bad_request",
-              "validation_failed",
-              "unauthenticated",
-              "invalid_token",
-              "invalid_credentials",
-              "token_reused",
-              "account_banned",
-              "email_taken",
-              "forbidden",
-              "not_found",
-              "conflict",
-              "payload_too_large",
-              "rate_limited",
-              "internal_error",
-              "timeout",
-              "service_unavailable"
+            "example": "not_found",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
             ]
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "Tiếng Anh, cho dev đọc; client hiển thị lời theo code"
           },
           "details": {
             "type": "object",
-            "additionalProperties": {}
+            "additionalProperties": true
           },
           "requestId": {
-            "type": "string"
+            "type": "string",
+            "example": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
           }
         },
         "required": [
@@ -999,10 +1011,10 @@
         "type": "object",
         "properties": {
           "email": {
+            "type": "string",
             "format": "email",
             "maxLength": 254,
-            "example": "linh@example.com",
-            "type": "string"
+            "example": "linh@example.com"
           },
           "password": {
             "type": "string",
@@ -1020,60 +1032,11 @@
         "type": "object",
         "properties": {
           "refreshToken": {
-            "description": "Chỉ mobile gửi; web để trống, token nằm trong cookie refresh_token",
             "type": "string",
-            "minLength": 1,
-            "maxLength": 256
+            "maxLength": 256,
+            "description": "Chỉ mobile gửi; web để trống, token nằm trong cookie refresh_token"
           }
-        },
-        "default": {}
-      },
-      "MeDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
-          },
-          "displayName": {
-            "type": "string",
-            "example": "Linh"
-          },
-          "avatarUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "admin"
-            ]
-          },
-          "emailVerified": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "displayName",
-          "avatarUrl",
-          "role",
-          "emailVerified",
-          "createdAt"
-        ]
+        }
       },
       "UpdateMeDto": {
         "type": "object",
@@ -1082,7 +1045,8 @@
             "type": "string",
             "minLength": 2,
             "maxLength": 50,
-            "example": "Linh Nguyễn"
+            "example": "Linh Nguyễn",
+            "description": "Tên hiển thị, 2–50 ký tự sau khi bỏ khoảng trắng ở hai đầu"
           }
         },
         "required": [

@@ -37,11 +37,13 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
 - **Ngữ cảnh request:** `core/context`: `requestIdMiddleware` đặt `req.id` (nhận `x-request-id` hợp lệ của client hoặc tự sinh) và trả lại header; `nestjs-cls` giữ id cho filter và service; `nestjs-pino` ghi log JSON có `requestId`, ẩn `authorization`, cookie, mật khẩu, token.
 - **Lỗi:**
   - Service ném `AppError(code, details?)`.
-  - `AllExceptionsFilter` (toàn cục) đổi mọi lỗi qua `toApiError` thành `{ code, message, details?, requestId }`. Gồm: lỗi zod → `validation_failed` với `details.issues`, `HttpException` theo status, lỗi body-parser, lỗi lạ → 500 không lộ chi tiết.
+  - `AllExceptionsFilter` (toàn cục) đổi mọi lỗi qua `toApiError` thành `{ code, message, details?, requestId }`. Gồm: lỗi validate → `validation_failed` với `details.issues`, `HttpException` theo status, lỗi body-parser, lỗi lạ → 500 không lộ chi tiết.
   - `message` tiếng Anh cho dev; client hiển thị tiếng Việt theo `code`.
   - **Mã mới thêm vào `core/errors/error-codes.ts`.**
 - **Validate và OpenAPI:**
-  - DTO là `class X extends createZodDto(schema)`, import từ `@/core/http/zod-dto` (lớp bọc nestjs-zod: sửa schema nullable mà Nest hiểu nhầm thành mảng; lint chặn import thẳng từ `nestjs-zod`). `ZodValidationPipe` toàn cục.
+  - **DTO là class dùng class-validator + class-transformer:** mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger (không dùng plugin CLI của Nest vì build bằng SWC). Trường bắt buộc khai báo `name!: string`.
+  - `ValidationPipe` toàn cục (`core/http/validation.ts`): bỏ trường lạ (`whitelist`), chạy `@Transform` (`Trim()`, `NormalizeEmail()` trong `core/http/transforms.ts`), **không** đổi kiểu ngầm. Lỗi → 400 `validation_failed`, `details.issues = [{ path, code, message }]` với `code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...).
+  - zod chỉ còn dùng cho biến môi trường (`config/env.schema.ts`).
   - Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`). Mỗi endpoint có `@ApiOperation({ summary })` tiếng Việt, `@ApiErrorResponses(...codes)` (`core/http/api-error-responses.ts`) liệt kê mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
   - Trên `/docs`, gọi register / login / refresh xong thì access token tự điền vào nút Authorize.
 - **Database** (`src/infra/database`, plan `documents/plan-02-database.md`):
@@ -72,7 +74,7 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
   - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
-- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt ở `test/unit/`, cùng cấu trúc thư mục với `src/` (vd `src/modules/auth/password.service.ts` → `test/unit/modules/auth/password.service.spec.ts`), import bằng alias `@/`; e2e đặt ở `test/<tên>/`.
+- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (class-validator). Test unit đặt ở `test/unit/`, cùng cấu trúc thư mục với `src/` (vd `src/modules/auth/password.service.ts` → `test/unit/modules/auth/password.service.spec.ts`), import bằng alias `@/`; e2e đặt ở `test/<tên>/`.
 
 ## Quy ước
 

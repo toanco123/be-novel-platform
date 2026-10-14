@@ -14,9 +14,9 @@ Trạng thái: ✅ xong (14/10/2026).
   - Web: lỗi `invalid_token`, `account_banned` thì xóa cookie. `token_reused` không xóa, vì tab khác có thể vừa nhận cookie mới.
 - **Mật khẩu khi đăng nhập** chỉ cần 1–128 ký tự: user chuyển từ Supabase có thể có mật khẩu ngắn hơn 8. Đăng ký vẫn 8–72.
 - **Thứ tự guard toàn cục:** đăng ký ở `AppModule` theo thứ tự `JwtAuthGuard` → `RolesGuard` → `AppThrottlerGuard`, để throttler đếm theo user. `RateLimitModule` không còn tự đăng ký guard.
-- **`createZodDto` bọc lại** ở `core/http/zod-dto.ts`:
-  - zod 4.6 sinh `type: ['string', 'null']` cho giá trị nullable, Nest hiểu nhầm thành mảng (`avatarUrl` thành `string[]` trong Swagger). Lớp bọc đổi về `type: 'string', nullable: true`.
-  - Luật lint chặn import `createZodDto` thẳng từ `nestjs-zod`.
+- **DTO đổi sang class-validator + class-transformer** (người dùng yêu cầu, 14/10/2026), bỏ `nestjs-zod`:
+  - Lỗi validate vẫn là `validation_failed` với `details.issues = [{ path, code, message }]`; `code` giờ là tên ràng buộc của class-validator (`isEmail`, `isLength`...), không còn mã của zod.
+  - Swagger lấy schema từ `@ApiProperty`.
 - **Log có `userId`** (`customProps` của pino-http).
 - **Test:** project unit có `DATABASE_URL` / `REDIS_URL` giả (module config kiểm tra env ngay khi nạp). e2e bật `TRUST_PROXY_HOPS=1` để giả nhiều IP bằng `X-Forwarded-For`.
 - **Cần nhớ khi chuyển web sang BE:** cookie `SameSite=Lax` chỉ được gửi khi web và API cùng "site" (vd `novel.vn` và `api.novel.vn`). Khác site thì phải đổi sang `SameSite=None` (kèm chống CSRF).
@@ -107,7 +107,7 @@ Bám theo Supabase để chuyển dữ liệu sau này: `users` thay `auth.users
 ### Swagger (người dùng yêu cầu thêm, 14/10/2026)
 
 - Trang `/docs` dễ xem và thử API:
-  - Mỗi endpoint có tóm tắt tiếng Việt; schema request và response (từ DTO zod) kèm ví dụ.
+  - Mỗi endpoint có tóm tắt tiếng Việt; schema request và response (từ `@ApiProperty` của DTO) kèm ví dụ.
   - Liệt kê các mã lỗi có thể trả về (`@ApiErrorResponses(...)`, dùng chung dạng lỗi `ApiErrorDto`).
 - Nút **Authorize** (bearer JWT) để dán access token; `persistAuthorization` giữ token khi tải lại trang.
 - Nhóm theo tag (`auth`, `me`, `health`); bật "Try it out" sẵn.
@@ -129,7 +129,7 @@ Bám theo Supabase để chuyển dữ liệu sau này: `users` thay `auth.users
 3. Schema `users`, `profiles`, `refresh_tokens`; migration (`db:generate` + trigger `updated_at`).
 4. `PasswordService`, `TokenService`, `SessionService` (tạo, xoay vòng, thu hồi refresh token); `AuthService` (đăng ký, đăng nhập); `UsersRepository`, `SessionsRepository`.
 5. Guard, decorator, CLS actor; `cookie-parser` trong bootstrap.
-6. Controller `auth` và `me`; DTO zod; Swagger có bearer auth.
+6. Controller `auth` và `me`; DTO (class-validator); Swagger có bearer auth.
 7. Script `keys:generate`.
 
 ## Kiểm tra

@@ -32,23 +32,23 @@ Ngoài phạm vi đợt này:
 
 Khi cài thì lấy bản mới nhất của đúng dòng phiên bản và ghim chính xác (`--save-exact`).
 
-| Phần                   | Lựa chọn                                                                                                                                                                            |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Runtime                | Node 24 (`.nvmrc`, `engines`), npm                                                                                                                                                  |
-| Framework              | NestJS **11** (Express 5), CLI dùng builder SWC, TypeScript 6 strict. NestJS 12 đã ra nhưng `nestjs-zod` và throttler-storage-redis chưa hỗ trợ, nên nâng cấp là việc riêng sau này |
-| Config                 | `@nestjs/config` + schema env bằng **zod** (sai env thì dừng khi khởi động)                                                                                                         |
-| DTO, validate, OpenAPI | **zod 4 + nestjs-zod**: một schema vừa validate vừa sinh Swagger; zod giống web                                                                                                     |
-| DB                     | `drizzle-orm` + `drizzle-kit` + `postgres` (postgres.js)                                                                                                                            |
-| Ngữ cảnh request       | `nestjs-cls` (requestId, actor)                                                                                                                                                     |
-| Log                    | `nestjs-pino` (requestId, userId; ẩn token, mật khẩu)                                                                                                                               |
-| Rate limit             | `@nestjs/throttler` lưu trên Redis (`@nest-lab/throttler-storage-redis`, `ioredis`), cộng `RateLimitService` riêng cho hạn mức nghiệp vụ                                            |
-| Job                    | `@nestjs/bullmq` + `bullmq` (hàng đợi `mail`; process `worker.ts` riêng)                                                                                                            |
-| Health, docs           | `@nestjs/terminus`, `@nestjs/swagger` (`/docs`, `/openapi.json`)                                                                                                                    |
-| Bảo mật                | `helmet`, CORS allowlist, `cookie-parser`, `jose` (JWT ES256, JWKS của Google/Apple), `argon2`, `bcryptjs` (chỉ để xác minh hash cũ)                                                |
-| Mail, lưu ảnh          | `nodemailer` (Mailpit ở local), `@aws-sdk/client-s3` + `s3-request-presigner`                                                                                                       |
-| Giám sát               | `@sentry/nestjs` (chỉ bật khi có DSN)                                                                                                                                               |
-| Test                   | **vitest** + `unplugin-swc`, `supertest`, **Testcontainers** (postgres:17, redis)                                                                                                   |
-| Lint, format           | `oxlint`, `prettier` (cùng quy ước với web: không chấm phẩy, nháy đơn, width 100)                                                                                                   |
+| Phần                   | Lựa chọn                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime                | Node 24 (`.nvmrc`, `engines`), npm                                                                                                                                  |
+| Framework              | NestJS **11** (Express 5), CLI dùng builder SWC, TypeScript 6 strict. NestJS 12 đã ra nhưng throttler-storage-redis chưa hỗ trợ, nên nâng cấp là việc riêng sau này |
+| Config                 | `@nestjs/config` + schema env bằng **zod** (sai env thì dừng khi khởi động)                                                                                         |
+| DTO, validate, OpenAPI | **class-validator + class-transformer** (đổi từ zod + nestjs-zod theo yêu cầu, 14/10/2026), `@ApiProperty` cho Swagger; zod chỉ dùng cho env                        |
+| DB                     | `drizzle-orm` + `drizzle-kit` + `postgres` (postgres.js)                                                                                                            |
+| Ngữ cảnh request       | `nestjs-cls` (requestId, actor)                                                                                                                                     |
+| Log                    | `nestjs-pino` (requestId, userId; ẩn token, mật khẩu)                                                                                                               |
+| Rate limit             | `@nestjs/throttler` lưu trên Redis (`@nest-lab/throttler-storage-redis`, `ioredis`), cộng `RateLimitService` riêng cho hạn mức nghiệp vụ                            |
+| Job                    | `@nestjs/bullmq` + `bullmq` (hàng đợi `mail`; process `worker.ts` riêng)                                                                                            |
+| Health, docs           | `@nestjs/terminus`, `@nestjs/swagger` (`/docs`, `/openapi.json`)                                                                                                    |
+| Bảo mật                | `helmet`, CORS allowlist, `cookie-parser`, `jose` (JWT ES256, JWKS của Google/Apple), `argon2`, `bcryptjs` (chỉ để xác minh hash cũ)                                |
+| Mail, lưu ảnh          | `nodemailer` (Mailpit ở local), `@aws-sdk/client-s3` + `s3-request-presigner`                                                                                       |
+| Giám sát               | `@sentry/nestjs` (chỉ bật khi có DSN)                                                                                                                               |
+| Test                   | **vitest** + `unplugin-swc`, `supertest`, **Testcontainers** (postgres:17, redis)                                                                                   |
+| Lint, format           | `oxlint`, `prettier` (cùng quy ước với web: không chấm phẩy, nháy đơn, width 100)                                                                                   |
 
 ## 2. Cấu trúc thư mục
 
@@ -93,7 +93,7 @@ be-novel-platform/
 - **Service:** luật nghiệp vụ, quyền, hạn mức, mở transaction.
 - **Repository:** nơi duy nhất import bảng Drizzle; mọi hàm nhận `tx`.
 - **Mapper:** dòng DB → DTO trả về (camelCase, giống kiểu domain của web).
-- **`dto/`:** schema zod.
+- **`dto/`:** class DTO (class-validator).
 - **Test:** unit đặt ở `test/unit/` (cùng cấu trúc thư mục với `src/`), e2e đặt ở `test/<module>/`.
 
 ## 3. Thiết kế lõi
@@ -127,7 +127,7 @@ be-novel-platform/
 
 - `AllExceptionsFilter` trả `{ code, message, details?, requestId }`.
   - `message` bằng tiếng Anh cho dev; **client tự hiển thị lời tiếng Việt theo `code`** (web đang làm vậy).
-  - Lỗi zod nằm ở `details.issues`.
+  - Lỗi validate nằm ở `details.issues`.
   - Chỉ gửi Sentry với lỗi 5xx.
 
 ### 3.3 Auth (`modules/auth`, `core/auth`)

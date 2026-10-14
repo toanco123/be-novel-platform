@@ -1,6 +1,5 @@
 import type { INestApplication } from '@nestjs/common'
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger'
-import { cleanupOpenApiDoc } from 'nestjs-zod'
 import { version } from '../../../package.json'
 
 /** Tên security scheme bearer (khớp @ApiBearerAuth() mặc định) */
@@ -14,7 +13,7 @@ const DESCRIPTION = `Backend của nền tảng đọc truyện chữ.
 
 **Lỗi** luôn có dạng \`{ code, message, details?, requestId }\`; client hiển thị lời theo \`code\`.`
 
-/** Tài liệu OpenAPI của app (DTO zod → schema qua nestjs-zod) */
+/** Tài liệu OpenAPI của app (schema lấy từ @ApiProperty của DTO) */
 export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('Novel Platform API')
@@ -28,7 +27,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addTag('me', 'Tài khoản của người đang đăng nhập')
     .addTag('health', 'Kiểm tra app còn chạy (cho Docker / load balancer)')
     .build()
-  return cleanupOpenApiDoc(SwaggerModule.createDocument(app, config))
+  return SwaggerModule.createDocument(app, config)
 }
 
 /**

@@ -1,21 +1,41 @@
-import { z } from 'zod'
-import { createZodDto } from '@/core/http/zod-dto'
+import { ApiProperty } from '@nestjs/swagger'
+import { IsString, Length } from 'class-validator'
+import type { Role } from '@/core/auth/actor'
+import { Trim } from '@/core/http/transforms'
 
-/** Tên hiển thị: 2–50 ký tự sau khi bỏ khoảng trắng ở hai đầu (giống web) */
-export const displayNameSchema = z.string().trim().min(2).max(50)
+/** Hồ sơ của chính mình (không bao giờ có password_hash) */
+export class MeDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string
 
-export const meSchema = z.object({
-  id: z.uuid(),
-  email: z.email(),
-  displayName: z.string().meta({ example: 'Linh' }),
-  avatarUrl: z.string().nullable(),
-  role: z.enum(['user', 'admin']),
-  emailVerified: z.boolean(),
-  createdAt: z.iso.datetime(),
-})
+  @ApiProperty({ format: 'email', example: 'linh@example.com' })
+  email!: string
 
-export class MeDto extends createZodDto(meSchema) {}
+  @ApiProperty({ example: 'Linh' })
+  displayName!: string
 
-export class UpdateMeDto extends createZodDto(
-  z.object({ displayName: displayNameSchema.meta({ example: 'Linh Nguyễn' }) }),
-) {}
+  @ApiProperty({ type: String, nullable: true, example: null })
+  avatarUrl!: string | null
+
+  @ApiProperty({ enum: ['user', 'admin'], example: 'user' })
+  role!: Role
+
+  @ApiProperty({ description: 'false cho tới khi xác nhận email (phần 5)' })
+  emailVerified!: boolean
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt!: string
+}
+
+export class UpdateMeDto {
+  @ApiProperty({
+    minLength: 2,
+    maxLength: 50,
+    example: 'Linh Nguyễn',
+    description: 'Tên hiển thị, 2–50 ký tự sau khi bỏ khoảng trắng ở hai đầu',
+  })
+  @Trim()
+  @IsString()
+  @Length(2, 50)
+  displayName!: string
+}

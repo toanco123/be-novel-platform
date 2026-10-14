@@ -1,8 +1,6 @@
 // Đổi mọi loại lỗi về một dạng trả cho client: { status, code, message, details? }.
 // Hàm thuần (không phụ thuộc Nest DI) để test riêng.
 import { HttpException } from '@nestjs/common'
-import { ZodValidationException } from 'nestjs-zod'
-import { ZodError } from 'zod'
 import { AppError } from './app-error'
 import { ERROR_CODES, type ErrorCode } from './error-codes'
 import { pgErrorCode } from './pg-error'
@@ -20,14 +18,6 @@ const fromCode = (code: ErrorCode, details?: Record<string, unknown>): ApiError 
   message: ERROR_CODES[code].message,
   ...(details ? { details } : {}),
 })
-
-/** Lỗi validate của zod → danh sách { path, code, message } cho client hiện cạnh ô nhập */
-export const zodIssues = (error: ZodError) =>
-  error.issues.map((issue) => ({
-    path: issue.path.map(String).join('.'),
-    code: issue.code,
-    message: issue.message,
-  }))
 
 /** Mã lỗi theo HTTP status của HttpException (lỗi của Nest hoặc thư viện) */
 function codeForStatus(status: number): ErrorCode {
@@ -58,16 +48,6 @@ type BodyParserError = { type?: unknown; status?: unknown }
 
 export function toApiError(exception: unknown): ApiError {
   if (exception instanceof AppError) return fromCode(exception.code, exception.details)
-  if (exception instanceof ZodValidationException) {
-    const zodError = exception.getZodError()
-    return fromCode(
-      'validation_failed',
-      zodError instanceof ZodError ? { issues: zodIssues(zodError) } : undefined,
-    )
-  }
-  if (exception instanceof ZodError) {
-    return fromCode('validation_failed', { issues: zodIssues(exception) })
-  }
   if (exception instanceof HttpException) return fromCode(codeForStatus(exception.getStatus()))
 
   // Lỗi Postgres (Drizzle bọc trong cause): trùng khóa, khóa ngoại, check, quá thời gian

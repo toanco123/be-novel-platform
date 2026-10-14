@@ -25,31 +25,14 @@
           {
             "name": "drizzle-orm/postgres-js",
             "message": "Chỉ src/infra/database được tạo client Drizzle; nơi khác inject DB."
-          },
-          {
-            "name": "nestjs-zod",
-            "importNames": ["createZodDto"],
-            "message": "Dùng createZodDto của @/core/http/zod-dto (sửa schema nullable trong Swagger)."
           }
         ]
-      }
-    ],
-    "no-underscore-dangle": [
-      "warn",
-      {
-        "allow": ["_OPENAPI_METADATA_FACTORY"]
       }
     ]
   },
   "overrides": [
     {
       "files": ["src/infra/database/**", "test/**"],
-      "rules": {
-        "no-restricted-imports": "off"
-      }
-    },
-    {
-      "files": ["src/core/http/zod-dto.ts"],
       "rules": {
         "no-restricted-imports": "off"
       }

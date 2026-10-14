@@ -1,13 +1,13 @@
-// Thành phần dùng chung toàn app: filter lỗi, pipe validate bằng zod
+// Thành phần dùng chung toàn app: filter lỗi, pipe validate (class-validator)
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_PIPE } from '@nestjs/core'
-import { ZodValidationPipe } from 'nestjs-zod'
 import { AllExceptionsFilter } from './errors/all-exceptions.filter'
+import { createValidationPipe } from './http/validation'
 
 @Module({
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
-    { provide: APP_PIPE, useClass: ZodValidationPipe },
+    { provide: APP_PIPE, useFactory: createValidationPipe },
   ],
 })
 export class CoreModule {}

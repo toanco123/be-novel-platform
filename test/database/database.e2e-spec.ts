@@ -2,15 +2,18 @@
 import { Body, Controller, Inject, Module, Post } from '@nestjs/common'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { sql } from 'drizzle-orm'
+import { IsString, MinLength } from 'class-validator'
 import request from 'supertest'
-import { z } from 'zod'
-import { createZodDto } from '@/core/http/zod-dto'
 import { AppModule } from '@/app.module'
 import { Public } from '@/core/auth/auth.decorators'
 import { DB, type Db } from '@/infra/database/db'
 import { createTestApp } from '../helpers/app'
 
-class ItemDto extends createZodDto(z.object({ name: z.string().min(1) })) {}
+class ItemDto {
+  @IsString()
+  @MinLength(1)
+  name!: string
+}
 
 /** Bảng chỉ dùng trong test này (không nằm trong schema của app) */
 @Public()

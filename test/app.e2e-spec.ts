@@ -2,15 +2,18 @@
 // validate, định dạng lỗi và OpenAPI
 import { Body, Controller, Get, Module, Post } from '@nestjs/common'
 import type { NestExpressApplication } from '@nestjs/platform-express'
+import { IsString, Length } from 'class-validator'
 import request from 'supertest'
-import { z } from 'zod'
-import { createZodDto } from '@/core/http/zod-dto'
 import { AppModule } from '@/app.module'
 import { Public } from '@/core/auth/auth.decorators'
 import { AppError } from '@/core/errors/app-error'
 import { createTestApp } from './helpers/app'
 
-class EchoDto extends createZodDto(z.object({ name: z.string().min(2).max(20) })) {}
+class EchoDto {
+  @IsString()
+  @Length(2, 20)
+  name!: string
+}
 
 @Public()
 @Controller('test-only')
@@ -63,10 +66,15 @@ test('body sai: 400 validation_failed kèm issue; đúng thì qua', async () => 
   const bad = await http().post('/v1/test-only/echo').send({ name: 'a' }).expect(400)
   expect(bad.body).toMatchObject({
     code: 'validation_failed',
-    details: { issues: [expect.objectContaining({ path: 'name', code: 'too_small' })] },
+    details: { issues: [expect.objectContaining({ path: 'name', code: 'isLength' })] },
     requestId: expect.any(String),
   })
   await http().post('/v1/test-only/echo').send({ name: 'Linh' }).expect(201, { name: 'Linh' })
+  // Trường không khai báo trong DTO bị bỏ
+  await http()
+    .post('/v1/test-only/echo')
+    .send({ name: 'Linh', role: 'admin' })
+    .expect(201, { name: 'Linh' })
 })
 
 test('JSON hỏng: 400 bad_request; body quá 1 MB: 413 payload_too_large', async () => {
@@ -107,8 +115,7 @@ test('/openapi.json: route cần đăng nhập có bearer, nullable đúng dạn
   expect(body.components.securitySchemes.bearer).toMatchObject({ type: 'http', scheme: 'bearer' })
   expect(body.paths['/v1/me'].get.security).toEqual([{ bearer: [] }])
   expect(body.paths['/v1/auth/login'].post.security).toBeUndefined()
-  // zod sinh type: ['string', 'null'], Nest hiểu nhầm thành mảng (xem core/http/zod-dto.ts)
-  expect(body.components.schemas.MeDto.properties.avatarUrl).toEqual({
+  expect(body.components.schemas.MeDto.properties.avatarUrl).toMatchObject({
     type: 'string',
     nullable: true,
   })
