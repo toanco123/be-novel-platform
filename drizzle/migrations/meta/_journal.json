@@ -50,6 +50,27 @@
       "when": 1791952385649,
       "tag": "0006_genres",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791959967701,
+      "tag": "0007_catalog_functions",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791959985727,
+      "tag": "0008_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791960004852,
+      "tag": "0009_catalog_triggers",
+      "breakpoints": true
     }
   ]
 }

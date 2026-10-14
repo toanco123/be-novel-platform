@@ -1,10 +1,17 @@
 // Mọi bảng của BE (Drizzle, code-first). Thêm bảng: tạo file trong thư mục này, export ở đây,
 // rồi `npm run db:generate` và review SQL sinh ra trong drizzle/migrations.
+export * from './chapter-views'
+export * from './chapters'
 export { timestamps } from './columns'
+export * from './curated-stories'
 export * from './email-tokens'
 export * from './genres'
 export * from './oauth-accounts'
 export * from './profiles'
 export * from './refresh-tokens'
+export * from './stories'
+export * from './story-enums'
+export * from './story-genres'
+export * from './story-stats'
 export type * from './schema.types'
 export * from './users'

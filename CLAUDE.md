@@ -108,7 +108,13 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
 - **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction; từ 2 service thì vào `services/`), repository (nơi duy nhất đụng DB), mapper (dòng DB → DTO), `dto/` (class-validator, mỗi DTO một file), `<tên>.types.ts`, `<tên>.constants.ts`. Module mẫu đơn giản nhất: `src/modules/genres` (plan `documents/plan-07-genres.md`); module có nhiều phần: `src/modules/auth`.
 - **Danh sách có phân trang:** query kế thừa `PageQueryDto` (`common/pagination`), repository nhận `pageWindow(query)`, service trả `Page<T>`, route gắn `@ResponsePage(Dto)` (`common/response/decorators/`) → `{ statusCode, data: [...], meta: { total, page, pageSize, pageCount, requestId } }`.
-- **Slug** dùng `slugify` (`common/utils/slugify.ts`, giống web).
+- **Slug** dùng `slugify` (`common/utils/slugify.ts`, giống web). DB có hàm SQL `slugify(text)` cùng kết quả (migration `0007_catalog_functions`, có test so sánh).
+- **Truyện, chương** (đợt 1, plan `documents/plan-09-truyen-chuong.md`):
+  - Bảng `stories`, `story_genres`, `chapters`, `story_stats`, `chapter_views`, `curated_stories` lấy đúng Supabase. Khóa ngoại đặt tên như Supabase (`foreignKey({ name: '<bảng>_<cột>_fkey' })`), index `desc` ghi `.desc().nullsFirst()` cho khớp `desc` của Postgres.
+  - **Số liệu suy ra để ở trigger DB** (`stories_create_stats`, `chapters_after_change`: `story_stats` theo chương đã xuất bản, chương hẹn giờ sớm nhất, `stories.updated_at`). **Luật nghiệp vụ** của trigger Supabase (công khai, duyệt, gỡ, khóa số chương, tối đa 5 thể loại, `published_at` của chương) viết trong service ở đợt Sáng tác.
+  - `StoriesRepository` dựng thẻ truyện (tương đương view `story_cards`: truyện + tên chủ + số liệu + thể loại gom `jsonb_agg`); `StoriesMapper` đổi sang DTO (URL bìa = `S3_PUBLIC_URL/covers/<cover_path>`, `author.slug` = `tac-gia-<ownerId>[-<slug bút danh>]` như web). Điều kiện "truyện công khai có chương" dùng chung: `isPublicStory()` (`modules/stories/public-story.ts`).
+  - Ai xem được: `canViewStory` (`stories.rules.ts`); không xem được trả 404 như không tồn tại.
+  - Test tạo dữ liệu thẳng vào DB: `createStory(db, {...})`, `createGenre(db)` (`test/helpers/stories.ts`); quản trị viên: `adminUser(app)`.
 
 ## Quy ước
 
