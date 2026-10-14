@@ -21,7 +21,7 @@ Chi tiết và ví dụ: mục **Quy ước code** trong [README.md](README.md).
 - **Hằng số, token inject, hạn mức** trong `*.constants.ts`.
 - **Dùng chung thì vào `src/common/<mảng>/`** (`auth`, `context`, `crypto`, `errors`, `http`, `rate-limit`, `swagger`, `validation`, `utils`); chỉ một module dùng thì để trong module. Provider dùng chung khai báo trong module `@Global()` của mảng (`CryptoModule`, `ErrorsModule`).
 - **DTO kiểu chuẩn của Nest:** `email: string`, không dùng `!` (`strictPropertyInitialization` tắt).
-- **Response thành công bọc `{ statusCode, data, meta: { requestId } }`** (route gắn `@ResponseDto(Dto)`, bắt buộc với route trả dữ liệu); danh sách `{ statusCode, data: [...], meta: { total, page, pageCount, requestId } }`; lỗi `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; `statusCode` luôn trùng HTTP status; 204 và `/health/*` không bọc. Chi tiết: README mục **Dạng response**.
+- **Response thành công bọc `{ statusCode, data, meta: { requestId } }`** (route gắn `@ResponseDto(Dto)`, bắt buộc với route trả dữ liệu; mảng không phân trang `@ResponseDto(Dto, { isArray: true })`); danh sách `{ statusCode, data: [...], meta: { total, page, pageCount, requestId } }`; lỗi `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; `statusCode` luôn trùng HTTP status; 204 và `/health/*` không bọc. Chi tiết: README mục **Dạng response**.
 - **Đầu vào** nhận cả camelCase lẫn snake_case (pipe đổi về camelCase trước khi validate); **đầu ra** luôn camelCase. DTO trả về dùng `@ApiField` cho mỗi trường; route trả dữ liệu dùng `@ResponseDto(Dto)` (response chỉ có trường có `@ApiField`, kể cả object con).
 - **Từ 2 file cùng loại trở lên trong một thư mục** thì gom vào thư mục con số nhiều: `services/`, `repositories/`, `types/`, `guards/`, `decorators/`, `dto/`. Ngoại lệ: `app.module.ts`, `worker.module.ts` ở `src/`.
 - **Import:** cùng thư mục hoặc lên một cấp trong cùng nhánh thì đường dẫn tương đối; xa hơn dùng `@/`. Test luôn dùng `@/`.
@@ -115,6 +115,10 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - `StoriesRepository` dựng thẻ truyện (tương đương view `story_cards`: truyện + tên chủ + số liệu + thể loại gom `jsonb_agg`); `StoriesMapper` đổi sang DTO (URL bìa = `S3_PUBLIC_URL/covers/<cover_path>`, `author.slug` = `tac-gia-<ownerId>[-<slug bút danh>]` như web). Điều kiện "truyện công khai có chương" dùng chung: `isPublicStory()` (`modules/stories/public-story.ts`).
   - Ai xem được: `canViewStory` (`stories.rules.ts`); không xem được trả 404 như không tồn tại.
   - Test tạo dữ liệu thẳng vào DB: `createStory(db, {...})`, `createGenre(db)` (`test/helpers/stories.ts`); quản trị viên: `adminUser(app)`.
+- **Chương cho người đọc** (plan `documents/plan-10-chuong-nguoi-doc.md`, module `src/modules/chapters`, import `StoriesModule` để dùng `StoriesRepository` / `StoriesMapper`):
+  - Ai xem được truyện thì đọc được chương **đã xuất bản**; chương nháp không bao giờ hiện cho người đọc. Không đọc được → 404.
+  - Route tĩnh (`contents`) khai báo trước `:number`; `:number` validate bằng `ChapterParamsDto` (1–99999, sai → 400 `validation_failed`).
+  - **Lượt đọc** (`ChapterViewsService`): chống đếm lặp bằng Redis `SET NX EX` (`views:seen:<ngày>:<storyId>:<số>:<người xem>`, 2 ngày) thay bảng `private.chapter_view_log`; người xem `u:<id>` / `ip:<SHA-256>` / `unknown`. Ghi DB lỗi thì xóa khóa. Ngày theo giờ Việt Nam: `vietnamDate()` (`common/utils/vietnam-date.ts`).
 
 ## Quy ước
 

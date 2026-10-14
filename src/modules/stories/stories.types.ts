@@ -10,6 +10,9 @@ export type StoryAccess = {
   reviewStatus: ReviewStatus | null
 }
 
+/** Truyện tìm theo slug khi chỉ cần xét quyền xem (mục lục, lượt đọc) */
+export type StoryAccessRow = StoryAccess & { id: string }
+
 /**
  * Một thẻ truyện đọc từ DB (stories + profiles + story_stats + thể loại), tương đương một dòng view
  * story_cards của Supabase

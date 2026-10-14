@@ -18,6 +18,7 @@ import { QueueModule } from './infra/queue/queue.module'
 import { RedisModule } from './infra/redis/redis.module'
 import { StorageModule } from './infra/storage/storage.module'
 import { AuthModule } from './modules/auth/auth.module'
+import { ChaptersModule } from './modules/chapters/chapters.module'
 import { GenresModule } from './modules/genres/genres.module'
 import { HealthModule } from './modules/health/health.module'
 import { StoriesModule } from './modules/stories/stories.module'
@@ -43,6 +44,7 @@ import { UsersModule } from './modules/users/users.module'
     UsersModule,
     GenresModule,
     StoriesModule,
+    ChaptersModule,
   ],
   // Guard toàn cục chạy theo thứ tự khai báo: xác thực trước để throttler đếm theo user
   providers: [

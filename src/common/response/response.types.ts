@@ -4,6 +4,8 @@ export type ResponseDtoOptions = {
   /** HTTP status ghi trong Swagger (status thật do route quyết định, vd @HttpCode) */
   status?: 200 | 201
   description?: string
+  /** Service trả mảng (không phân trang): data là mảng các `dto` */
+  isArray?: boolean
 }
 
 /** Thông tin kèm theo mọi response thành công */

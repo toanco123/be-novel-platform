@@ -84,7 +84,7 @@ src/
     swagger/              #   dựng /docs, @ApiErrorResponses
     response/             #   đầu ra: lọc theo DTO và bọc { statusCode, data, meta } (@ResponseDto, @ApiField)
     validation/           #   kiểm tra đầu vào: ValidationPipe, @Trim, @NormalizeEmail
-    utils/                #   hàm tiện ích thuần (withTimeout)
+    utils/                #   hàm tiện ích thuần (withTimeout, slugify, vietnamDate)
   infra/                  # hạ tầng
     database/             #   Postgres + Drizzle, schema/, migration, health
     redis/                #   client Redis dùng chung, health
@@ -96,6 +96,7 @@ src/
     users/                #   /v1/me, dữ liệu tài khoản
     genres/               #   thể loại (module mẫu cho các module sau)
     stories/              #   truyện cho người đọc (chi tiết; danh sách, tìm kiếm, xếp hạng ở các phần sau)
+    chapters/             #   chương cho người đọc: mục lục, đọc chương, tải nhiều chương, ghi lượt đọc
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
 test/
@@ -233,6 +234,7 @@ export class LoginDto {
 
 - Response bọc `{ statusCode, data, meta }` (xem [Dạng response](#dạng-response)); `data` **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
 - Swagger ghi luôn schema response; status khác 200 thì truyền thêm, vd `@ResponseDto(AuthSessionDto, { status: 201 })`.
+- Service trả mảng không phân trang: `@ResponseDto(ChapterDto, { isArray: true })` → `data: [...]`, `meta: { requestId }`.
 - Giá trị có thể null: `@ApiField({ type: String, nullable: true })`.
 
 ```ts
@@ -332,7 +334,7 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 ## Truyện, chương (đọc công khai)
 
-Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md)).
+Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md), [plan-10-chuong-nguoi-doc.md](documents/plan-10-chuong-nguoi-doc.md)).
 
 - **Bảng lấy đúng từ Supabase:** `stories`, `story_genres`, `chapters`, `story_stats`, `chapter_views`, `curated_stories` (cột, check, tên constraint, index).
   - Khác: bỏ `default auth.uid()`; extension `unaccent`, `pg_trgm` ở schema `public`.
@@ -340,10 +342,16 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 - **Số liệu `story_stats` do trigger của DB tính** (migration `0009_catalog_triggers`): tạo truyện thì có dòng số liệu; thêm / sửa / xóa chương thì tính lại số chương đã xuất bản, chương đầu, mới nhất, chương hẹn giờ sớm nhất.
 - **Luật nghiệp vụ** (công khai, duyệt, gỡ, số chương...) viết trong service ở đợt Sáng tác, không dùng trigger.
 - **Ai xem được truyện** (`stories.rules.ts`): truyện công khai thì mọi người; truyện nháp thì chủ truyện; truyện chờ duyệt thì thêm quản trị viên. Không xem được → 404.
+- **Chương:** ai xem được truyện thì đọc được chương **đã xuất bản** (chương nháp không hiện ở trang đọc, mục lục, kể cả với chủ truyện). Chương trước / sau là chương đã xuất bản liền kề.
+- **Lượt đọc:** mỗi người (khách: mỗi IP, băm SHA-256) 1 lượt / chương / ngày giờ Việt Nam, chống đếm lặp bằng khóa Redis sống 2 ngày; không tính chủ truyện và truyện chưa công khai. Lượt mới cộng `chapter_views` (theo ngày) và `story_stats.view_count` trong một transaction.
 
-| Endpoint                | Việc                                                                                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `GET /v1/stories/:slug` | Chi tiết truyện: tác giả (bút danh), thể loại theo thứ tự, URL bìa, số liệu, chương mới nhất, chương hẹn giờ |
+| Endpoint                                               | Việc                                                                                                         |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `GET /v1/stories/:slug`                                | Chi tiết truyện: tác giả (bút danh), thể loại theo thứ tự, URL bìa, số liệu, chương mới nhất, chương hẹn giờ |
+| `GET /v1/stories/:slug/chapters`                       | Mục lục (phân trang): `order=asc\|desc`, `from` (chỉ chương có số ≥ `from`; `meta.total` là số chương từ đó) |
+| `GET /v1/stories/:slug/chapters/:number`               | Một chương: nội dung, thông tin truyện, chương trước / sau                                                   |
+| `GET /v1/stories/:slug/chapters/contents?from=&count=` | Tối đa 20 chương liên tiếp từ `from` (tải trước, đọc offline)                                                |
+| `POST /v1/stories/:slug/chapters/:number/views`        | Ghi lượt đọc, luôn 204 nếu chương đọc được                                                                   |
 
 ## Đăng nhập mạng xã hội
 
@@ -408,6 +416,7 @@ Response thành công có dạng chung **`{ statusCode, data, meta }`** (chốt 
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Thành công, có dữ liệu       | `{ statusCode, data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`)                                            |
 | Danh sách                    | `{ statusCode, data: [...], meta: { total, page, pageSize, pageCount, requestId } }` (route gắn `@ResponsePage(Dto)`, query `?page=&pageSize=`) |
+| Mảng không phân trang        | `{ statusCode, data: [...], meta: { requestId } }` (route gắn `@ResponseDto(Dto, { isArray: true })`)                                           |
 | Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                                                                  |
 | Lỗi                          | `{ statusCode, error: { code, message, details? }, meta: { requestId } }`, status 4xx / 5xx (xem [Lỗi](#lỗi))                                   |
 | `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc                                                          |
