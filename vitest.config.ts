@@ -34,6 +34,9 @@ export default defineConfig({
           name: 'e2e',
           globals: true,
           include: ['test/**/*.e2e-spec.ts'],
+          // Postgres thật (Testcontainers, cần Docker) cho cả lượt e2e
+          globalSetup: ['test/setup/global-setup.ts'],
+          setupFiles: ['test/setup/env.ts'],
           env: testEnv,
           testTimeout: 30_000,
           hookTimeout: 60_000,

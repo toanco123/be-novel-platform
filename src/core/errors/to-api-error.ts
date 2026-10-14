@@ -5,6 +5,7 @@ import { ZodValidationException } from 'nestjs-zod'
 import { ZodError } from 'zod'
 import { AppError } from './app-error'
 import { ERROR_CODES, type ErrorCode } from './error-codes'
+import { pgErrorCode } from './pg-error'
 
 export type ApiError = {
   status: number
@@ -45,6 +46,8 @@ function codeForStatus(status: number): ErrorCode {
       return 'payload_too_large'
     case 429:
       return 'rate_limited'
+    case 503:
+      return 'service_unavailable'
     default:
       return status >= 500 ? 'internal_error' : 'bad_request'
   }
@@ -66,6 +69,10 @@ export function toApiError(exception: unknown): ApiError {
     return fromCode('validation_failed', { issues: zodIssues(exception) })
   }
   if (exception instanceof HttpException) return fromCode(codeForStatus(exception.getStatus()))
+
+  // Lỗi Postgres (Drizzle bọc trong cause): trùng khóa, khóa ngoại, check, quá thời gian
+  const pgCode = pgErrorCode(exception)
+  if (pgCode) return fromCode(pgCode)
 
   const parser = exception as BodyParserError | null
   if (parser && typeof parser === 'object') {

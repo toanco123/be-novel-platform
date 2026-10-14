@@ -23,6 +23,9 @@ npm test                 # unit (src/**/*.spec.ts)
 npm run test:e2e         # e2e (test/**/*.e2e-spec.ts)
 npx vitest run src/core/errors/to-api-error.spec.ts   # một file
 npm run openapi:export   # ghi openapi.json
+npm run db:up            # Postgres 17 (docker-compose, cổng 5433); db:down để tắt
+npm run db:generate      # sinh migration từ schema Drizzle
+npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.js)
 ```
 
 ## Kiến trúc
@@ -36,6 +39,14 @@ npm run openapi:export   # ghi openapi.json
   - `message` tiếng Anh cho dev; client hiển thị tiếng Việt theo `code`.
   - **Mã mới thêm vào `core/errors/error-codes.ts`.**
 - **Validate và OpenAPI:** DTO là `class X extends createZodDto(schema)` (nestjs-zod), `ZodValidationPipe` toàn cục; Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`).
+- **Database** (`src/infra/database`, plan `documents/plan-02-database.md`):
+  - Một pool postgres.js; inject `@Inject(DB) db: Db` (Drizzle, `casing: 'snake_case'`). Kiểu `Tx` cho transaction, `Executor` (= `Db | Tx`) cho repository.
+  - Chỉ `src/infra/database` (và test) được import `postgres` / `drizzle-orm/postgres-js` (luật `no-restricted-imports` của oxlint).
+  - **Schema code-first:** `schema/*.ts` export ở `schema/index.ts`, dùng `timestamps` cho bảng có sửa.
+  - **Migration:** `npm run db:generate` rồi review SQL trong `drizzle/migrations` (hàm, trigger thì `drizzle-kit generate --custom`). Bảng có `updated_at` thêm trigger `set_updated_at()` trong migration. `db:migrate` là bước riêng khi deploy, app không tự migrate. Sửa schema mà quên generate thì `drizzle-kit generate` sẽ ra file mới (CI kiểm tra).
+  - Lỗi Postgres đi qua `pg-error.ts`: `23505` → `conflict` (hoặc mã riêng theo tên constraint trong `CONSTRAINT_CODES`), `23503` → `not_found`, `23514`/`22001` → `validation_failed`, `57014` → `timeout`.
+  - `/health/ready` kiểm tra DB (503 `service_unavailable` khi hỏng).
+- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17 bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
 - **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt cạnh code, e2e đặt ở `test/<tên>/`.
 

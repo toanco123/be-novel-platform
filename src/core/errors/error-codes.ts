@@ -11,6 +11,7 @@ export const ERROR_CODES = {
   rate_limited: { status: 429, message: 'Too many requests, try again later' },
   internal_error: { status: 500, message: 'Internal server error' },
   timeout: { status: 503, message: 'The request took too long' },
+  service_unavailable: { status: 503, message: 'A dependency is not available' },
 } as const satisfies Record<string, { status: number; message: string }>
 
 export type ErrorCode = keyof typeof ERROR_CODES

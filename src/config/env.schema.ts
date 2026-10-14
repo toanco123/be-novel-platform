@@ -26,6 +26,15 @@ export const envSchema = z.object({
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(0),
   /** Bật /docs và /openapi.json */
   SWAGGER_ENABLED: flag.default(true),
+
+  /** postgres://user:pass@host:port/db */
+  DATABASE_URL: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'Phải là URL postgres:// hoặc postgresql://'),
+  /** Số kết nối tối đa của pool (mỗi process api / worker) */
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+  /** Câu lệnh chạy quá lâu thì Postgres hủy (lỗi 57014 → mã timeout) */
+  DB_STATEMENT_TIMEOUT_MS: z.coerce.number().int().min(100).default(15_000),
 })
 
 export type Env = z.infer<typeof envSchema>

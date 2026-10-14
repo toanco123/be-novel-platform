@@ -8,13 +8,15 @@ Backend NestJS cho nền tảng đọc truyện chữ (web `web-novel-platform`,
 ## Yêu cầu
 
 - Node 24 (`.nvmrc`), npm
-- Từ phần 2 trở đi: Docker (OrbStack hoặc Docker Desktop) để chạy Postgres, Redis, MinIO, Mailpit và test e2e
+- Docker (OrbStack hoặc Docker Desktop): Postgres cho dev (docker-compose) và test e2e (Testcontainers)
 
 ## Bắt đầu
 
 ```bash
 npm ci
 cp .env.example .env
+npm run db:up          # Postgres 17 ở cổng 5433
+npm run db:migrate
 npm run dev            # http://localhost:4000, tài liệu API ở /docs
 ```
 
@@ -30,6 +32,10 @@ npm run dev            # http://localhost:4000, tài liệu API ở /docs
 | `npm test`                        | Test unit (`src/**/*.spec.ts`)                          |
 | `npm run test:e2e`                | Test e2e (`test/**/*.e2e-spec.ts`)                      |
 | `npm run openapi:export`          | Ghi `openapi.json` (để web, mobile sinh client có kiểu) |
+| `npm run db:up` / `db:down`       | Bật / tắt Postgres (docker-compose)                     |
+| `npm run db:generate`             | Sinh migration từ schema Drizzle (`drizzle/migrations`) |
+| `npm run db:migrate`              | Chạy migration                                          |
+| `npm run db:studio`               | Drizzle Studio xem dữ liệu                              |
 
 ## Cấu trúc
 
@@ -39,9 +45,11 @@ src/
   app.module.ts
   config/                    # biến môi trường (zod), AppConfig
   core/                      # dùng chung: ngữ cảnh request, lỗi, HTTP, Swagger
+  infra/database/            # Postgres (postgres.js + Drizzle), schema, migration, health
   modules/<tên>/             # từng domain: controller, service, repository, dto
   cli/                       # script chạy bằng node (xuất OpenAPI...)
-test/                        # test e2e
+test/                        # test e2e (Postgres thật qua Testcontainers)
+drizzle/migrations/          # SQL migration (sinh bởi drizzle-kit, review trước khi commit)
 documents/                   # thiết kế, lộ trình, plan từng phần (tiếng Việt)
 ```
 

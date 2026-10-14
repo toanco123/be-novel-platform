@@ -6,8 +6,8 @@ import { createZodDto } from 'nestjs-zod'
 import request from 'supertest'
 import { z } from 'zod'
 import { AppModule } from '@/app.module'
-import { createApp } from '@/bootstrap'
 import { AppError } from '@/core/errors/app-error'
+import { createTestApp } from './helpers/app'
 
 class EchoDto extends createZodDto(z.object({ name: z.string().min(2).max(20) })) {}
 
@@ -35,8 +35,7 @@ class TestAppModule {}
 let app: NestExpressApplication
 
 beforeAll(async () => {
-  app = await createApp(TestAppModule)
-  await app.init()
+  app = await createTestApp(TestAppModule)
 })
 afterAll(() => app.close())
 

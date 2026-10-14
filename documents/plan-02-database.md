@@ -1,6 +1,12 @@
 # Phần 2: Database
 
-Trạng thái: chờ làm. Cần Docker (OrbStack) trên máy.
+Trạng thái: ✅ xong (14/10/2026).
+
+**Khác so với plan:**
+
+- `runMigrations` nằm ở `src/infra/database/migrations.ts` (dùng chung cho CLI `src/cli/migrate.ts` và global setup của test e2e); CLI đọc `.env` bằng `process.loadEnvFile`.
+- Thêm mã lỗi `service_unavailable` (503) cho `/health/ready` khi một phụ thuộc không trả lời; `22001` (chuỗi quá dài) cũng thành `validation_failed`; lỗi Postgres lạ (vd sai cú pháp) để thành `internal_error` vì đó là lỗi của code.
+- Health indicator DB tự viết bằng `HealthIndicatorService` của terminus (Drizzle không có indicator sẵn); trường hợp DB hỏng kiểm tra bằng test unit.
 
 ## Mục tiêu
 

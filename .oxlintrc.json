@@ -8,7 +8,28 @@
   "rules": {
     "typescript/no-explicit-any": "warn",
     "no-console": "error",
-    "typescript/no-extraneous-class": ["warn", { "allowWithDecorator": true }]
+    "typescript/no-extraneous-class": ["warn", { "allowWithDecorator": true }],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "postgres",
+            "message": "Chỉ src/infra/database được dùng postgres.js; nơi khác inject DB (Drizzle)."
+          },
+          {
+            "name": "drizzle-orm/postgres-js",
+            "message": "Chỉ src/infra/database được tạo client Drizzle; nơi khác inject DB."
+          }
+        ]
+      }
+    ]
   },
+  "overrides": [
+    {
+      "files": ["src/infra/database/**", "test/**"],
+      "rules": { "no-restricted-imports": "off" }
+    }
+  ],
   "ignorePatterns": ["dist", "coverage", "node_modules"]
 }
