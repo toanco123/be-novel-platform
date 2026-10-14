@@ -2556,6 +2556,192 @@
         ]
       }
     },
+    "/v1/stories": {
+      "get": {
+        "description": "Truyện công khai có ít nhất một chương đã xuất bản. Lọc theo trạng thái, thể loại, độ dài, tác giả (`author.slug`); sắp xếp giảm dần. Mô tả chỉ 300 ký tự đầu.",
+        "operationId": "StoriesController_list_v1",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ongoing",
+                "completed"
+              ]
+            }
+          },
+          {
+            "name": "genre",
+            "required": false,
+            "in": "query",
+            "description": "Slug thể loại",
+            "schema": {
+              "example": "ngon-tinh",
+              "type": "string"
+            }
+          },
+          {
+            "name": "length",
+            "required": false,
+            "in": "query",
+            "description": "Số chương đã xuất bản: short < 50, medium 50–200, long > 200",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "short",
+                "medium",
+                "long"
+              ]
+            }
+          },
+          {
+            "name": "author",
+            "required": false,
+            "in": "query",
+            "description": "`author.slug` của truyện: cùng chủ truyện và cùng bút danh",
+            "schema": {
+              "example": "tac-gia-6f1c2d4e-0b7a-4c1e-9a55-2f3e8d9b1a20",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Giảm dần. updated: mới cập nhật; views: lượt đọc (rồi mới cập nhật); rating: điểm, lượt chấm (rồi mới đăng); newest: mới đăng",
+            "schema": {
+              "default": "updated",
+              "type": "string",
+              "enum": [
+                "updated",
+                "views",
+                "rating",
+                "newest"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Danh sách truyện",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
     "/v1/stories/{slug}": {
       "get": {
         "description": "Truyện công khai: mọi người. Truyện nháp: chỉ chủ truyện (xem trước). Truyện chờ duyệt: thêm quản trị viên. Không xem được thì 404 như truyện không tồn tại.",
@@ -2650,6 +2836,122 @@
           }
         },
         "summary": "Chi tiết truyện",
+        "tags": [
+          "stories"
+        ]
+      }
+    },
+    "/v1/curated-stories": {
+      "get": {
+        "description": "Theo thứ tự quản trị viên chọn, chỉ truyện công khai có chương. Chưa chọn thì tự chọn: featured là 4 truyện nhiều lượt đọc nhất, editor_pick là 8 truyện điểm cao nhất.",
+        "operationId": "CuratedStoriesController_list_v1",
+        "parameters": [
+          {
+            "name": "list",
+            "required": true,
+            "in": "query",
+            "description": "featured: banner nổi bật; editor_pick: đề cử",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "featured",
+                "editor_pick"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoryDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Truyện chọn tay cho trang chủ",
         "tags": [
           "stories"
         ]
@@ -3293,7 +3595,7 @@
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "contact": {}
   },
   "tags": [
@@ -3929,6 +4231,140 @@
         "required": [
           "number",
           "at"
+        ]
+      },
+      "StoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string",
+            "example": "thanh-xuan-vuon-truong",
+            "description": "Không đổi sau khi tạo"
+          },
+          "title": {
+            "type": "string",
+            "example": "Thanh xuân vườn trường"
+          },
+          "author": {
+            "$ref": "#/components/schemas/StoryAuthorDto"
+          },
+          "genres": {
+            "description": "Theo thứ tự tác giả chọn",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryGenreDto"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ongoing",
+              "completed"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ],
+            "description": "draft chỉ chủ truyện (và quản trị viên với truyện chờ duyệt) thấy"
+          },
+          "description": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri"
+          },
+          "coverThumbUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Bìa nhỏ 320×480; null: chưa có, dùng coverUrl"
+          },
+          "chapterCount": {
+            "type": "number",
+            "description": "Số chương đã xuất bản"
+          },
+          "firstChapterNumber": {
+            "type": "number",
+            "nullable": true,
+            "description": "null: chưa có chương nào xuất bản"
+          },
+          "latestChapter": {
+            "nullable": true,
+            "description": "Chương đã xuất bản mới nhất",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChapterRefDto"
+              }
+            ]
+          },
+          "nextChapter": {
+            "nullable": true,
+            "description": "Chương hẹn giờ sớm nhất",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextChapterDto"
+              }
+            ]
+          },
+          "viewCount": {
+            "type": "number"
+          },
+          "ratingAvg": {
+            "type": "number",
+            "example": 4.25,
+            "description": "0 khi chưa có lượt chấm"
+          },
+          "ratingCount": {
+            "type": "number"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Chủ truyện"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Lần đầu công khai (chưa công khai: lúc tạo)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Mới nhất trong: chương xuất bản gần nhất, lần đầu công khai, lúc tạo"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "author",
+          "genres",
+          "status",
+          "visibility",
+          "description",
+          "coverUrl",
+          "coverThumbUrl",
+          "chapterCount",
+          "firstChapterNumber",
+          "latestChapter",
+          "nextChapter",
+          "viewCount",
+          "ratingAvg",
+          "ratingCount",
+          "ownerId",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "StoryDetailDto": {

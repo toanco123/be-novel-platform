@@ -1,17 +1,36 @@
-import { Controller, Get, Param } from '@nestjs/common'
+import { Controller, Get, Header, Param, Query } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
 import { Public } from '@/common/auth/decorators/public.decorator'
 import { ResponseDto } from '@/common/response/decorators/response-dto.decorator'
+import { ResponsePage } from '@/common/response/decorators/response-page.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
-import { StoryDetailDto } from './dto/story-detail.dto'
-import { StoriesService } from './stories.service'
+import { StoryDetailDto } from '../dto/story-detail.dto'
+import { StoryListQueryDto } from '../dto/story-list-query.dto'
+import { StoryDto } from '../dto/story.dto'
+import { StoriesService } from '../services/stories.service'
+import { STORIES_CACHE_CONTROL } from '../stories.constants'
 
 @ApiTags('stories')
 @Controller('stories')
 export class StoriesController {
   constructor(private readonly stories: StoriesService) {}
+
+  @Get()
+  @Public()
+  @Header('Cache-Control', STORIES_CACHE_CONTROL)
+  @ApiOperation({
+    summary: 'Danh sách truyện',
+    description:
+      'Truyện công khai có ít nhất một chương đã xuất bản. Lọc theo trạng thái, thể loại, độ dài, ' +
+      'tác giả (`author.slug`); sắp xếp giảm dần. Mô tả chỉ 300 ký tự đầu.',
+  })
+  @ResponsePage(StoryDto)
+  @ApiErrorResponses('validation_failed', 'invalid_token')
+  list(@Query() query: StoryListQueryDto) {
+    return this.stories.list(query)
+  }
 
   @Get(':slug')
   @Public()
