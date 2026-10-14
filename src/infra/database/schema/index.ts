@@ -2,6 +2,7 @@
 // rồi `npm run db:generate` và review SQL sinh ra trong drizzle/migrations.
 export { timestamps } from './columns'
 export * from './email-tokens'
+export * from './oauth-accounts'
 export * from './profiles'
 export * from './refresh-tokens'
 export type * from './schema.types'

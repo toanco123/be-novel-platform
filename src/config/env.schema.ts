@@ -71,6 +71,22 @@ export const envSchema = z
     APP_WEB_URL: z.url().default('http://localhost:3000'),
     /** Secret của Cloudflare Turnstile; trống thì tắt captcha */
     TURNSTILE_SECRET: z.string().optional(),
+
+    /** Gốc URL công khai của API: dựng redirect_uri khai báo ở Google / Facebook */
+    API_PUBLIC_URL: z.url().default('http://localhost:4000'),
+    /**
+     * Tiền tố `redirect_to` được phép sau đăng nhập mạng xã hội (csv), ngoài APP_WEB_URL: vd deep
+     * link của app `webtruyen://`
+     */
+    OAUTH_REDIRECT_URLS: csv.default([]),
+    /** Đăng nhập Google (OAuth client loại Web application); thiếu thì tắt */
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+    /** Đăng nhập Facebook; thiếu thì tắt */
+    FACEBOOK_APP_ID: z.string().optional(),
+    FACEBOOK_APP_SECRET: z.string().optional(),
+    /** Đăng nhập Apple (app iOS): bundle id được phép là `aud` của id token (csv); trống thì tắt */
+    APPLE_CLIENT_IDS: csv.default([]),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && (!env.JWT_PRIVATE_KEY || !env.JWT_PUBLIC_KEY)) {
@@ -81,7 +97,7 @@ export const envSchema = z
       })
     }
     // Production không được dùng mặc định của dev (Mailpit, localhost)
-    for (const key of ['SMTP_URL', 'APP_WEB_URL'] as const) {
+    for (const key of ['SMTP_URL', 'APP_WEB_URL', 'API_PUBLIC_URL'] as const) {
       if (env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/.test(env[key])) {
         ctx.addIssue({
           code: 'custom',

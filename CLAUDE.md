@@ -89,11 +89,16 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - **Refresh token** (`modules/auth`): DB chỉ lưu SHA-256; mỗi phiên là một họ token (`family_id` = `sessionId`), xoay vòng mỗi lần dùng, dùng lại token cũ thì thu hồi cả họ. Web nhận qua cookie `refresh_token`, mobile qua body (`X-Client: mobile`).
   - **Mật khẩu:** `PasswordService` (`common/crypto`): argon2id; hash bcrypt cũ (Supabase) đăng nhập đúng thì băm lại. Token bí mật gửi cho client (refresh token, sau này link email) sinh bằng `randomToken()`, DB lưu `hashToken()` (`common/crypto/secure-token.ts`).
   - **Dữ liệu tài khoản:** `UsersRepository` (`modules/users`) là nơi duy nhất truy vấn `users`, `profiles`. Kiểm tra mật khẩu hiện tại trước thao tác nhạy cảm (đổi mật khẩu, xóa tài khoản) qua `PasswordConfirmationService` (sai 5 lần / 15 phút → `rate_limited`).
+- **Đăng nhập mạng xã hội** (plan `documents/plan-06-oauth.md`, code ở `modules/auth/oauth/`):
+  - Google, Facebook: luồng chuyển trang (`authorize` → provider → `callback` → `redirect_to?code` → `exchange` với PKCE của client). `state` và mã một lần lưu Redis (`OAuthStoreService`, GETDEL).
+  - Apple: id token + nonce (`/oauth/apple/token`).
+  - Client gọi provider ở `oauth/providers/*.client.ts`, id token xác minh bằng JWKS (`jose`). Test thay client bằng bản giả: `createTestApp(undefined, [{ provide: GoogleOAuthClient, useValue: fake }])`.
+  - Tìm / liên kết / tạo tài khoản ở `OAuthService.resolveUser` (bảng `oauth_accounts`); mở phiên bằng `AuthService.signIn`; trả phiên chung qua `sessionResponse`.
 - **Email** (plan `documents/plan-05-email.md`):
   - API dựng thư (template ở `modules/auth/templates/`, khung chung `mail-layout.template.ts`, chữ người dùng nhập luôn qua `escapeHtml`) rồi đẩy vào hàng đợi `mail` bằng `MailQueueService` (`infra/mail`). Worker gửi qua SMTP (`MailerService`, `MailProcessor`), lỗi thì thử lại và ghi `ErrorLogger`.
   - Link trong thư: `EmailTokenService` (`createLink` / `consume`), bảng `email_tokens` lưu SHA-256, dùng một lần; link sai, hết hạn, đã dùng → 400 `invalid_link`.
   - Dev xem thư ở Mailpit (http://localhost:8025); test e2e đọc thư qua API của Mailpit (`test/helpers/mailpit.ts`, cần chạy `createWorker()` trong file test).
-- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17, Redis và Mailpit bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
+- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17, Redis và Mailpit bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp(rootModule?, overrides?)` (`test/helpers/app.ts`, dùng `Test.createTestingModule` để thay provider bằng bản giả). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
   - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
@@ -102,6 +107,7 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
 ## Quy ước
 
 - Tên nhánh git tiếng Anh (kebab-case); commit message và tài liệu tiếng Việt.
+- **Mỗi phần mới làm trên nhánh riêng** (người dùng yêu cầu 14/10/2026): tạo nhánh từ `main` → commit trên nhánh → push nhánh, mở pull request (`gh pr create`) để CI chạy → CI xanh thì merge vào `main` bằng merge commit "Gộp nhánh <tên nhánh>" (`gh pr merge --merge`), commit gộp không tăng version → `git checkout main && git pull`.
 - **Mỗi commit tăng version:** `npm version patch --no-git-tag-version` rồi đưa `package.json`, `package-lock.json` vào chính commit đó.
 - Import alias `@/` → `src/`: cấu hình ở `tsconfig.json` (`paths`), `.swcrc` (build) và `vitest.config.ts`. TypeScript 6 bỏ `baseUrl` nên `paths` viết tương đối (`./src/*`); SWC cần `baseUrl` trong `.swcrc`.
 - Build bằng SWC (`nest-cli.json` → `.swcrc`, `stripLeadingPaths`), đầu ra `dist/main.js`. Kiểm tra kiểu tách riêng (`npm run typecheck`).

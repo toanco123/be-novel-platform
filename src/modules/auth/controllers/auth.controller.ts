@@ -4,24 +4,20 @@ import type { Request, Response } from 'express'
 import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
 import { Public } from '@/common/auth/decorators/public.decorator'
-import {
-  clearRefreshCookie,
-  readRefreshToken,
-  setRefreshCookie,
-} from '@/common/auth/refresh-cookie'
+import { clearRefreshCookie, readRefreshToken } from '@/common/auth/refresh-cookie'
 import { RequireCaptcha } from '@/common/captcha/require-captcha.decorator'
 import { AppException } from '@/common/errors/app.exception'
-import { clientMeta, isMobileClient } from '@/common/http/request-client'
+import { clientMeta } from '@/common/http/request-client'
 import { ResponseDto } from '@/common/response/response-dto.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
 import { AppConfig } from '@/config/app-config.service'
 import { ApiClientHeader, ApiRefreshTokenBody, ApiSessionOperation } from '../auth-api.decorator'
-import type { AuthResult } from '../auth.types'
 import { AuthSessionDto } from '../dto/auth-session.dto'
 import { LoginDto } from '../dto/login.dto'
 import { RefreshTokenDto } from '../dto/refresh-token.dto'
 import { RegisterDto } from '../dto/register.dto'
 import { AuthService } from '../services/auth.service'
+import { sessionResponse } from '../session-response'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -43,7 +39,12 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.respond(req, res, await this.auth.register(body, clientMeta(req)))
+    return sessionResponse(
+      req,
+      res,
+      this.config.cookieSecure,
+      await this.auth.register(body, clientMeta(req)),
+    )
   }
 
   @Post('login')
@@ -59,7 +60,12 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.respond(req, res, await this.auth.login(body, clientMeta(req)))
+    return sessionResponse(
+      req,
+      res,
+      this.config.cookieSecure,
+      await this.auth.login(body, clientMeta(req)),
+    )
   }
 
   @Post('refresh')
@@ -83,7 +89,12 @@ export class AuthController {
     const token = readRefreshToken(req, body.refreshToken)
     if (!token) throw new AppException('unauthenticated')
     try {
-      return this.respond(req, res, await this.auth.refresh(token, clientMeta(req)))
+      return sessionResponse(
+        req,
+        res,
+        this.config.cookieSecure,
+        await this.auth.refresh(token, clientMeta(req)),
+      )
     } catch (error) {
       // Cookie không còn dùng được thì xóa. token_reused không xóa: có thể tab khác vừa nhận
       // cookie mới
@@ -125,13 +136,5 @@ export class AuthController {
   async logoutAll(@CurrentUser() actor: Actor, @Res({ passthrough: true }) res: Response) {
     await this.auth.logoutAll(actor.id)
     clearRefreshCookie(res, this.config.cookieSecure)
-  }
-
-  /** Mobile: refresh token trong body; web: đặt cookie và bỏ khỏi body */
-  private respond(req: Request, res: Response, result: AuthResult): AuthSessionDto {
-    const { refreshToken, refreshExpiresAt, ...session } = result
-    if (isMobileClient(req)) return { ...session, refreshToken }
-    setRefreshCookie(res, refreshToken, refreshExpiresAt, this.config.cookieSecure)
-    return session
   }
 }

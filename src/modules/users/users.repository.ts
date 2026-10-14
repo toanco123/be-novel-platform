@@ -34,13 +34,22 @@ export class UsersRepository {
   async createWithProfile(input: NewUserWithProfile, ex: Executor) {
     const [user] = await ex
       .insert(users)
-      .values({ email: input.email, passwordHash: input.passwordHash })
+      .values({
+        email: input.email,
+        passwordHash: input.passwordHash,
+        emailVerifiedAt: input.emailVerified ? new Date() : null,
+      })
       .returning()
-    await ex.insert(profiles).values({ id: user!.id, displayName: input.displayName })
+    await ex.insert(profiles).values({
+      id: user!.id,
+      displayName: input.displayName,
+      avatarUrl: input.avatarUrl ?? null,
+    })
     return user!
   }
 
-  async updatePasswordHash(id: string, passwordHash: string, ex: Executor = this.db) {
+  /** null: bỏ mật khẩu (tài khoản chỉ còn đăng nhập bằng mạng xã hội) */
+  async updatePasswordHash(id: string, passwordHash: string | null, ex: Executor = this.db) {
     await ex.update(users).set({ passwordHash }).where(eq(users.id, id))
   }
 

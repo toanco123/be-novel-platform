@@ -1300,6 +1300,502 @@
         ]
       }
     },
+    "/v1/auth/oauth/providers": {
+      "get": {
+        "operationId": "OAuthController_providers_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/OAuthProvidersDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Provider đăng nhập mạng xã hội đang bật",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/oauth/{provider}/authorize": {
+      "get": {
+        "description": "Mở bằng trình duyệt (web) hoặc trình duyệt trong app. Chuyển sang trang đăng nhập của provider; xong thì quay về `redirect_to?code=…` (đổi ở POST /v1/auth/oauth/exchange) hoặc `redirect_to?error=<mã lỗi>`.",
+        "operationId": "OAuthController_authorize_v1",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "redirectTo",
+            "required": true,
+            "in": "query",
+            "description": "Nơi quay về sau khi đăng nhập: trang của web (APP_WEB_URL) hoặc deep link của app đã khai báo (OAUTH_REDIRECT_URLS). Nhận về `?code=` (đổi ở /v1/auth/oauth/exchange) hoặc `?error=`",
+            "schema": {
+              "example": "http://localhost:3000/auth/callback",
+              "type": "string"
+            }
+          },
+          {
+            "name": "codeChallenge",
+            "required": true,
+            "in": "query",
+            "description": "PKCE: SHA-256 (base64url) của codeVerifier client giữ bí mật",
+            "schema": {
+              "example": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Chuyển sang trang đăng nhập của provider"
+          },
+          "400": {
+            "description": "code: `validation_failed`, `provider_disabled`, `oauth_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "provider_disabled": {
+                    "summary": "provider_disabled",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "provider_disabled",
+                        "message": "This sign-in provider is not enabled"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "oauth_failed": {
+                    "summary": "oauth_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "oauth_failed",
+                        "message": "Social sign-in failed"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Bắt đầu đăng nhập Google / Facebook (chuyển trang)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/oauth/{provider}/callback": {
+      "get": {
+        "description": "Không gọi trực tiếp. Chuyển về `redirect_to` kèm `?code=` hoặc `?error=`.",
+        "operationId": "OAuthController_callback_v1",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Chuyển về redirect_to của client"
+          }
+        },
+        "summary": "Provider quay về (redirect_uri khai báo ở Google / Facebook)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/oauth/exchange": {
+      "post": {
+        "description": "Mã dùng một lần, sống 60 giây; `codeVerifier` phải khớp `code_challenge` lúc authorize. Web nhận refresh token trong cookie, app gửi `X-Client: mobile` để nhận trong body.",
+        "operationId": "OAuthController_exchange_v1",
+        "parameters": [
+          {
+            "name": "X-Client",
+            "in": "header",
+            "description": "`mobile`: refresh token trả trong body thay vì cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mobile"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthExchangeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthSessionDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`, `oauth_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "oauth_failed": {
+                    "summary": "oauth_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "oauth_failed",
+                        "message": "Social sign-in failed"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "code: `account_banned`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "account_banned": {
+                    "summary": "account_banned",
+                    "value": {
+                      "statusCode": 403,
+                      "error": {
+                        "code": "account_banned",
+                        "message": "This account is banned",
+                        "details": {
+                          "bannedUntil": "2026-12-31T00:00:00.000Z"
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Đổi mã sau đăng nhập mạng xã hội lấy phiên",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/oauth/apple/token": {
+      "post": {
+        "description": "Gửi `X-Client: mobile` để nhận refresh token trong body.",
+        "operationId": "OAuthController_appleToken_v1",
+        "parameters": [
+          {
+            "name": "X-Client",
+            "in": "header",
+            "description": "`mobile`: refresh token trả trong body thay vì cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mobile"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleSignInDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthSessionDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`, `provider_disabled`, `oauth_failed`, `oauth_email_required`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "provider_disabled": {
+                    "summary": "provider_disabled",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "provider_disabled",
+                        "message": "This sign-in provider is not enabled"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "oauth_failed": {
+                    "summary": "oauth_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "oauth_failed",
+                        "message": "Social sign-in failed"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "oauth_email_required": {
+                    "summary": "oauth_email_required",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "oauth_email_required",
+                        "message": "The provider did not share an email address"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "code: `account_banned`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "account_banned": {
+                    "summary": "account_banned",
+                    "value": {
+                      "statusCode": 403,
+                      "error": {
+                        "code": "account_banned",
+                        "message": "This account is banned",
+                        "details": {
+                          "bannedUntil": "2026-12-31T00:00:00.000Z"
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "code: `email_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "email_taken": {
+                    "summary": "email_taken",
+                    "value": {
+                      "statusCode": 409,
+                      "error": {
+                        "code": "email_taken",
+                        "message": "Email is already registered"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Đăng nhập Apple (app iOS) bằng id token",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "operationId": "MeController_me_v1",
@@ -1689,7 +2185,7 @@
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.17",
+    "version": "0.0.18",
     "contact": {}
   },
   "tags": [
@@ -1853,6 +2349,9 @@
           "invalid_link",
           "same_password",
           "invalid_captcha",
+          "provider_disabled",
+          "oauth_failed",
+          "oauth_email_required",
           "email_taken",
           "forbidden",
           "not_found",
@@ -2024,6 +2523,68 @@
         "required": [
           "currentPassword",
           "newPassword"
+        ]
+      },
+      "OAuthProvidersDto": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "type": "array",
+            "example": [
+              "google",
+              "facebook"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "google",
+                "facebook",
+                "apple"
+              ]
+            }
+          }
+        },
+        "required": [
+          "providers"
+        ]
+      },
+      "OAuthExchangeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Mã `code` trong redirect_to sau khi đăng nhập (dùng một lần, 60 giây)"
+          },
+          "codeVerifier": {
+            "type": "string",
+            "description": "PKCE: chuỗi bí mật client tạo trước khi gọi authorize (43–128 ký tự)"
+          }
+        },
+        "required": [
+          "code",
+          "codeVerifier"
+        ]
+      },
+      "AppleSignInDto": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "description": "identityToken từ AppleAuthentication.signInAsync"
+          },
+          "nonce": {
+            "type": "string",
+            "description": "Nonce gốc; app gửi SHA-256 (hex) của nó cho Apple"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Họ tên Apple gửi ở lần cho phép đầu tiên; dùng cho tài khoản mới tạo",
+            "maxLength": 30
+          }
+        },
+        "required": [
+          "idToken",
+          "nonce"
         ]
       },
       "UpdateMeDto": {

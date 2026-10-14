@@ -10,6 +10,8 @@ const testEnv = {
   SWAGGER_ENABLED: 'true',
   // Test giả nhiều IP bằng X-Forwarded-For (rate limit theo IP)
   TRUST_PROXY_HOPS: '1',
+  // Deep link của app được phép làm redirect_to (test OAuth)
+  OAUTH_REDIRECT_URLS: 'webtruyen://',
 }
 
 const shared = {
