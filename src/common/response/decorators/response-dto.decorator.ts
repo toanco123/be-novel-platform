@@ -1,8 +1,8 @@
 import { applyDecorators, SetMetadata, type Type } from '@nestjs/common'
 import { ApiExtraModels, ApiResponse, getSchemaPath } from '@nestjs/swagger'
-import { ResponseMetaDto } from './response-meta.dto'
-import { RESPONSE_DTO } from './response.constants'
-import type { ResponseDtoOptions } from './response.types'
+import { ResponseMetaDto } from '../response-meta.dto'
+import { RESPONSE_DTO } from '../response.constants'
+import type { ResponseDtoOptions, ResponseShape } from '../response.types'
 
 /**
  * Route trả về `dto`: ResponseInterceptor lọc theo DTO (chỉ trường có @ApiField) rồi bọc
@@ -11,7 +11,7 @@ import type { ResponseDtoOptions } from './response.types'
  */
 export const ResponseDto = (dto: Type, { status = 200, description }: ResponseDtoOptions = {}) =>
   applyDecorators(
-    SetMetadata(RESPONSE_DTO, dto),
+    SetMetadata(RESPONSE_DTO, { dto, paginated: false } satisfies ResponseShape),
     ApiExtraModels(dto, ResponseMetaDto),
     ApiResponse({
       status,

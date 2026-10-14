@@ -17,6 +17,7 @@ import { MailModule } from './infra/mail/mail.module'
 import { QueueModule } from './infra/queue/queue.module'
 import { RedisModule } from './infra/redis/redis.module'
 import { AuthModule } from './modules/auth/auth.module'
+import { GenresModule } from './modules/genres/genres.module'
 import { HealthModule } from './modules/health/health.module'
 import { UsersModule } from './modules/users/users.module'
 
@@ -37,6 +38,7 @@ import { UsersModule } from './modules/users/users.module'
     HealthModule,
     AuthModule,
     UsersModule,
+    GenresModule,
   ],
   // Guard toàn cục chạy theo thứ tự khai báo: xác thực trước để throttler đếm theo user
   providers: [

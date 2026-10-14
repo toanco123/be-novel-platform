@@ -16,7 +16,7 @@ Cách làm: chia thành từng phần nhỏ. Mỗi phần có plan riêng trong 
 | 5    | Email: Mailpit, hàng đợi mail, xác nhận email, quên và đặt lại mật khẩu, đổi mật khẩu, captcha Turnstile                                                             | [plan-05-email.md](plan-05-email.md)                                   | ✅         |
 | 5.1  | CI GitHub Actions: lint, format, typecheck, build, test unit, e2e (Testcontainers); kiểm tra migration và `openapi.json` khớp code                                   | [plan-05-1-ci.md](plan-05-1-ci.md)                                     | 🚧         |
 | 6    | OAuth: Google và Facebook (chuyển trang + PKCE, web và app), Apple (id token, app); liên kết tài khoản theo email                                                    | [plan-06-oauth.md](plan-06-oauth.md)                                   | ✅         |
-| 7    | Module mẫu `genres` (đủ mọi lớp, làm khuôn cho các module sau)                                                                                                       |                                                                        |            |
+| 7    | Module mẫu `genres` (đủ mọi lớp, làm khuôn cho các module sau) và phân trang dùng chung                                                                              | [plan-07-genres.md](plan-07-genres.md)                                 | ✅         |
 | 8    | Storage S3/MinIO, Dockerfile (+ docker build trong CI), README, CLAUDE.md hoàn chỉnh                                                                                 |                                                                        |            |
 
 ## Các đợt sau

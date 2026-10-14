@@ -1,4 +1,4 @@
-import { ApiField } from '@/common/response/api-field.decorator'
+import { ApiField } from '@/common/response/decorators/api-field.decorator'
 import type { OAuthProvider } from '@/infra/database/schema'
 
 /** Provider đăng nhập mạng xã hội đang bật */

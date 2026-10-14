@@ -7,8 +7,8 @@ import request from 'supertest'
 import { AppModule } from '@/app.module'
 import { Public } from '@/common/auth/decorators/public.decorator'
 import { AppException } from '@/common/errors/app.exception'
-import { ApiField } from '@/common/response/api-field.decorator'
-import { ResponseDto } from '@/common/response/response-dto.decorator'
+import { ApiField } from '@/common/response/decorators/api-field.decorator'
+import { ResponseDto } from '@/common/response/decorators/response-dto.decorator'
 import { createTestApp } from './helpers/app'
 
 class EchoDto {

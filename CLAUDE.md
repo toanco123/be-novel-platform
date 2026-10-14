@@ -102,7 +102,9 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
   - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
-- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction; từ 2 service thì vào `services/`), repository (nơi duy nhất đụng DB), mapper (dòng DB → DTO), `dto/` (class-validator, mỗi DTO một file), `<tên>.types.ts`, `<tên>.constants.ts`. Ví dụ đầy đủ: `src/modules/auth` (xem README).
+- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction; từ 2 service thì vào `services/`), repository (nơi duy nhất đụng DB), mapper (dòng DB → DTO), `dto/` (class-validator, mỗi DTO một file), `<tên>.types.ts`, `<tên>.constants.ts`. Module mẫu đơn giản nhất: `src/modules/genres` (plan `documents/plan-07-genres.md`); module có nhiều phần: `src/modules/auth`.
+- **Danh sách có phân trang:** query kế thừa `PageQueryDto` (`common/pagination`), repository nhận `pageWindow(query)`, service trả `Page<T>`, route gắn `@ResponsePage(Dto)` (`common/response/decorators/`) → `{ statusCode, data: [...], meta: { total, page, pageSize, pageCount, requestId } }`.
+- **Slug** dùng `slugify` (`common/utils/slugify.ts`, giống web).
 
 ## Quy ước
 

@@ -76,6 +76,7 @@ src/
     crypto/               #   băm mật khẩu, token ngẫu nhiên + SHA-256, khóa JWT
     errors/               #   bố cục lỗi chung: mã lỗi, AppException, filter, ErrorLogger
     http/                 #   thông tin client gọi API (web / mobile, IP, user agent)
+    pagination/           #   phân trang: PageQueryDto, Page<T>
     rate-limit/           #   throttler toàn cục, RateLimitService
     swagger/              #   dựng /docs, @ApiErrorResponses
     response/             #   đầu ra: lọc theo DTO và bọc { statusCode, data, meta } (@ResponseDto, @ApiField)
@@ -89,6 +90,7 @@ src/
   modules/                # từng domain nghiệp vụ
     auth/                 #   đăng ký, đăng nhập, refresh token, đăng xuất
     users/                #   /v1/me, dữ liệu tài khoản
+    genres/               #   thể loại (module mẫu cho các module sau)
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
 test/
@@ -220,6 +222,8 @@ export class LoginDto {
 }
 ```
 
+**Danh sách có phân trang:** query kế thừa `PageQueryDto` (`page` từ 1, `pageSize` 1–100, mặc định 20); repository nhận `pageWindow(query)` (`offset`, `limit`); service trả `Page<T>` (`{ items, total, page, pageSize }`); route gắn `@ResponsePage(Dto)`. Ví dụ: `GET /v1/genres` (`src/modules/genres`).
+
 **DTO đầu ra** (response): mỗi trường dùng `@ApiField({...})` (`@ApiFieldOptional` cho trường tùy chọn) thay cho `@ApiProperty`. Route trả dữ liệu **bắt buộc** gắn `@ResponseDto(Dto)` thay cho `@ApiOkResponse`:
 
 - Response bọc `{ statusCode, data, meta }` (xem [Dạng response](#dạng-response)); `data` **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
@@ -310,6 +314,16 @@ Trước khi push nên chạy ở máy: `npm run lint && npm run typecheck && np
 
 Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05-email.md](documents/plan-05-email.md).
 
+## Thể loại (module mẫu)
+
+`src/modules/genres` làm đủ mọi lớp; module mới làm theo khuôn này. Bảng `genres` lấy đúng từ Supabase.
+
+| Endpoint               | Việc                                                                                                                          |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/genres`       | Danh sách (công khai, phân trang): thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo                      |
+| `GET /v1/genres/:slug` | Một thể loại                                                                                                                  |
+| `POST /v1/genres`      | Tạo (đã xác nhận email): trùng tên → 409 `genre_exists` kèm thể loại đang có; tối đa 10 / ngày (quản trị viên không giới hạn) |
+
 ## Đăng nhập mạng xã hội
 
 - **Google, Facebook** (web và app): luồng chuyển trang có PKCE như Supabase.
@@ -345,13 +359,13 @@ Response thành công có dạng chung **`{ statusCode, data, meta }`** (chốt 
 }
 ```
 
-| Trường hợp                   | Trả về                                                                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Thành công, có dữ liệu       | `{ statusCode, data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`)          |
-| Danh sách (từ phần 7)        | `{ statusCode, data: [...], meta: { total, page, pageCount, requestId } }`                                    |
-| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                                |
-| Lỗi                          | `{ statusCode, error: { code, message, details? }, meta: { requestId } }`, status 4xx / 5xx (xem [Lỗi](#lỗi)) |
-| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc                        |
+| Trường hợp                   | Trả về                                                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Thành công, có dữ liệu       | `{ statusCode, data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`)                                            |
+| Danh sách                    | `{ statusCode, data: [...], meta: { total, page, pageSize, pageCount, requestId } }` (route gắn `@ResponsePage(Dto)`, query `?page=&pageSize=`) |
+| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                                                                  |
+| Lỗi                          | `{ statusCode, error: { code, message, details? }, meta: { requestId } }`, status 4xx / 5xx (xem [Lỗi](#lỗi))                                   |
+| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc                                                          |
 
 - Bọc và lọc làm tự động ở `ResponseInterceptor` (`common/response/`) cho route có `@ResponseDto`; controller, service chỉ trả DTO.
 - Thành công hay lỗi đều có `statusCode` (trùng HTTP status) và `meta.requestId` (trùng header `x-request-id`); thành công có `data`, lỗi có `error`.

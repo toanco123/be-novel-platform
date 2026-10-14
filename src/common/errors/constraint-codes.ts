@@ -6,4 +6,5 @@ import type { ErrorCode } from './errors.types'
  */
 export const CONSTRAINT_CODES: Record<string, ErrorCode> = {
   users_email_unique: 'email_taken',
+  genres_pkey: 'genre_exists',
 }

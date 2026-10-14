@@ -1,4 +1,4 @@
-import { ApiField } from './api-field.decorator'
+import { ApiField } from './decorators/api-field.decorator'
 
 /** `meta` của response thành công (Swagger) */
 export class ResponseMetaDto {

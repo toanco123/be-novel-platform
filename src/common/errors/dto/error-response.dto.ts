@@ -1,4 +1,4 @@
-import { ApiField } from '@/common/response/api-field.decorator'
+import { ApiField } from '@/common/response/decorators/api-field.decorator'
 import { ResponseMetaDto } from '@/common/response/response-meta.dto'
 import { ErrorBodyDto } from './error-body.dto'
 
