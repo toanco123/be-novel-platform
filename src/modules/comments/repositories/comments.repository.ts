@@ -3,7 +3,7 @@ import { and, asc, count, desc, eq, gt, isNull, type SQL, sql } from 'drizzle-or
 import type { PageWindow } from '@/common/pagination/pagination.types'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
-import { chapters, comments, profiles, stories } from '@/infra/database/schema'
+import { chapters, commentLikes, comments, profiles, stories } from '@/infra/database/schema'
 import { notBlockedBy } from '@/modules/blocks/block-conditions'
 import type {
   CommentListFilter,
@@ -11,7 +11,7 @@ import type {
   CommentSort,
   CommentTargetRow,
   NewComment,
-} from './comments.types'
+} from '../comments.types'
 
 const SORT_ORDER: Record<CommentSort, SQL[]> = {
   newest: [desc(comments.createdAt), desc(comments.id)],
@@ -80,6 +80,7 @@ export class CommentsRepository {
         storyId: comments.storyId,
         chapterNumber: comments.chapterNumber,
         parentId: comments.parentId,
+        content: comments.content,
         storyVisibility: stories.visibility,
         storyOwnerId: stories.ownerId,
         storyReviewStatus: stories.reviewStatus,
@@ -180,6 +181,9 @@ export class CommentsRepository {
             and ${notBlockedBy(viewerId, sql`replies.user_id`)}
         )`.mapWith(Number),
         likeCount: comments.likeCount,
+        likedByMe: viewerId
+          ? sql<boolean>`exists (select 1 from ${commentLikes} where ${commentLikes.commentId} = ${comments.id} and ${commentLikes.userId} = ${viewerId})`
+          : sql<boolean>`false`,
         editedAt: comments.editedAt,
         isAuthor: sql<boolean>`(${comments.userId} = ${stories.ownerId} and ${stories.authorName} is null)`,
       })

@@ -1,5 +1,7 @@
 import type { chapterViews } from './chapter-views'
 import type { chapters } from './chapters'
+import type { commentLikes } from './comment-likes'
+import type { commentReports } from './comment-reports'
 import type { comments } from './comments'
 import type { curatedStories } from './curated-stories'
 import type { emailTokens } from './email-tokens'
@@ -39,3 +41,6 @@ export type FollowRow = typeof follows.$inferSelect
 export type RatingRow = typeof ratings.$inferSelect
 export type CommentRow = typeof comments.$inferSelect
 export type UserBlockRow = typeof userBlocks.$inferSelect
+export type CommentLikeRow = typeof commentLikes.$inferSelect
+export type CommentReportRow = typeof commentReports.$inferSelect
+export type CommentReportReason = CommentReportRow['reason']

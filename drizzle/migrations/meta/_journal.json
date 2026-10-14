@@ -113,6 +113,20 @@
       "when": 1791963978704,
       "tag": "0015_comments_user_blocks",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791964660905,
+      "tag": "0016_comment_likes_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791964661417,
+      "tag": "0017_comment_likes_triggers",
+      "breakpoints": true
     }
   ]
 }

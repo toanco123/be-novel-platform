@@ -46,6 +46,7 @@ describe('viết bình luận', () => {
       parentId: null,
       replyCount: 0,
       likeCount: 0,
+      likedByMe: false,
       editedAt: null,
       isAuthor: false,
     })

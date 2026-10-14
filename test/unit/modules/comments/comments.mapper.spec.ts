@@ -15,6 +15,7 @@ describe('toComment', () => {
         parentId: null,
         replyCount: 2,
         likeCount: 5,
+        likedByMe: true,
         editedAt: new Date('2026-10-14T01:00:00Z'),
         isAuthor: true,
       }),
@@ -28,6 +29,7 @@ describe('toComment', () => {
       parentId: null,
       replyCount: 2,
       likeCount: 5,
+      likedByMe: true,
       editedAt: '2026-10-14T01:00:00.000Z',
       isAuthor: true,
     })

@@ -12,6 +12,7 @@ export function toComment(row: CommentRow): CommentDto {
     parentId: row.parentId,
     replyCount: row.replyCount,
     likeCount: row.likeCount,
+    likedByMe: row.likedByMe,
     editedAt: row.editedAt?.toISOString() ?? null,
     isAuthor: row.isAuthor,
   }
