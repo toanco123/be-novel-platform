@@ -3,7 +3,7 @@ import {
   newRefreshToken,
   refreshTokenState,
   REUSE_GRACE_MS,
-} from './refresh-token'
+} from '@/modules/auth/refresh-token'
 
 describe('refresh token', () => {
   const now = new Date('2026-10-14T10:00:00Z')

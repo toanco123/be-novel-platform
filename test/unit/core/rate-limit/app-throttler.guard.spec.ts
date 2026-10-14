@@ -1,4 +1,4 @@
-import { throttleTracker } from './app-throttler.guard'
+import { throttleTracker } from '@/core/rate-limit/app-throttler.guard'
 
 test('đã đăng nhập: đếm theo người dùng; khách: theo IP', () => {
   expect(throttleTracker({ user: { id: 'u1' }, ip: '1.2.3.4' })).toBe('user:u1')

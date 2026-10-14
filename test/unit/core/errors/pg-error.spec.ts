@@ -1,5 +1,5 @@
-import { CONSTRAINT_CODES, findPgError, pgErrorCode } from './pg-error'
-import { toApiError } from './to-api-error'
+import { CONSTRAINT_CODES, findPgError, pgErrorCode } from '@/core/errors/pg-error'
+import { toApiError } from '@/core/errors/to-api-error'
 
 const pg = (code: string, constraint_name?: string) =>
   Object.assign(new Error('pg'), { name: 'PostgresError', code, constraint_name })

@@ -1,8 +1,8 @@
 import { BadRequestException, NotFoundException, PayloadTooLargeException } from '@nestjs/common'
 import { ZodValidationException } from 'nestjs-zod'
 import { z } from 'zod'
-import { AppError } from './app-error'
-import { toApiError } from './to-api-error'
+import { AppError } from '@/core/errors/app-error'
+import { toApiError } from '@/core/errors/to-api-error'
 
 test('AppError giữ đúng mã, status và details', () => {
   expect(toApiError(new AppError('conflict', { slug: 'ngon-tinh' }))).toEqual({

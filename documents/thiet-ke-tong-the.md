@@ -94,7 +94,7 @@ be-novel-platform/
 - **Repository:** nơi duy nhất import bảng Drizzle; mọi hàm nhận `tx`.
 - **Mapper:** dòng DB → DTO trả về (camelCase, giống kiểu domain của web).
 - **`dto/`:** schema zod.
-- **Test:** unit đặt cạnh code, e2e đặt ở `test/<module>/`.
+- **Test:** unit đặt ở `test/unit/` (cùng cấu trúc thư mục với `src/`), e2e đặt ở `test/<module>/`.
 
 ## 3. Thiết kế lõi
 

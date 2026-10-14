@@ -1,5 +1,5 @@
 import { hash as bcryptHash } from 'bcryptjs'
-import { PasswordService } from './password.service'
+import { PasswordService } from '@/modules/auth/password.service'
 
 describe('PasswordService', () => {
   const passwords = new PasswordService()

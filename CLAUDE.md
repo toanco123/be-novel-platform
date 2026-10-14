@@ -19,9 +19,9 @@ npm run build            # nest build (SWC) → dist/
 npm run typecheck        # tsc --noEmit
 npm run lint             # oxlint
 npm run format           # prettier --write .
-npm test                 # unit (src/**/*.spec.ts)
+npm test                 # unit (test/unit/**/*.spec.ts)
 npm run test:e2e         # e2e (test/**/*.e2e-spec.ts)
-npx vitest run src/core/errors/to-api-error.spec.ts   # một file
+npx vitest run test/unit/core/errors/to-api-error.spec.ts   # một file
 npm run openapi:export   # ghi openapi.json
 npm run keys:generate    # in cặp khóa ES256 cho JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
 npm run db:up            # Postgres 17 (cổng 5433) + Redis 7.4 (cổng 6380) bằng docker-compose; db:down để tắt
@@ -72,7 +72,7 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
   - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
-- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt cạnh code, e2e đặt ở `test/<tên>/`.
+- **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt ở `test/unit/`, cùng cấu trúc thư mục với `src/` (vd `src/modules/auth/password.service.ts` → `test/unit/modules/auth/password.service.spec.ts`), import bằng alias `@/`; e2e đặt ở `test/<tên>/`.
 
 ## Quy ước
 

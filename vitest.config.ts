@@ -26,7 +26,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           globals: true,
-          include: ['src/**/*.spec.ts'],
+          include: ['test/unit/**/*.spec.ts'],
           // Unit test không kết nối DB / Redis; URL chỉ để module config (kiểm tra env khi nạp) chạy được
           env: {
             ...testEnv,

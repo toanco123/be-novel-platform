@@ -31,7 +31,7 @@ npm run dev:worker     # process worker xử lý hàng đợi (terminal khác)
 | `npm run typecheck`                   | Kiểm tra kiểu (`tsc --noEmit`)                                 |
 | `npm run lint`                        | oxlint                                                         |
 | `npm run format` / `format:check`     | prettier                                                       |
-| `npm test`                            | Test unit (`src/**/*.spec.ts`)                                 |
+| `npm test`                            | Test unit (`test/unit/**/*.spec.ts`)                           |
 | `npm run test:e2e`                    | Test e2e (`test/**/*.e2e-spec.ts`)                             |
 | `npm run openapi:export`              | Ghi `openapi.json` (để web, mobile sinh client có kiểu)        |
 | `npm run keys:generate`               | In cặp khóa ES256 mới cho `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` |
@@ -53,6 +53,7 @@ src/
   worker.ts                  # process worker (không mở cổng HTTP)
   modules/<tên>/             # từng domain: controller, service, repository, dto
   cli/                       # script chạy bằng node (xuất OpenAPI...)
+test/unit/                   # test unit, cùng cấu trúc thư mục với src/
 test/                        # test e2e (Postgres thật qua Testcontainers)
 drizzle/migrations/          # SQL migration (sinh bởi drizzle-kit, review trước khi commit)
 documents/                   # thiết kế, lộ trình, plan từng phần (tiếng Việt)

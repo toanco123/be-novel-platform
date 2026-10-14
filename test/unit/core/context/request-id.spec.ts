@@ -1,4 +1,4 @@
-import { resolveRequestId } from './request-id'
+import { resolveRequestId } from '@/core/context/request-id'
 
 test('dùng lại x-request-id hợp lệ của client', () => {
   expect(resolveRequestId('abc-123')).toBe('abc-123')

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createZodDto, fixNullableTypes } from './zod-dto'
+import { createZodDto, fixNullableTypes } from '@/core/http/zod-dto'
 
 type MetadataFactoryHost = { _OPENAPI_METADATA_FACTORY(): Record<string, Record<string, unknown>> }
 
