@@ -17,6 +17,7 @@ export const ERROR_CODES = {
   oauth_email_required: { status: 400, message: 'The provider did not share an email address' },
   email_taken: { status: 409, message: 'Email is already registered' },
   genre_exists: { status: 409, message: 'A genre with this name already exists' },
+  story_not_public: { status: 409, message: 'The story is not public' },
   forbidden: { status: 403, message: 'You are not allowed to do this' },
   not_found: { status: 404, message: 'Resource not found' },
   conflict: { status: 409, message: 'Conflict with the current state' },

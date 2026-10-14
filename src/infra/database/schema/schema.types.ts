@@ -6,6 +6,7 @@ import type { follows } from './follows'
 import type { genres } from './genres'
 import type { oauthAccounts } from './oauth-accounts'
 import type { profiles } from './profiles'
+import type { ratings } from './ratings'
 import type { readingHistory } from './reading-history'
 import type { refreshTokens } from './refresh-tokens'
 import type { stories } from './stories'
@@ -33,3 +34,4 @@ export type ChapterViewRow = typeof chapterViews.$inferSelect
 export type CuratedStoryRow = typeof curatedStories.$inferSelect
 export type ReadingHistoryRow = typeof readingHistory.$inferSelect
 export type FollowRow = typeof follows.$inferSelect
+export type RatingRow = typeof ratings.$inferSelect

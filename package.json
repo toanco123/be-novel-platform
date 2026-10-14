@@ -1,6 +1,6 @@
 {
   "name": "be-novel-platform",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "private": true,
   "description": "Backend NestJS cho nền tảng đọc truyện chữ (thay Supabase)",
   "license": "UNLICENSED",
