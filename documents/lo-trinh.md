@@ -23,12 +23,12 @@ Cách làm: chia thành từng phần nhỏ. Mỗi phần có plan riêng trong 
 
 Người đọc (kể cả khách) xem truyện, chương, danh sách, tìm kiếm, xếp hạng; ghi lượt đọc. Bảng lấy đúng từ Supabase. Chưa có API ghi truyện / chương (đợt 3, Sáng tác): test tạo dữ liệu thẳng vào DB.
 
-| Phần | Nội dung                                                                                                                                                                  | Plan                                                 | Trạng thái |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---------- |
-| 9    | Bảng truyện, thể loại của truyện, chương, số liệu, lượt đọc, truyện chọn tay (đúng Supabase); trigger tự tính số liệu; `GET /v1/stories/:slug`; `storyCount` cho thể loại | [plan-09-truyen-chuong.md](plan-09-truyen-chuong.md) | ✅         |
-| 10   | Chương cho người đọc: mục lục, đọc một chương (kèm chương trước / sau), tải nhiều chương (đọc offline), ghi lượt đọc (1 / người hoặc IP / chương / ngày)                  | viết khi bắt đầu phần                                |            |
-| 11   | Danh sách truyện: lọc (trạng thái, thể loại, độ dài, tác giả), sắp xếp; truyện chọn tay cho trang chủ (danh sách trống thì tự chọn như web)                               | viết khi bắt đầu phần                                |            |
-| 12   | Tìm kiếm không dấu (chấm điểm như web, kèm thể loại khớp), bảng xếp hạng (lượt đọc theo tuần / tháng / tất cả, điểm, người theo dõi), truyện liên quan                    | viết khi bắt đầu phần                                |            |
+| Phần | Nội dung                                                                                                                                                                  | Plan                                                       | Trạng thái |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------- |
+| 9    | Bảng truyện, thể loại của truyện, chương, số liệu, lượt đọc, truyện chọn tay (đúng Supabase); trigger tự tính số liệu; `GET /v1/stories/:slug`; `storyCount` cho thể loại | [plan-09-truyen-chuong.md](plan-09-truyen-chuong.md)       | ✅         |
+| 10   | Chương cho người đọc: mục lục, đọc một chương (kèm chương trước / sau), tải nhiều chương (đọc offline), ghi lượt đọc (1 / người hoặc IP / chương / ngày)                  | [plan-10-chuong-nguoi-doc.md](plan-10-chuong-nguoi-doc.md) | ✅         |
+| 11   | Danh sách truyện: lọc (trạng thái, thể loại, độ dài, tác giả), sắp xếp; truyện chọn tay cho trang chủ (danh sách trống thì tự chọn như web)                               | viết khi bắt đầu phần                                      |            |
+| 12   | Tìm kiếm không dấu (chấm điểm như web, kèm thể loại khớp), bảng xếp hạng (lượt đọc theo tuần / tháng / tất cả, điểm, người theo dõi), truyện liên quan                    | viết khi bắt đầu phần                                      |            |
 
 Xếp hạng theo phiếu đề cử làm ở đợt 4 (cần bảng `story_votes`).
 

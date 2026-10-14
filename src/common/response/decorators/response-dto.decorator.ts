@@ -7,9 +7,13 @@ import type { ResponseDtoOptions, ResponseShape } from '../response.types'
 /**
  * Route trả về `dto`: ResponseInterceptor lọc theo DTO (chỉ trường có @ApiField) rồi bọc
  * { statusCode, data, meta }; Swagger ghi đúng schema đó. Vd @ResponseDto(MeDto),
- * @ResponseDto(AuthSessionDto, { status: 201 })
+ * @ResponseDto(AuthSessionDto, { status: 201 }). Mảng không phân trang:
+ * @ResponseDto(ChapterDto, { isArray: true }) (danh sách phân trang dùng @ResponsePage)
  */
-export const ResponseDto = (dto: Type, { status = 200, description }: ResponseDtoOptions = {}) =>
+export const ResponseDto = (
+  dto: Type,
+  { status = 200, description, isArray = false }: ResponseDtoOptions = {},
+) =>
   applyDecorators(
     SetMetadata(RESPONSE_DTO, { dto, paginated: false } satisfies ResponseShape),
     ApiExtraModels(dto, ResponseMetaDto),
@@ -21,7 +25,9 @@ export const ResponseDto = (dto: Type, { status = 200, description }: ResponseDt
         required: ['statusCode', 'data', 'meta'],
         properties: {
           statusCode: { type: 'integer', example: status },
-          data: { $ref: getSchemaPath(dto) },
+          data: isArray
+            ? { type: 'array', items: { $ref: getSchemaPath(dto) } }
+            : { $ref: getSchemaPath(dto) },
           meta: { $ref: getSchemaPath(ResponseMetaDto) },
         },
       },

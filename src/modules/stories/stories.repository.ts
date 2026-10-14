@@ -4,9 +4,9 @@ import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
 import { genres, profiles, stories, storyGenres, storyStats } from '@/infra/database/schema'
 import { CARD_DESCRIPTION_LENGTH } from './stories.constants'
-import type { StoryCardRow, StoryGenreRef } from './stories.types'
+import type { StoryAccessRow, StoryCardRow, StoryGenreRef } from './stories.types'
 
-/** Nơi duy nhất truy vấn stories, story_stats, story_genres cho người đọc */
+/** Nơi duy nhất truy vấn stories, story_stats, story_genres cho người đọc (module khác dùng qua export) */
 @Injectable()
 export class StoriesRepository {
   constructor(@Inject(DB) private readonly db: Db) {}
@@ -14,6 +14,21 @@ export class StoriesRepository {
   /** Thẻ truyện theo slug, mô tả đầy đủ. Không xét quyền xem (service xét) */
   async findBySlug(slug: string, ex: Executor = this.db): Promise<StoryCardRow | null> {
     const [row] = await this.selectCards(ex, { fullDescription: true })
+      .where(eq(stories.slug, slug))
+      .limit(1)
+    return row ?? null
+  }
+
+  /** Truyện theo slug, chỉ các cột để xét quyền xem */
+  async findAccessBySlug(slug: string, ex: Executor = this.db): Promise<StoryAccessRow | null> {
+    const [row] = await ex
+      .select({
+        id: stories.id,
+        visibility: stories.visibility,
+        ownerId: stories.ownerId,
+        reviewStatus: stories.reviewStatus,
+      })
+      .from(stories)
       .where(eq(stories.slug, slug))
       .limit(1)
     return row ?? null
