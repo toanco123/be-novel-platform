@@ -1,5 +1,6 @@
 import type { chapterViews } from './chapter-views'
 import type { chapters } from './chapters'
+import type { comments } from './comments'
 import type { curatedStories } from './curated-stories'
 import type { emailTokens } from './email-tokens'
 import type { follows } from './follows'
@@ -12,6 +13,7 @@ import type { refreshTokens } from './refresh-tokens'
 import type { stories } from './stories'
 import type { storyGenres } from './story-genres'
 import type { storyStats } from './story-stats'
+import type { userBlocks } from './user-blocks'
 import type { users } from './users'
 
 /** Một dòng của bảng (kiểu Drizzle suy ra từ schema) */
@@ -35,3 +37,5 @@ export type CuratedStoryRow = typeof curatedStories.$inferSelect
 export type ReadingHistoryRow = typeof readingHistory.$inferSelect
 export type FollowRow = typeof follows.$inferSelect
 export type RatingRow = typeof ratings.$inferSelect
+export type CommentRow = typeof comments.$inferSelect
+export type UserBlockRow = typeof userBlocks.$inferSelect
