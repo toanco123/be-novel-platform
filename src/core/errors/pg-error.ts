@@ -1,17 +1,7 @@
 // Lỗi Postgres → mã lỗi của API. Drizzle bọc lỗi của postgres.js trong `cause` (DrizzleQueryError),
 // nên phải tìm theo chuỗi cause. Lỗi không phải của Postgres trả null để xử lý tiếp.
-import type { ErrorCode } from './error-codes'
-
-/** Phần cần dùng của PostgresError (postgres.js) */
-type PgErrorLike = { name: 'PostgresError'; code: string; constraint_name?: string }
-
-/**
- * Tên constraint unique → mã lỗi riêng (vd `genres_pkey` → `genre_exists`). Module thêm vào đây khi
- * cần báo trùng rõ ràng hơn `conflict`
- */
-export const CONSTRAINT_CODES: Record<string, ErrorCode> = {
-  users_email_unique: 'email_taken',
-}
+import { CONSTRAINT_CODES } from './constraint-codes'
+import type { ErrorCode, PgErrorLike } from './errors.types'
 
 const BY_SQLSTATE: Record<string, ErrorCode> = {
   '23505': 'conflict', // unique_violation

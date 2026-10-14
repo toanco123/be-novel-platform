@@ -6,13 +6,12 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import { Logger } from 'nestjs-pino'
+import { BODY_LIMIT } from './app.constants'
 import { AppModule } from './app.module'
-import { AppConfig } from './config/app-config'
-import { requestIdMiddleware, REQUEST_ID_HEADER } from './core/context/request-id'
+import { AppConfig } from './config/app-config.service'
+import { requestIdMiddleware } from './core/context/request-id.middleware'
+import { REQUEST_ID_HEADER } from './core/context/context.constants'
 import { setupSwagger } from './core/http/swagger'
-
-/** Giới hạn body JSON; route cần lớn hơn (nhập truyện) tự đặt riêng ở các phần sau */
-export const BODY_LIMIT = '1mb'
 
 export async function createApp(rootModule: Type = AppModule) {
   const app = await NestFactory.create<NestExpressApplication>(rootModule, {

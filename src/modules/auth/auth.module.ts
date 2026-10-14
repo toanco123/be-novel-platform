@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common'
 import { UsersModule } from '@/modules/users/users.module'
 import { AuthController } from './auth.controller'
-import { AuthService } from './auth.service'
-import { PasswordService } from './password.service'
-import { SessionService } from './session.service'
+import { AuthService } from './services/auth.service'
+import { PasswordService } from './services/password.service'
+import { SessionService } from './services/session.service'
 import { SessionsRepository } from './sessions.repository'
 
 @Module({

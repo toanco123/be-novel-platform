@@ -3,23 +3,15 @@
 import { randomInt, randomUUID } from 'node:crypto'
 import type { INestApplication } from '@nestjs/common'
 import request from 'supertest'
+import type { RegisterUserInput, TestUser } from './helpers.types'
 
 export const uniqueEmail = () => `u-${randomUUID()}@example.test`
 export const uniqueIp = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`
 
-export type TestUser = {
-  id: string
-  email: string
-  password: string
-  ip: string
-  accessToken: string
-  refreshToken: string
-}
-
 /** Đăng ký (dạng mobile để nhận refresh token trong body) */
 export async function registerUser(
   app: INestApplication,
-  input: { email?: string; password?: string; displayName?: string } = {},
+  input: RegisterUserInput = {},
 ): Promise<TestUser> {
   const email = input.email ?? uniqueEmail()
   const password = input.password ?? 'mat-khau-bi-mat'

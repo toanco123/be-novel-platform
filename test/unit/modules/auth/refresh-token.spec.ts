@@ -1,9 +1,5 @@
-import {
-  hashRefreshToken,
-  newRefreshToken,
-  refreshTokenState,
-  REUSE_GRACE_MS,
-} from '@/modules/auth/refresh-token'
+import { hashRefreshToken, newRefreshToken, refreshTokenState } from '@/modules/auth/refresh-token'
+import { REUSE_GRACE_MS } from '@/modules/auth/auth.constants'
 
 describe('refresh token', () => {
   const now = new Date('2026-10-14T10:00:00Z')

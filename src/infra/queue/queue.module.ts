@@ -1,7 +1,7 @@
 import { BullModule } from '@nestjs/bullmq'
 import { Global, Module } from '@nestjs/common'
-import { AppConfig } from '@/config/app-config'
-import { QUEUES } from './queues'
+import { AppConfig } from '@/config/app-config.service'
+import { QUEUES } from './queue.constants'
 
 /**
  * Kết nối BullMQ (Redis riêng của BullMQ, không dùng chung client REDIS vì worker cần

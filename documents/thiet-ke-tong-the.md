@@ -52,6 +52,8 @@ Khi cài thì lấy bản mới nhất của đúng dòng phiên bản và ghim 
 
 ## 2. Cấu trúc thư mục
 
+> Cập nhật 14/10/2026: cấu trúc thực tế và quy ước tổ chức file (mỗi file một việc, type ở `*.types.ts`, từ 2 file cùng loại thì gom thư mục con) xem mục **Cấu trúc thư mục** và **Quy ước code** trong [README.md](../README.md). Cây dưới đây là bản thiết kế ban đầu.
+
 ```
 be-novel-platform/
 ├─ .github/workflows/ci.yml

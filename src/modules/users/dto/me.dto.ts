@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsString, Length } from 'class-validator'
-import type { Role } from '@/core/auth/actor'
-import { Trim } from '@/core/http/transforms'
+import type { Role } from '@/core/auth/auth.types'
 
 /** Hồ sơ của chính mình (không bao giờ có password_hash) */
 export class MeDto {
@@ -25,17 +23,4 @@ export class MeDto {
 
   @ApiProperty({ format: 'date-time' })
   createdAt!: string
-}
-
-export class UpdateMeDto {
-  @ApiProperty({
-    minLength: 2,
-    maxLength: 50,
-    example: 'Linh Nguyễn',
-    description: 'Tên hiển thị, 2–50 ký tự sau khi bỏ khoảng trắng ở hai đầu',
-  })
-  @Trim()
-  @IsString()
-  @Length(2, 50)
-  displayName!: string
 }

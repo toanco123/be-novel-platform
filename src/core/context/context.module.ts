@@ -3,9 +3,9 @@
 import { Global, Module } from '@nestjs/common'
 import { ClsModule } from 'nestjs-cls'
 import { LoggerModule } from 'nestjs-pino'
-import { AppConfig } from '@/config/app-config'
-import type { AuthenticatedRequest } from '../auth/actor'
-import type { RequestWithId } from './request-id'
+import { AppConfig } from '@/config/app-config.service'
+import type { RequestWithId } from './context.types'
+import { loggerOptions } from './logger.options'
 
 @Global()
 @Module({
@@ -18,40 +18,7 @@ import type { RequestWithId } from './request-id'
         idGenerator: (req) => (req as RequestWithId).id,
       },
     }),
-    LoggerModule.forRootAsync({
-      inject: [AppConfig],
-      useFactory: (config: AppConfig) => ({
-        pinoHttp: {
-          level: config.get('LOG_LEVEL'),
-          // Dev: log dễ đọc; production: JSON một dòng
-          transport:
-            config.get('NODE_ENV') === 'development'
-              ? { target: 'pino-pretty', options: { singleLine: true, colorize: true } }
-              : undefined,
-          genReqId: (req) => (req as RequestWithId).id,
-          customAttributeKeys: { reqId: 'requestId' },
-          // Người gọi (JwtAuthGuard gắn req.user); tính lại khi request xong nên có userId
-          customProps: (req) => {
-            const user = (req as AuthenticatedRequest).user
-            return user ? { userId: user.id } : {}
-          },
-          // Không ghi token, cookie, mật khẩu vào log
-          redact: {
-            paths: [
-              'req.headers.authorization',
-              'req.headers.cookie',
-              'res.headers["set-cookie"]',
-              '*.password',
-              '*.token',
-              '*.refreshToken',
-            ],
-            censor: '[đã ẩn]',
-          },
-          // Health check gọi liên tục: không ghi log mỗi lần
-          autoLogging: { ignore: (req) => req.url?.startsWith('/health') ?? false },
-        },
-      }),
-    }),
+    LoggerModule.forRootAsync({ inject: [AppConfig], useFactory: loggerOptions }),
   ],
 })
 export class ContextModule {}

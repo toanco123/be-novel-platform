@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ERROR_CODES, type ErrorCode } from '../errors/error-codes'
+import { ERROR_CODES } from '../errors/error-codes'
+import type { ErrorCode } from '../errors/errors.types'
 
 /** Dạng lỗi chung của API (hiện trong Swagger) */
 export class ApiErrorDto {

@@ -5,7 +5,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import { IsString, Length } from 'class-validator'
 import request from 'supertest'
 import { AppModule } from '@/app.module'
-import { Public } from '@/core/auth/auth.decorators'
+import { Public } from '@/core/auth/decorators/public.decorator'
 import { AppError } from '@/core/errors/app-error'
 import { createTestApp } from './helpers/app'
 

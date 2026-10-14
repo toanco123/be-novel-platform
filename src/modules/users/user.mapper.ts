@@ -1,8 +1,8 @@
 import type { MeDto } from './dto/me.dto'
-import type { UserWithProfile } from './users.repository'
+import type { UserWithProfile } from './users.types'
 
 /** Dòng DB → hồ sơ của chính mình (không bao giờ có password_hash) */
-export function toMe(row: NonNullable<UserWithProfile>): MeDto {
+export function toMe(row: UserWithProfile): MeDto {
   return {
     id: row.id,
     email: row.email,

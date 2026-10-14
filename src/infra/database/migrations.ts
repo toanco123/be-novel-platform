@@ -1,10 +1,8 @@
 // Chạy migration trong drizzle/migrations: dùng chung cho CLI (npm run db:migrate) và test e2e
-import { join } from 'node:path'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
-
-export const MIGRATIONS_FOLDER = join(process.cwd(), 'drizzle', 'migrations')
+import { MIGRATIONS_FOLDER } from './database.constants'
 
 /** Chạy mọi migration chưa chạy lên `url` (một kết nối riêng, đóng khi xong) */
 export async function runMigrations(url: string) {

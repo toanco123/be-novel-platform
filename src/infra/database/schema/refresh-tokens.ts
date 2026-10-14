@@ -25,5 +25,3 @@ export const refreshTokens = pgTable(
   },
   (t) => [index().on(t.userId), index().on(t.familyId)],
 )
-
-export type RefreshTokenRow = typeof refreshTokens.$inferSelect

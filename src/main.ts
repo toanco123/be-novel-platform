@@ -1,5 +1,5 @@
 import { createApp } from './bootstrap'
-import { AppConfig } from './config/app-config'
+import { AppConfig } from './config/app-config.service'
 
 async function main() {
   const app = await createApp()

@@ -3,7 +3,7 @@ import { getQueueToken } from '@nestjs/bullmq'
 import type { INestApplicationContext } from '@nestjs/common'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import type { Queue } from 'bullmq'
-import { QUEUES, SYSTEM_JOBS } from '@/infra/queue/queues'
+import { QUEUES, SYSTEM_JOBS } from '@/infra/queue/queue.constants'
 import { createWorker } from '@/worker'
 import { createTestApp } from '../helpers/app'
 

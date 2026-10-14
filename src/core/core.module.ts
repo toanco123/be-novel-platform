@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common'
 import { APP_FILTER, APP_PIPE } from '@nestjs/core'
 import { AllExceptionsFilter } from './errors/all-exceptions.filter'
-import { createValidationPipe } from './http/validation'
+import { createValidationPipe } from './http/validation.pipe'
 
 @Module({
   providers: [

@@ -5,8 +5,9 @@ import { sql } from 'drizzle-orm'
 import { IsString, MinLength } from 'class-validator'
 import request from 'supertest'
 import { AppModule } from '@/app.module'
-import { Public } from '@/core/auth/auth.decorators'
-import { DB, type Db } from '@/infra/database/db'
+import { Public } from '@/core/auth/decorators/public.decorator'
+import { DB } from '@/infra/database/database.constants'
+import type { Db } from '@/infra/database/database.types'
 import { createTestApp } from '../helpers/app'
 
 class ItemDto {

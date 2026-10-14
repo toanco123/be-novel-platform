@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq'
 import type { Job } from 'bullmq'
-import { QUEUES, SYSTEM_JOBS } from './queues'
+import { QUEUES, SYSTEM_JOBS } from './queue.constants'
 
 /** Xử lý hàng đợi `system` (chỉ chạy trong process worker) */
 @Processor(QUEUES.system)

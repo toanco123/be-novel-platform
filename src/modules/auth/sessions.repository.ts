@@ -1,16 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { and, eq, isNull } from 'drizzle-orm'
-import { DB, type Db, type Executor, type Tx } from '@/infra/database/db'
+import { DB } from '@/infra/database/database.constants'
+import type { Db, Executor, Tx } from '@/infra/database/database.types'
 import { refreshTokens } from '@/infra/database/schema'
-
-export type NewRefreshToken = {
-  userId: string
-  familyId: string
-  tokenHash: string
-  expiresAt: Date
-  userAgent: string | null
-  ip: string | null
-}
+import type { NewRefreshToken } from './auth.types'
 
 /** Nơi duy nhất truy vấn bảng refresh_tokens */
 @Injectable()

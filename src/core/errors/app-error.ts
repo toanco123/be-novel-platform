@@ -1,4 +1,5 @@
-import { ERROR_CODES, type ErrorCode } from './error-codes'
+import { ERROR_CODES } from './error-codes'
+import type { ErrorCode } from './errors.types'
 
 /**
  * Lỗi nghiệp vụ service ném ra: `throw new AppError('not_found')`. `details` (tùy chọn) gửi kèm

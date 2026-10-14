@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { Request } from 'express'
-
-/** Người đã đăng nhập (JwtAuthGuard gắn req.user, chạy trước guard này) */
-type RequestWithUser = Request & { user?: { id: string } }
+import type { ThrottleRequest } from './rate-limit.types'
 
 /**
  * Chặn spam thô cho toàn API: đếm theo người dùng khi đã đăng nhập (nhiều thiết bị cùng một người),
@@ -12,7 +10,7 @@ type RequestWithUser = Request & { user?: { id: string } }
 @Injectable()
 export class AppThrottlerGuard extends ThrottlerGuard {
   protected override async getTracker(req: Record<string, unknown>): Promise<string> {
-    return throttleTracker(req as unknown as RequestWithUser)
+    return throttleTracker(req as unknown as ThrottleRequest)
   }
 
   protected override async shouldSkip(context: Parameters<ThrottlerGuard['shouldSkip']>[0]) {
@@ -22,6 +20,6 @@ export class AppThrottlerGuard extends ThrottlerGuard {
 }
 
 /** Khóa đếm của một request: user:<id> hoặc ip:<địa chỉ> */
-export function throttleTracker(req: Pick<RequestWithUser, 'user' | 'ip'>) {
+export function throttleTracker(req: ThrottleRequest) {
   return req.user?.id ? `user:${req.user.id}` : `ip:${req.ip ?? 'unknown'}`
 }

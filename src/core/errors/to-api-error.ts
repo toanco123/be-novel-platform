@@ -2,15 +2,9 @@
 // Hàm thuần (không phụ thuộc Nest DI) để test riêng.
 import { HttpException } from '@nestjs/common'
 import { AppError } from './app-error'
-import { ERROR_CODES, type ErrorCode } from './error-codes'
+import { ERROR_CODES } from './error-codes'
+import type { ApiError, BodyParserError, ErrorCode } from './errors.types'
 import { pgErrorCode } from './pg-error'
-
-export type ApiError = {
-  status: number
-  code: ErrorCode
-  message: string
-  details?: Record<string, unknown>
-}
 
 const fromCode = (code: ErrorCode, details?: Record<string, unknown>): ApiError => ({
   status: ERROR_CODES[code].status,
@@ -42,9 +36,6 @@ function codeForStatus(status: number): ErrorCode {
       return status >= 500 ? 'internal_error' : 'bad_request'
   }
 }
-
-/** Lỗi của body-parser (JSON hỏng, body quá lớn) đi qua Express, không phải HttpException */
-type BodyParserError = { type?: unknown; status?: unknown }
 
 export function toApiError(exception: unknown): ApiError {
   if (exception instanceof AppError) return fromCode(exception.code, exception.details)

@@ -2,8 +2,8 @@ import { Global, Module } from '@nestjs/common'
 import { seconds, ThrottlerModule } from '@nestjs/throttler'
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import type { Redis } from 'ioredis'
-import { AppConfig } from '@/config/app-config'
-import { REDIS } from '@/infra/redis/redis.module'
+import { AppConfig } from '@/config/app-config.service'
+import { REDIS } from '@/infra/redis/redis.constants'
 import { RateLimitService } from './rate-limit.service'
 
 /**

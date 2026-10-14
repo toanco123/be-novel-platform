@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common'
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger'
 import { version } from '../../../package.json'
+import { autoAuthorize } from './swagger-auto-authorize'
 
 /** Tên security scheme bearer (khớp @ApiBearerAuth() mặc định) */
 const BEARER = 'bearer'
@@ -28,34 +29,6 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addTag('health', 'Kiểm tra app còn chạy (cho Docker / load balancer)')
     .build()
   return SwaggerModule.createDocument(app, config)
-}
-
-/**
- * Chạy trong trình duyệt (Swagger UI, hàm được chép nguyên văn vào trang): đăng ký / đăng nhập /
- * refresh thành công thì tự điền access token vào nút Authorize. Không dùng biến ngoài hàm.
- */
-function autoAuthorize(res: { ok: boolean; url: string; obj?: { accessToken?: unknown } }) {
-  type SwaggerUi = {
-    preauthorizeApiKey(name: string, value: string): void
-    authActions: { persistAuthorizationIfNeeded(): void }
-  }
-  try {
-    const ui = (globalThis as { ui?: SwaggerUi }).ui
-    const token = res.obj?.accessToken
-    if (
-      ui &&
-      res.ok &&
-      typeof token === 'string' &&
-      /\/v1\/auth\/(register|login|refresh)$/.test(new URL(res.url).pathname)
-    ) {
-      ui.preauthorizeApiKey('bearer', token)
-      // preauthorize không tự lưu như nút Authorize: lưu để tải lại trang vẫn còn
-      ui.authActions.persistAuthorizationIfNeeded()
-    }
-  } catch {
-    // Không làm hỏng response của Swagger UI
-  }
-  return res
 }
 
 /** /docs (giao diện) và /openapi.json */

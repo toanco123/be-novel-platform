@@ -4,28 +4,17 @@ import { Injectable, Logger, type OnModuleInit } from '@nestjs/common'
 import {
   type CryptoKey,
   errors,
-  exportPKCS8,
-  exportSPKI,
   generateKeyPair,
   importPKCS8,
   importSPKI,
   jwtVerify,
   SignJWT,
 } from 'jose'
-import { AppConfig } from '@/config/app-config'
+import { AppConfig } from '@/config/app-config.service'
 import { AppError } from '../errors/app-error'
-import type { Actor, Role } from './actor'
-
-const ALG = 'ES256'
-
-/** PEM trong env có thể viết "\n" thành chuỗi hai ký tự */
-const pem = (value: string) => value.replace(/\\n/g, '\n').trim()
-
-/** Sinh cặp khóa ES256 dạng PEM (script keys:generate và khóa tạm ở dev) */
-export async function generatePemKeyPair() {
-  const { privateKey, publicKey } = await generateKeyPair(ALG, { extractable: true })
-  return { privateKey: await exportPKCS8(privateKey), publicKey: await exportSPKI(publicKey) }
-}
+import { JWT_ALG } from './auth.constants'
+import type { Actor, Role } from './auth.types'
+import { normalizePem } from './jwt-keys'
 
 @Injectable()
 export class TokenService implements OnModuleInit {
@@ -39,8 +28,8 @@ export class TokenService implements OnModuleInit {
     const privatePem = this.config.get('JWT_PRIVATE_KEY')
     const publicPem = this.config.get('JWT_PUBLIC_KEY')
     if (privatePem && publicPem) {
-      this.privateKey = await importPKCS8(pem(privatePem), ALG)
-      this.publicKey = await importSPKI(pem(publicPem), ALG)
+      this.privateKey = await importPKCS8(normalizePem(privatePem), JWT_ALG)
+      this.publicKey = await importSPKI(normalizePem(publicPem), JWT_ALG)
       return
     }
     // env.schema chặn trường hợp này ở production
@@ -49,7 +38,7 @@ export class TokenService implements OnModuleInit {
         'Chưa đặt JWT_PRIVATE_KEY / JWT_PUBLIC_KEY: dùng khóa tạm (npm run keys:generate)',
       )
     }
-    const pair = await generateKeyPair(ALG)
+    const pair = await generateKeyPair(JWT_ALG)
     this.privateKey = pair.privateKey
     this.publicKey = pair.publicKey
   }
@@ -61,7 +50,7 @@ export class TokenService implements OnModuleInit {
 
   async signAccessToken(actor: Actor) {
     return new SignJWT({ role: actor.role, sid: actor.sessionId })
-      .setProtectedHeader({ alg: ALG, kid: this.config.get('JWT_KEY_ID'), typ: 'JWT' })
+      .setProtectedHeader({ alg: JWT_ALG, kid: this.config.get('JWT_KEY_ID'), typ: 'JWT' })
       .setSubject(actor.id)
       .setIssuer(this.config.get('JWT_ISSUER'))
       .setAudience(this.config.get('JWT_AUDIENCE'))
@@ -74,7 +63,7 @@ export class TokenService implements OnModuleInit {
   async verifyAccessToken(token: string): Promise<Actor> {
     try {
       const { payload } = await jwtVerify(token, this.publicKey, {
-        algorithms: [ALG],
+        algorithms: [JWT_ALG],
         issuer: this.config.get('JWT_ISSUER'),
         audience: this.config.get('JWT_AUDIENCE'),
       })

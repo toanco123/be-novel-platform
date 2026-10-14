@@ -1,7 +1,7 @@
 // Chạy migration (npm run db:migrate). Chạy như một bước riêng khi deploy, app không tự migrate lúc
 // khởi động. Đọc .env nếu có (dev); production đặt biến môi trường.
 import { existsSync } from 'node:fs'
-import { validateEnv } from '../config/env.schema'
+import { validateEnv } from '@/config/validate-env'
 import { runMigrations } from '../infra/database/migrations'
 
 async function main() {

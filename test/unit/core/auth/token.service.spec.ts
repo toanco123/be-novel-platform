@@ -1,7 +1,8 @@
-import type { AppConfig } from '@/config/app-config'
-import type { Env } from '@/config/env.schema'
-import type { Actor } from '@/core/auth/actor'
-import { generatePemKeyPair, TokenService } from '@/core/auth/token.service'
+import type { AppConfig } from '@/config/app-config.service'
+import type { Env } from '@/config/config.types'
+import type { Actor } from '@/core/auth/auth.types'
+import { generatePemKeyPair } from '@/core/auth/jwt-keys'
+import { TokenService } from '@/core/auth/token.service'
 
 const actor: Actor = {
   id: '6f1c2a54-8a43-4c5e-9b7f-3c8f0d2e1a11',

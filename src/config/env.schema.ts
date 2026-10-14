@@ -1,5 +1,5 @@
-// Biến môi trường của app, kiểm tra bằng zod khi khởi động: sai thì dừng ngay, báo rõ biến nào sai.
-// Các nơi khác đọc cấu hình qua AppConfig, không đọc process.env trực tiếp.
+// Schema biến môi trường (zod). Kiểm tra khi khởi động ở validate-env.ts; các nơi khác đọc cấu hình
+// qua AppConfig, không đọc process.env trực tiếp.
 import { z } from 'zod'
 
 /** "a, b,,c" → ['a', 'b', 'c'] */
@@ -69,16 +69,3 @@ export const envSchema = z
       })
     }
   })
-
-export type Env = z.infer<typeof envSchema>
-
-/** Dùng cho ConfigModule.forRoot({ validate }) */
-export function validateEnv(raw: Record<string, unknown>): Env {
-  // Biến để trống trong .env (`KEY=`) coi như không đặt, để dùng giá trị mặc định
-  const defined = Object.fromEntries(Object.entries(raw).filter(([, value]) => value !== ''))
-  const result = envSchema.safeParse(defined)
-  if (!result.success) {
-    throw new Error(`Cấu hình môi trường không hợp lệ:\n${z.prettifyError(result.error)}`)
-  }
-  return result.data
-}

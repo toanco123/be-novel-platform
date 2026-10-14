@@ -1,4 +1,5 @@
-import { envSchema, validateEnv } from '@/config/env.schema'
+import { envSchema } from '@/config/env.schema'
+import { validateEnv } from '@/config/validate-env'
 
 const DATABASE_URL = 'postgres://novel:novel@localhost:5433/novel'
 const REDIS_URL = 'redis://localhost:6380'

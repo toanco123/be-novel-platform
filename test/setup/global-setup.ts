@@ -5,13 +5,6 @@ import { RedisContainer } from '@testcontainers/redis'
 import type { TestProject } from 'vitest/node'
 import { runMigrations } from '@/infra/database/migrations'
 
-declare module 'vitest' {
-  export interface ProvidedContext {
-    databaseUrl: string
-    redisUrl: string
-  }
-}
-
 export default async function setup(project: TestProject) {
   const [postgres, redis] = await Promise.all([
     new PostgreSqlContainer('postgres:17-alpine')

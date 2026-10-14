@@ -18,7 +18,3 @@ export const ERROR_CODES = {
   timeout: { status: 503, message: 'The request took too long' },
   service_unavailable: { status: 503, message: 'A dependency is not available' },
 } as const satisfies Record<string, { status: number; message: string }>
-
-export type ErrorCode = keyof typeof ERROR_CODES
-
-export const isErrorCode = (code: string): code is ErrorCode => Object.hasOwn(ERROR_CODES, code)
