@@ -101,6 +101,7 @@ src/
     ratings/              #   chấm điểm truyện
     comments/             #   bình luận (gốc, trả lời, sửa, xóa), thích, báo cáo
     blocks/               #   chặn người dùng
+    feedback/             #   báo lỗi chương, tin nhắn liên hệ
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
 test/
@@ -297,7 +298,7 @@ Trước khi push nên chạy ở máy: `npm run lint && npm run typecheck && np
 2. Access token tự điền vào nút **Authorize** (vẫn còn khi tải lại trang). Các route có ổ khóa gọi được ngay, vd `GET /v1/me`.
 3. Access token hết hạn sau 15 phút: gọi `POST /v1/auth/refresh` với body `{}`. Trình duyệt đã có cookie refresh token nên không cần dán gì.
 
-Ở dev không đặt `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` thì app tự sinh khóa tạm, nên token cũ hết hiệu lực mỗi lần chạy lại. Production bắt buộc đặt khóa (`npm run keys:generate`).
+Ở dev không đặt `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` thì app tự sinh khóa tạm, nên token cũ hết hiệu lực mỗi lần chạy lại. Production bắt buộc đặt khóa (`npm run keys:generate`) và `IP_HASH_SECRET` (khóa băm IP, ít nhất 32 ký tự: `openssl rand -hex 32`).
 
 ## Auth
 
@@ -364,7 +365,7 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 ## Hoạt động người đọc
 
-Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md), [plan-14-theo-doi-tu-truyen.md](documents/plan-14-theo-doi-tu-truyen.md), [plan-15-cham-diem.md](documents/plan-15-cham-diem.md), [plan-16-binh-luan-chan.md](documents/plan-16-binh-luan-chan.md), [plan-17-thich-bao-cao-binh-luan.md](documents/plan-17-thich-bao-cao-binh-luan.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
+Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md), [plan-14-theo-doi-tu-truyen.md](documents/plan-14-theo-doi-tu-truyen.md), [plan-15-cham-diem.md](documents/plan-15-cham-diem.md), [plan-16-binh-luan-chan.md](documents/plan-16-binh-luan-chan.md), [plan-17-thich-bao-cao-binh-luan.md](documents/plan-17-thich-bao-cao-binh-luan.md), [plan-18-bao-loi-lien-he.md](documents/plan-18-bao-loi-lien-he.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
 
 Mốc "đã thấy" (`follows.seen_chapter`) và số người theo dõi do trigger của DB tính (migration `0012_follows_triggers`): theo dõi lấy chương mới nhất (hoặc chỗ đã đọc nếu xa hơn); lưu chỗ đọc xa hơn thì nâng mốc.
 
@@ -387,6 +388,8 @@ Mốc "đã thấy" (`follows.seen_chapter`) và số người theo dõi do trig
 | `PATCH /v1/comments/:id`, `DELETE ...`                    | Sửa (người viết) / xóa (người viết hoặc chủ truyện)                                                                                                                        |
 | `PUT` / `DELETE /v1/comments/:id/like`                    | Thích (cần xác nhận email; không tự thích; 300 lượt mới / giờ) / bỏ thích. Bình luận có `likeCount` (trigger DB đếm), `likedByMe`                                          |
 | `POST /v1/comments/:id/reports`                           | Báo cáo bình luận vi phạm `{ reason, note? }` (báo lại thì cập nhật; 10 báo cáo mới / giờ; lưu nội dung lúc báo cáo)                                                       |
+| `POST /v1/stories/:slug/chapters/:number/reports`         | Báo lỗi chương `{ reason, note? }` (cần xác nhận email; báo lại cùng lý do thì cập nhật ghi chú; 10 báo lỗi mới / giờ)                                                     |
+| `POST /v1/contact-messages`                               | Tin nhắn liên hệ, khách cũng gửi được (3 / giờ mỗi email, 5 / giờ mỗi IP; chỉ lưu IP đã băm)                                                                               |
 | `GET /v1/me/blocks`, `PUT` / `DELETE /v1/users/:id/block` | Danh sách đã chặn / chặn / bỏ chặn                                                                                                                                         |
 
 ## Đăng nhập mạng xã hội

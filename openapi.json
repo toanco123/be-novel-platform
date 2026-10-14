@@ -7395,12 +7395,376 @@
           "blocks"
         ]
       }
+    },
+    "/v1/stories/{slug}/chapters/{number}/reports": {
+      "post": {
+        "description": "Cần đã xác nhận email. Chương đã xuất bản của truyện đang công khai. Báo lại cùng lý do khi báo lỗi cũ còn mở thì chỉ cập nhật ghi chú; báo lỗi mới tối đa 10 / giờ.",
+        "operationId": "ChapterReportsController_report_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "example": "thanh-xuan-vuon-truong",
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "minimum": 1,
+              "maximum": 99999,
+              "example": 12,
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportChapterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 201
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ChapterReportDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "code: `email_not_verified`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "email_not_verified": {
+                    "summary": "email_not_verified",
+                    "value": {
+                      "statusCode": 403,
+                      "error": {
+                        "code": "email_not_verified",
+                        "message": "Email address is not verified"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "code: `story_not_public`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "story_not_public": {
+                    "summary": "story_not_public",
+                    "value": {
+                      "statusCode": 409,
+                      "error": {
+                        "code": "story_not_public",
+                        "message": "The story is not public"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "statusCode": 429,
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Báo lỗi chương",
+        "tags": [
+          "feedback"
+        ]
+      }
+    },
+    "/v1/contact-messages": {
+      "post": {
+        "description": "Khách cũng gửi được (đăng nhập thì ghi người gửi). Tối đa 3 tin / giờ mỗi email, 5 tin / giờ mỗi IP. Gửi xong không đọc lại được.",
+        "operationId": "ContactController_send_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Đã gửi"
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "statusCode": 400,
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "statusCode": 429,
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Gửi tin nhắn liên hệ",
+        "tags": [
+          "feedback"
+        ]
+      }
     }
   },
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.31",
+    "version": "0.0.32",
     "contact": {}
   },
   "tags": [
@@ -8870,6 +9234,139 @@
         "required": [
           "user",
           "blockedAt"
+        ]
+      },
+      "ReportReporterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Linh"
+          }
+        },
+        "required": [
+          "id",
+          "displayName"
+        ]
+      },
+      "ChapterReportDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "storySlug": {
+            "type": "string",
+            "example": "thanh-xuan-vuon-truong"
+          },
+          "chapterNumber": {
+            "type": "number",
+            "example": 12
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "typo",
+              "missing",
+              "order",
+              "violation",
+              "other"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/ReportReporterDto"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "resolved"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Lần báo (hoặc báo lại) gần nhất"
+          }
+        },
+        "required": [
+          "id",
+          "storySlug",
+          "chapterNumber",
+          "reason",
+          "note",
+          "reporter",
+          "status",
+          "createdAt"
+        ]
+      },
+      "ReportChapterDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "typo",
+              "missing",
+              "order",
+              "violation",
+              "other"
+            ],
+            "description": "typo: lỗi chính tả; missing: thiếu nội dung; order: sai thứ tự; violation: vi phạm"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Bắt buộc khi reason = other"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ContactMessageDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 60,
+            "example": "Linh"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254,
+            "example": "linh@example.com"
+          },
+          "topic": {
+            "type": "string",
+            "enum": [
+              "general",
+              "bug",
+              "copyright",
+              "partnership"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "topic",
+          "message"
         ]
       }
     }

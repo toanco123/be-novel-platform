@@ -71,6 +71,11 @@ export const envSchema = z
     APP_WEB_URL: z.url().default('http://localhost:3000'),
     /** Secret của Cloudflare Turnstile; trống thì tắt captcha */
     TURNSTILE_SECRET: z.string().optional(),
+    /**
+     * Khóa băm IP (HMAC-SHA256) khi lưu hoặc đếm theo IP, để không giữ IP gốc. Production bắt buộc
+     * (ít nhất 32 ký tự); dev / test để trống thì dùng khóa cố định
+     */
+    IP_HASH_SECRET: z.string().min(32).optional(),
 
     /** Gốc URL công khai của API: dựng redirect_uri khai báo ở Google / Facebook */
     API_PUBLIC_URL: z.url().default('http://localhost:4000'),
@@ -107,6 +112,14 @@ export const envSchema = z
         code: 'custom',
         path: ['JWT_PRIVATE_KEY'],
         message: 'Production bắt buộc có JWT_PRIVATE_KEY và JWT_PUBLIC_KEY (npm run keys:generate)',
+      })
+    }
+    if (env.NODE_ENV === 'production' && !env.IP_HASH_SECRET) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['IP_HASH_SECRET'],
+        message:
+          'Production bắt buộc có IP_HASH_SECRET (ít nhất 32 ký tự, vd openssl rand -hex 32)',
       })
     }
     // Production không được dùng mặc định của dev (Mailpit, localhost)

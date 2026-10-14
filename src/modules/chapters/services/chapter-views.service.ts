@@ -1,9 +1,11 @@
 // Ghi lượt đọc (như private.record_chapter_view của Supabase): chỉ chương đã xuất bản của truyện đang
-// công khai, không tính chủ truyện, mỗi người (khách: mỗi IP) 1 lượt / chương / ngày giờ Việt Nam.
+// công khai, không tính chủ truyện, mỗi người (khách: mỗi IP, băm có khóa) 1 lượt / chương / ngày giờ
+// Việt Nam.
 // Chống đếm lặp bằng khóa Redis sống 2 ngày thay bảng private.chapter_view_log.
 import { Inject, Injectable } from '@nestjs/common'
 import type { Redis } from 'ioredis'
 import type { Actor } from '@/common/auth/auth.types'
+import { IpHashService } from '@/common/crypto/ip-hash.service'
 import { AppException } from '@/common/errors/app.exception'
 import { vietnamDate } from '@/common/utils/vietnam-date'
 import { DB } from '@/infra/database/database.constants'
@@ -23,6 +25,7 @@ export class ChapterViewsService {
     private readonly access: StoryAccessService,
     private readonly chapters: ChaptersRepository,
     private readonly views: ChapterViewsRepository,
+    private readonly ipHash: IpHashService,
   ) {}
 
   /**
@@ -35,7 +38,8 @@ export class ChapterViewsService {
     if (story.visibility !== 'published' || actor?.id === story.ownerId) return
 
     const day = vietnamDate()
-    const key = viewSeenKey(day, story.id, number, viewerKey(actor, ip))
+    const viewer = viewerKey(actor, ip ? this.ipHash.hash(ip) : null)
+    const key = viewSeenKey(day, story.id, number, viewer)
     const fresh = await this.redis.set(key, '1', 'EX', VIEW_SEEN_TTL_SECONDS, 'NX')
     if (fresh !== 'OK') return
     try {
