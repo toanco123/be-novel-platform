@@ -42,6 +42,8 @@ npm run openapi:export   # ghi openapi.json
 npm run keys:generate    # in cặp khóa ES256 cho JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
 npm run db:up            # Postgres 17 (cổng 5433) + Redis 7.4 (cổng 6380) bằng docker-compose; db:down để tắt
 npm run dev:worker       # process worker (hàng đợi BullMQ)
+npm run storage:init     # tạo bucket lưu ảnh (RustFS, chạy một lần)
+docker compose --profile app up --build   # cả app trong Docker
 npm run db:generate      # sinh migration từ schema Drizzle
 npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.js)
 ```
@@ -94,11 +96,13 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - Apple: id token + nonce (`/oauth/apple/token`).
   - Client gọi provider ở `oauth/providers/*.client.ts`, id token xác minh bằng JWKS (`jose`). Test thay client bằng bản giả: `createTestApp(undefined, [{ provide: GoogleOAuthClient, useValue: fake }])`.
   - Tìm / liên kết / tạo tài khoản ở `OAuthService.resolveUser` (bảng `oauth_accounts`); mở phiên bằng `AuthService.signIn`; trả phiên chung qua `sessionResponse`.
+- **Lưu ảnh** (plan `documents/plan-08-storage-docker.md`): `StorageService` (`infra/storage`, AWS SDK v3, path-style) với RustFS ở dev / test (cổng 9010, MinIO đã ngừng phát hành image) và R2 ở production. Upload bằng presigned PUT ký kèm `Content-Type`, `Content-Length` (sai → 403). Bucket dev / test tạo bằng `ensurePublicBucket` (`npm run storage:init`, global-setup của e2e).
+- **Docker:** một image cho API / worker / migration (`Dockerfile`); `docker compose --profile app up --build` chạy cả app. Image không có devDependency nên log luôn là JSON (không có pino-pretty).
 - **Email** (plan `documents/plan-05-email.md`):
   - API dựng thư (template ở `modules/auth/templates/`, khung chung `mail-layout.template.ts`, chữ người dùng nhập luôn qua `escapeHtml`) rồi đẩy vào hàng đợi `mail` bằng `MailQueueService` (`infra/mail`). Worker gửi qua SMTP (`MailerService`, `MailProcessor`), lỗi thì thử lại và ghi `ErrorLogger`.
   - Link trong thư: `EmailTokenService` (`createLink` / `consume`), bảng `email_tokens` lưu SHA-256, dùng một lần; link sai, hết hạn, đã dùng → 400 `invalid_link`.
   - Dev xem thư ở Mailpit (http://localhost:8025); test e2e đọc thư qua API của Mailpit (`test/helpers/mailpit.ts`, cần chạy `createWorker()` trong file test).
-- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17, Redis và Mailpit bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp(rootModule?, overrides?)` (`test/helpers/app.ts`, dùng `Test.createTestingModule` để thay provider bằng bản giả). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
+- **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17, Redis, Mailpit và RustFS bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp(rootModule?, overrides?)` (`test/helpers/app.ts`, dùng `Test.createTestingModule` để thay provider bằng bản giả). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
   - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
@@ -116,4 +120,4 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
 - Prettier: không chấm phẩy, nháy đơn, `printWidth` 100. oxlint cho phép class rỗng có decorator (module Nest).
 - Test: vitest với `globals`, `unplugin-swc` (decorator metadata của Nest). Tên test tiếng Việt, mô tả hành vi.
 - Không log hay trả ra ngoài thông tin nhạy cảm (token, mật khẩu, email trong log lỗi).
-- **CI** (`.github/workflows/ci.yml`, plan `documents/plan-05-1-ci.md`): push `main` / pull request chạy lint, format, typecheck, build, test unit, kiểm tra migration khớp schema, test e2e (gồm `test/openapi.e2e-spec.ts`: `openapi.json` phải khớp API). Đổi API thì chạy `npm run openapi:export` (sau khi tăng version) rồi commit file.
+- **CI** (`.github/workflows/ci.yml`, plan `documents/plan-05-1-ci.md`): push `main` / pull request chạy lint, format, typecheck, build, test unit, kiểm tra migration khớp schema, test e2e (gồm `test/openapi.e2e-spec.ts`: `openapi.json` phải khớp API), build Docker và chạy thử image ở chế độ production. Đổi API thì chạy `npm run openapi:export` (sau khi tăng version) rồi commit file.

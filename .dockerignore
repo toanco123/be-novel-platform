@@ -1,0 +1,16 @@
+# Chỉ gửi vào Docker những gì cần để build (package*.json, src, drizzle, cấu hình build)
+node_modules
+dist
+coverage
+.git
+.github
+.vscode
+.playwright-mcp
+.env
+.env.*
+test
+documents
+*.md
+openapi.json
+docker-compose.yml
+Dockerfile

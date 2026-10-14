@@ -53,3 +53,33 @@ jobs:
       - run: npm ci
       # Testcontainers dùng Docker có sẵn trên ubuntu-latest
       - run: npm run test:e2e
+
+  docker:
+    name: Docker image (build + chạy thử production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build image
+        run: docker build -t be-novel-platform:ci .
+      - name: Chạy thử ở chế độ production
+        # Khóa JWT sinh bằng chính image; DB, Redis không cần có thật để /health/live trả 200
+        run: |
+          docker run --rm be-novel-platform:ci node dist/cli/generate-keys.js > prod.env
+          cat >> prod.env <<'ENV'
+          DATABASE_URL=postgres://novel:novel@db.example.com:5432/novel
+          REDIS_URL=redis://redis.example.com:6379
+          SMTP_URL=smtps://user:pass@smtp.example.com:465
+          APP_WEB_URL=https://web.example.com
+          API_PUBLIC_URL=https://api.example.com
+          S3_ENDPOINT=https://account.r2.cloudflarestorage.com
+          S3_PUBLIC_URL=https://img.example.com
+          ENV
+          docker run -d --name api --env-file prod.env -p 4000:4000 be-novel-platform:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:4000/health/live; then exit 0; fi
+            sleep 1
+          done
+          docker logs api
+          echo "::error::Image không khởi động được ở chế độ production"
+          exit 1

@@ -26,37 +26,40 @@ Backend NestJS cho nền tảng đọc truyện chữ (web `web-novel-platform`,
 ## Yêu cầu
 
 - Node 24 (`.nvmrc`), npm
-- Docker (OrbStack hoặc Docker Desktop): Postgres, Redis, Mailpit cho dev (docker-compose) và test e2e (Testcontainers)
+- Docker (OrbStack hoặc Docker Desktop): Postgres, Redis, Mailpit, RustFS (S3) cho dev (docker-compose) và test e2e (Testcontainers)
 
 ## Bắt đầu
 
 ```bash
 npm ci
 cp .env.example .env
-npm run db:up          # Postgres 17 (cổng 5433), Redis 7.4 (cổng 6380), Mailpit (thư ở http://localhost:8025)
+npm run db:up          # Postgres 17 (cổng 5433), Redis 7.4 (cổng 6380), Mailpit (thư ở http://localhost:8025), RustFS (S3, cổng 9010)
 npm run db:migrate
+npm run storage:init   # tạo bucket lưu ảnh trên RustFS (chạy một lần)
 npm run dev            # http://localhost:4000, tài liệu API và thử API ở /docs
 npm run dev:worker     # process worker xử lý hàng đợi, gửi email (terminal khác)
 ```
 
 ## Lệnh
 
-| Lệnh                                  | Việc                                                           |
-| ------------------------------------- | -------------------------------------------------------------- |
-| `npm run dev`                         | Chạy dev, tự build lại khi sửa                                 |
-| `npm run build` / `npm start`         | Build (SWC) ra `dist/` / chạy bản build                        |
-| `npm run dev:worker` / `start:worker` | Worker xử lý hàng đợi (dev / bản build)                        |
-| `npm run typecheck`                   | Kiểm tra kiểu (`tsc --noEmit`)                                 |
-| `npm run lint`                        | oxlint                                                         |
-| `npm run format` / `format:check`     | prettier                                                       |
-| `npm test`                            | Test unit (`test/unit/**/*.spec.ts`)                           |
-| `npm run test:e2e`                    | Test e2e (`test/**/*.e2e-spec.ts`, cần Docker)                 |
-| `npm run openapi:export`              | Ghi `openapi.json` (để web, mobile sinh client có kiểu)        |
-| `npm run keys:generate`               | In cặp khóa ES256 mới cho `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` |
-| `npm run db:up` / `db:down`           | Bật / tắt Postgres và Redis (docker-compose)                   |
-| `npm run db:generate`                 | Sinh migration từ schema Drizzle (`drizzle/migrations`)        |
-| `npm run db:migrate`                  | Chạy migration                                                 |
-| `npm run db:studio`                   | Drizzle Studio xem dữ liệu                                     |
+| Lệnh                                      | Việc                                                           |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| `npm run dev`                             | Chạy dev, tự build lại khi sửa                                 |
+| `npm run build` / `npm start`             | Build (SWC) ra `dist/` / chạy bản build                        |
+| `npm run dev:worker` / `start:worker`     | Worker xử lý hàng đợi (dev / bản build)                        |
+| `npm run typecheck`                       | Kiểm tra kiểu (`tsc --noEmit`)                                 |
+| `npm run lint`                            | oxlint                                                         |
+| `npm run format` / `format:check`         | prettier                                                       |
+| `npm test`                                | Test unit (`test/unit/**/*.spec.ts`)                           |
+| `npm run test:e2e`                        | Test e2e (`test/**/*.e2e-spec.ts`, cần Docker)                 |
+| `npm run openapi:export`                  | Ghi `openapi.json` (để web, mobile sinh client có kiểu)        |
+| `npm run keys:generate`                   | In cặp khóa ES256 mới cho `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` |
+| `npm run storage:init`                    | Tạo bucket lưu ảnh (dev), cho đọc công khai                    |
+| `docker compose --profile app up --build` | Chạy cả app trong Docker: migration → API (cổng 4000) + worker |
+| `npm run db:up` / `db:down`               | Bật / tắt Postgres và Redis (docker-compose)                   |
+| `npm run db:generate`                     | Sinh migration từ schema Drizzle (`drizzle/migrations`)        |
+| `npm run db:migrate`                      | Chạy migration                                                 |
+| `npm run db:studio`                       | Drizzle Studio xem dữ liệu                                     |
 
 ## Cấu trúc thư mục
 
@@ -87,6 +90,7 @@ src/
     redis/                #   client Redis dùng chung, health
     queue/                #   BullMQ: tên hàng đợi, processor
     mail/                 #   hàng đợi mail (API), gửi SMTP bằng nodemailer (worker)
+    storage/              #   lưu ảnh S3 (presigned upload, URL công khai, xóa)
   modules/                # từng domain nghiệp vụ
     auth/                 #   đăng ký, đăng nhập, refresh token, đăng xuất
     users/                #   /v1/me, dữ liệu tài khoản
@@ -268,7 +272,7 @@ me(@CurrentUser() actor: Actor) {
 
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) chạy mỗi lần push lên `main` và mỗi pull request, hai job song song:
+GitHub Actions (`.github/workflows/ci.yml`) chạy mỗi lần push lên `main` và mỗi pull request, ba job song song:
 
 - **Kiểm tra:**
   - lint, format, typecheck, build, test unit;
@@ -276,6 +280,7 @@ GitHub Actions (`.github/workflows/ci.yml`) chạy mỗi lần push lên `main` 
 - **Test e2e:**
   - Postgres, Redis, Mailpit thật qua Testcontainers;
   - có cả test so `openapi.json` với API hiện tại: đổi API thì chạy `npm run openapi:export` rồi commit file.
+- **Docker:** build image rồi chạy thử ở chế độ production (khóa JWT sinh bằng image, env production giả), chờ `/health/live` trả 200.
 
 Trước khi push nên chạy ở máy: `npm run lint && npm run typecheck && npm run test:all`.
 
@@ -339,6 +344,30 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 - **Cấu hình:**
   - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`, `APPLE_CLIENT_IDS`. Thiếu thì provider đó tắt (`provider_disabled`).
   - Ở Google / Facebook khai báo redirect URI `<API_PUBLIC_URL>/v1/auth/oauth/<provider>/callback`.
+
+## Lưu ảnh (S3)
+
+- **Nơi lưu:** S3-compatible.
+  - Production: Cloudflare R2.
+  - Dev và test: RustFS (MinIO đã ngừng phát hành image bản cộng đồng), cổng 9010 trên máy.
+- **`StorageService`** (`src/infra/storage`):
+  - `presignUpload({ key, contentType, size })` trả link PUT 5 phút, ký kèm `Content-Type` và `Content-Length`. Client phải gửi đúng loại và kích thước đã khai, sai thì S3 trả 403.
+  - Các hàm khác: `publicUrl(key)`, `head(key)`, `delete(key)`, `deletePrefix(prefix)`.
+- **Một bucket** (`S3_BUCKET`), thư mục theo loại: `avatars/<userId>/…`, `covers/<ownerId>/…` (giống đường dẫn của Supabase Storage).
+- **Ảnh công khai:** `<S3_PUBLIC_URL>/<key>`.
+- **Đợt này mới có hạ tầng;** upload ảnh đại diện, bìa truyện làm ở đợt Sáng tác.
+
+## Docker
+
+- **`Dockerfile`:** một image (`node:24-bookworm-slim`, user `node`, `NODE_ENV=production`) cho ba lệnh:
+  - API (mặc định): `node dist/main.js`, có `HEALTHCHECK` `/health/live`;
+  - worker: `node dist/worker.js`;
+  - migration: `node dist/cli/migrate.js` (chạy trước khi bật bản mới).
+- **Production cần đặt:**
+  - khóa JWT (`npm run keys:generate`);
+  - `DATABASE_URL`, `REDIS_URL`, `SMTP_URL`, `APP_WEB_URL`, `API_PUBLIC_URL`;
+  - `S3_*` (không được là localhost; sai thì app dừng ngay khi khởi động).
+- **`docker compose --profile app up --build`:** chạy cả app trên máy (dùng `.env`, đổi host sang tên service). Riêng link upload S3 trong chế độ này trỏ tới `rustfs:9000`, trình duyệt ngoài Docker không mở được; muốn thử upload thì chạy `npm run dev`.
 
 ## Email
 

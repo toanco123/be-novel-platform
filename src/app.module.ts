@@ -16,6 +16,7 @@ import { DatabaseModule } from './infra/database/database.module'
 import { MailModule } from './infra/mail/mail.module'
 import { QueueModule } from './infra/queue/queue.module'
 import { RedisModule } from './infra/redis/redis.module'
+import { StorageModule } from './infra/storage/storage.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { GenresModule } from './modules/genres/genres.module'
 import { HealthModule } from './modules/health/health.module'
@@ -32,6 +33,7 @@ import { UsersModule } from './modules/users/users.module'
     RateLimitModule,
     QueueModule,
     MailModule,
+    StorageModule,
     AuthCoreModule,
     CryptoModule,
     CaptchaModule,

@@ -1,4 +1,18 @@
-# Dịch vụ cho môi trường dev (npm run db:up). Phần sau thêm MinIO.
+# Dịch vụ cho môi trường dev (npm run db:up): Postgres, Redis, Mailpit, RustFS (S3).
+# Chạy cả app trong Docker: docker compose --profile app up --build (migrate → api + worker).
+
+# Cấu hình chung của api, worker, migrate: lấy .env, đổi host sang tên service trong mạng compose
+x-app: &app
+  build: .
+  image: be-novel-platform:local
+  profiles: [app]
+  env_file: .env
+  environment:
+    HOST: 0.0.0.0
+    DATABASE_URL: postgres://novel:novel@db:5432/novel
+    REDIS_URL: redis://redis:6379
+    SMTP_URL: smtp://mailpit:1025
+    S3_ENDPOINT: http://rustfs:9000
 name: novel-platform
 
 services:
@@ -42,6 +56,57 @@ services:
       timeout: 3s
       retries: 10
 
+  # Lưu ảnh S3-compatible (MinIO đã ngừng phát hành image bản cộng đồng). Tạo bucket: npm run storage:init
+  rustfs:
+    image: rustfs/rustfs:1.0.1
+    environment:
+      RUSTFS_ACCESS_KEY: novel
+      RUSTFS_SECRET_KEY: novel-secret
+    ports:
+      - '9010:9000' # 9010 trên máy để không đụng S3 khác ở 9000
+    volumes:
+      - rustfs-data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9000/health']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    <<: *app
+    command: ['node', 'dist/cli/migrate.js']
+    healthcheck:
+      disable: true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    ports:
+      - '4000:4000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+
+  worker:
+    <<: *app
+    command: ['node', 'dist/worker.js']
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+
 volumes:
   db-data:
   redis-data:
+  rustfs-data:
