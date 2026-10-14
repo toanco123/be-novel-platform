@@ -64,8 +64,12 @@ const hit = (token: string, from: string) =>
 
 it('route mặc định: không có token → 401 unauthenticated', async () => {
   const res = await http().get('/v1/test-auth/private').expect(401)
-  expect(res.body).toMatchObject({ code: 'unauthenticated', requestId: expect.any(String) })
-  expect((await http().get('/v1/me').expect(401)).body.code).toBe('unauthenticated')
+  expect(res.body).toMatchObject({
+    statusCode: 401,
+    error: { code: 'unauthenticated' },
+    meta: { requestId: expect.any(String) },
+  })
+  expect((await http().get('/v1/me').expect(401)).body.error.code).toBe('unauthenticated')
 })
 
 it('token đúng → gắn người gọi { id, role, sessionId }', async () => {
@@ -77,7 +81,7 @@ it('token đúng → gắn người gọi { id, role, sessionId }', async () => 
 it('token rác, sai scheme, hết hạn → 401 invalid_token', async () => {
   for (const header of ['Bearer khong-phai-jwt', 'Basic abc', 'Bearer']) {
     const res = await http().get('/v1/test-auth/private').set('Authorization', header).expect(401)
-    expect(res.body.code).toBe('invalid_token')
+    expect(res.body.error.code).toBe('invalid_token')
   }
 
   const user = await registerUser(app)
@@ -89,7 +93,7 @@ it('token rác, sai scheme, hết hạn → 401 invalid_token', async () => {
     .signAccessToken({ id: user.id, role: 'user', sessionId: 'old' })
   vi.useRealTimers()
   const res = await http().get('/v1/test-auth/private').set(bearer(expired)).expect(401)
-  expect(res.body.code).toBe('invalid_token')
+  expect(res.body.error.code).toBe('invalid_token')
 })
 
 it('route @Public(): khách gọi được; token đúng thì vẫn biết người gọi; token sai → invalid_token', async () => {
@@ -100,13 +104,13 @@ it('route @Public(): khách gọi được; token đúng thì vẫn biết ngư�
   expect(res.body.actor.id).toBe(user.id)
 
   const bad = await http().get('/v1/test-auth/public').set(bearer('rac')).expect(401)
-  expect(bad.body.code).toBe('invalid_token')
+  expect(bad.body.error.code).toBe('invalid_token')
 })
 
 it('@Roles("admin"): user thường → 403 forbidden, admin → 200', async () => {
   const user = await registerUser(app)
   const res = await http().get('/v1/test-auth/admin').set(bearer(user.accessToken)).expect(403)
-  expect(res.body.code).toBe('forbidden')
+  expect(res.body.error.code).toBe('forbidden')
   await http().get('/v1/test-auth/admin').expect(401)
 
   // Vai trò lấy từ DB khi đăng nhập / refresh
@@ -125,7 +129,7 @@ it('throttler đếm theo người dùng (đổi IP không qua được), ngư�
   const ip = uniqueIp()
   await hit(a.accessToken, ip).expect(200)
   await hit(a.accessToken, uniqueIp()).expect(200)
-  expect((await hit(a.accessToken, uniqueIp()).expect(429)).body.code).toBe('rate_limited')
+  expect((await hit(a.accessToken, uniqueIp()).expect(429)).body.error.code).toBe('rate_limited')
   await hit(b.accessToken, ip).expect(200)
 })
 

@@ -77,7 +77,11 @@ test('throttler: route giới hạn 3 lần, lần 4 trả 429 rate_limited có 
   const http = request(app.getHttpServer())
   for (let i = 0; i < 3; i++) await http.get('/v1/test-throttle').expect(200)
   const res = await http.get('/v1/test-throttle').expect(429)
-  expect(res.body).toMatchObject({ code: 'rate_limited', requestId: expect.any(String) })
+  expect(res.body).toMatchObject({
+    statusCode: 429,
+    error: { code: 'rate_limited' },
+    meta: { requestId: expect.any(String) },
+  })
   expect(Number(res.headers['retry-after'])).toBeGreaterThan(0)
 })
 

@@ -124,7 +124,7 @@ describe('đăng ký', () => {
       .set('Authorization', `Bearer ${user.accessToken}`)
       .send({ displayName: ' a ' })
       .expect(400)
-    expect(tooShort.body.code).toBe('validation_failed')
+    expect(tooShort.body.error.code).toBe('validation_failed')
   })
 
   it('email trùng (khác hoa thường) → 409 email_taken', async () => {
@@ -134,7 +134,7 @@ describe('đăng ký', () => {
       .set('X-Forwarded-For', uniqueIp())
       .send({ email: user.email.toUpperCase(), password: 'mat-khau-khac', displayName: 'Khác' })
       .expect(409)
-    expect(res.body.code).toBe('email_taken')
+    expect(res.body.error.code).toBe('email_taken')
   })
 
   it('mật khẩu ngắn, email sai, tên quá ngắn → 400 validation_failed', async () => {
@@ -148,7 +148,7 @@ describe('đăng ký', () => {
         .set('X-Forwarded-For', uniqueIp())
         .send(body)
         .expect(400)
-      expect(res.body.code).toBe('validation_failed')
+      expect(res.body.error.code).toBe('validation_failed')
     }
   })
 
@@ -162,8 +162,8 @@ describe('đăng ký', () => {
     for (let i = 0; i < 5; i++) await register().expect(201)
     const res = await register().expect(429)
     expect(res.body).toMatchObject({
-      code: 'rate_limited',
-      details: { retryAfterSeconds: expect.any(Number) },
+      statusCode: 429,
+      error: { code: 'rate_limited', details: { retryAfterSeconds: expect.any(Number) } },
     })
   })
 })
@@ -184,21 +184,21 @@ describe('đăng nhập', () => {
     const user = await registerUser(app)
     const wrong = await login(user.email, 'mat-khau-sai').expect(401)
     const missing = await login(uniqueEmail(), 'mat-khau-sai').expect(401)
-    expect(wrong.body).toMatchObject({ statusCode: 401, code: 'invalid_credentials' })
-    expect(missing.body.code).toBe('invalid_credentials')
-    expect(wrong.body.message).toBe(missing.body.message)
+    expect(wrong.body).toMatchObject({ statusCode: 401, error: { code: 'invalid_credentials' } })
+    expect(missing.body.error.code).toBe('invalid_credentials')
+    expect(wrong.body.error.message).toBe(missing.body.error.message)
   })
 
   it('sai 5 lần theo email → lần thứ 6 rate_limited, kể cả đúng mật khẩu', async () => {
     const user = await registerUser(app)
     for (let i = 0; i < 5; i++) {
       const res = await login(user.email, 'mat-khau-sai').expect(401)
-      expect(res.body.code).toBe('invalid_credentials')
+      expect(res.body.error.code).toBe('invalid_credentials')
     }
     const blocked = await login(user.email, user.password).expect(429)
     expect(blocked.body).toMatchObject({
-      code: 'rate_limited',
-      details: { retryAfterSeconds: expect.any(Number) },
+      statusCode: 429,
+      error: { code: 'rate_limited', details: { retryAfterSeconds: expect.any(Number) } },
     })
   })
 
@@ -214,7 +214,7 @@ describe('đăng nhập', () => {
     const ip = uniqueIp()
     for (let i = 0; i < 20; i++) await login(uniqueEmail(), 'mat-khau-sai', ip).expect(401)
     const res = await login(uniqueEmail(), 'mat-khau-sai', ip).expect(429)
-    expect(res.body.code).toBe('rate_limited')
+    expect(res.body.error.code).toBe('rate_limited')
   })
 
   it('tài khoản bị khóa → 403 account_banned khi đăng nhập và refresh', async () => {
@@ -224,11 +224,11 @@ describe('đăng nhập', () => {
 
     const res = await login(user.email, user.password).expect(403)
     expect(res.body).toMatchObject({
-      code: 'account_banned',
-      details: { bannedUntil: bannedUntil.toISOString() },
+      statusCode: 403,
+      error: { code: 'account_banned', details: { bannedUntil: bannedUntil.toISOString() } },
     })
     // Sai mật khẩu thì không lộ việc bị khóa
-    expect((await login(user.email, 'mat-khau-sai').expect(401)).body.code).toBe(
+    expect((await login(user.email, 'mat-khau-sai').expect(401)).body.error.code).toBe(
       'invalid_credentials',
     )
 
@@ -237,7 +237,7 @@ describe('đăng nhập', () => {
       .set('X-Client', 'mobile')
       .send({ refreshToken: user.refreshToken })
       .expect(403)
-    expect(refresh.body.code).toBe('account_banned')
+    expect(refresh.body.error.code).toBe('account_banned')
     // Phiên bị thu hồi luôn
     await db.update(users).set({ bannedUntil: null }).where(eq(users.id, user.id))
     const after = await http()
@@ -245,7 +245,7 @@ describe('đăng nhập', () => {
       .set('X-Client', 'mobile')
       .send({ refreshToken: user.refreshToken })
       .expect(401)
-    expect(after.body.code).toBe('invalid_token')
+    expect(after.body.error.code).toBe('invalid_token')
   })
 
   it('hết khóa (banned_until đã qua) thì đăng nhập được', async () => {
@@ -267,14 +267,16 @@ describe('đăng nhập', () => {
     const [row] = await db.select().from(users).where(eq(users.id, user!.id))
     expect(row!.passwordHash).toMatch(/^\$argon2id\$/)
     await login(email, 'mat-khau-cu').expect(200)
-    expect((await login(email, 'mat-khau-sai').expect(401)).body.code).toBe('invalid_credentials')
+    expect((await login(email, 'mat-khau-sai').expect(401)).body.error.code).toBe(
+      'invalid_credentials',
+    )
   })
 
   it('tài khoản chỉ có OAuth (không có mật khẩu) → invalid_credentials', async () => {
     const email = uniqueEmail()
     const [user] = await db.insert(users).values({ email, passwordHash: null }).returning()
     await db.insert(profiles).values({ id: user!.id, displayName: 'Chỉ Google' })
-    expect((await login(email, 'bat-ky-mat-khau').expect(401)).body.code).toBe(
+    expect((await login(email, 'bat-ky-mat-khau').expect(401)).body.error.code).toBe(
       'invalid_credentials',
     )
   })

@@ -1,3 +1,4 @@
+import type { ResponseMeta } from '../response/response.types'
 import type { ERROR_CODES } from './error-code'
 
 /** Mã lỗi của API (khóa của ERROR_CODES) */
@@ -17,14 +18,19 @@ export type PgErrorLike = { name: 'PostgresError'; code: string; constraint_name
 /** Lỗi của body-parser (JSON hỏng, body quá lớn) đi qua Express, không phải HttpException */
 export type BodyParserError = { type?: unknown; status?: unknown }
 
-/** Body lỗi trả cho client (mọi lỗi cùng một dạng) */
-export type ErrorResponse = {
-  /** Trùng HTTP status của response */
-  statusCode: number
+/** Phần `error` của body lỗi */
+export type ErrorBody = {
   code: ErrorCode
   message: string
   details?: Record<string, unknown>
-  requestId: string
+}
+
+/** Body lỗi trả cho client, cùng khuôn với response thành công (statusCode, meta) */
+export type ErrorResponse = {
+  /** Trùng HTTP status của response */
+  statusCode: number
+  error: ErrorBody
+  meta: ResponseMeta
 }
 
 /** Thông tin thêm khi ghi log lỗi (vd { queue, jobId }); requestId, userId được gắn tự động */

@@ -101,8 +101,7 @@ test('trùng khóa unique thật từ Postgres: 409 conflict qua filter', async 
   const res = await http().post('/v1/test-db/items').send({ name: 'trung' }).expect(409)
   expect(res.body).toEqual({
     statusCode: 409,
-    code: 'conflict',
-    message: 'Conflict with the current state',
-    requestId: expect.any(String),
+    error: { code: 'conflict', message: 'Conflict with the current state' },
+    meta: { requestId: expect.any(String) },
   })
 })

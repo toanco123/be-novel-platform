@@ -260,18 +260,22 @@
                     "summary": "validation_failed",
                     "value": {
                       "statusCode": 400,
-                      "code": "validation_failed",
-                      "message": "Request validation failed",
-                      "details": {
-                        "issues": [
-                          {
-                            "path": "password",
-                            "code": "too_small",
-                            "message": "Too small: expected string to have >=8 characters"
-                          }
-                        ]
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -290,9 +294,13 @@
                     "summary": "email_taken",
                     "value": {
                       "statusCode": 409,
-                      "code": "email_taken",
-                      "message": "Email is already registered",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "email_taken",
+                        "message": "Email is already registered"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -311,12 +319,16 @@
                     "summary": "rate_limited",
                     "value": {
                       "statusCode": 429,
-                      "code": "rate_limited",
-                      "message": "Too many requests, try again later",
-                      "details": {
-                        "retryAfterSeconds": 42
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -398,18 +410,22 @@
                     "summary": "validation_failed",
                     "value": {
                       "statusCode": 400,
-                      "code": "validation_failed",
-                      "message": "Request validation failed",
-                      "details": {
-                        "issues": [
-                          {
-                            "path": "password",
-                            "code": "too_small",
-                            "message": "Too small: expected string to have >=8 characters"
-                          }
-                        ]
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -428,9 +444,13 @@
                     "summary": "invalid_credentials",
                     "value": {
                       "statusCode": 401,
-                      "code": "invalid_credentials",
-                      "message": "Email or password is incorrect",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "invalid_credentials",
+                        "message": "Email or password is incorrect"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -449,12 +469,16 @@
                     "summary": "account_banned",
                     "value": {
                       "statusCode": 403,
-                      "code": "account_banned",
-                      "message": "This account is banned",
-                      "details": {
-                        "bannedUntil": "2026-12-31T00:00:00.000Z"
+                      "error": {
+                        "code": "account_banned",
+                        "message": "This account is banned",
+                        "details": {
+                          "bannedUntil": "2026-12-31T00:00:00.000Z"
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -473,12 +497,16 @@
                     "summary": "rate_limited",
                     "value": {
                       "statusCode": 429,
-                      "code": "rate_limited",
-                      "message": "Too many requests, try again later",
-                      "details": {
-                        "retryAfterSeconds": 42
+                      "error": {
+                        "code": "rate_limited",
+                        "message": "Too many requests, try again later",
+                        "details": {
+                          "retryAfterSeconds": 42
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -572,27 +600,39 @@
                     "summary": "unauthenticated",
                     "value": {
                       "statusCode": 401,
-                      "code": "unauthenticated",
-                      "message": "Authentication required",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   },
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
                       "statusCode": 401,
-                      "code": "invalid_token",
-                      "message": "Token is invalid or expired",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   },
                   "token_reused": {
                     "summary": "token_reused",
                     "value": {
                       "statusCode": 401,
-                      "code": "token_reused",
-                      "message": "Refresh token was already used",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "token_reused",
+                        "message": "Refresh token was already used"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -611,12 +651,16 @@
                     "summary": "account_banned",
                     "value": {
                       "statusCode": 403,
-                      "code": "account_banned",
-                      "message": "This account is banned",
-                      "details": {
-                        "bannedUntil": "2026-12-31T00:00:00.000Z"
+                      "error": {
+                        "code": "account_banned",
+                        "message": "This account is banned",
+                        "details": {
+                          "bannedUntil": "2026-12-31T00:00:00.000Z"
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -688,18 +732,26 @@
                     "summary": "unauthenticated",
                     "value": {
                       "statusCode": 401,
-                      "code": "unauthenticated",
-                      "message": "Authentication required",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   },
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
                       "statusCode": 401,
-                      "code": "invalid_token",
-                      "message": "Token is invalid or expired",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -762,18 +814,26 @@
                     "summary": "unauthenticated",
                     "value": {
                       "statusCode": 401,
-                      "code": "unauthenticated",
-                      "message": "Authentication required",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   },
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
                       "statusCode": 401,
-                      "code": "invalid_token",
-                      "message": "Token is invalid or expired",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -792,9 +852,13 @@
                     "summary": "not_found",
                     "value": {
                       "statusCode": 404,
-                      "code": "not_found",
-                      "message": "Resource not found",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -865,18 +929,22 @@
                     "summary": "validation_failed",
                     "value": {
                       "statusCode": 400,
-                      "code": "validation_failed",
-                      "message": "Request validation failed",
-                      "details": {
-                        "issues": [
-                          {
-                            "path": "password",
-                            "code": "too_small",
-                            "message": "Too small: expected string to have >=8 characters"
-                          }
-                        ]
+                      "error": {
+                        "code": "validation_failed",
+                        "message": "Request validation failed",
+                        "details": {
+                          "issues": [
+                            {
+                              "path": "password",
+                              "code": "too_small",
+                              "message": "Too small: expected string to have >=8 characters"
+                            }
+                          ]
+                        }
                       },
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -895,18 +963,26 @@
                     "summary": "unauthenticated",
                     "value": {
                       "statusCode": 401,
-                      "code": "unauthenticated",
-                      "message": "Authentication required",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   },
                   "invalid_token": {
                     "summary": "invalid_token",
                     "value": {
                       "statusCode": 401,
-                      "code": "invalid_token",
-                      "message": "Token is invalid or expired",
-                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
                     }
                   }
                 }
@@ -928,8 +1004,8 @@
   },
   "info": {
     "title": "Novel Platform API",
-    "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, code, message, details?, requestId }`; client hiển thị lời theo `code`.",
-    "version": "0.0.14",
+    "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
+    "version": "0.0.15",
     "contact": {}
   },
   "tags": [
@@ -1094,14 +1170,9 @@
           "service_unavailable"
         ]
       },
-      "ErrorResponseDto": {
+      "ErrorBodyDto": {
         "type": "object",
         "properties": {
-          "statusCode": {
-            "type": "integer",
-            "description": "Trùng HTTP status của response",
-            "example": 404
-          },
           "code": {
             "example": "not_found",
             "allOf": [
@@ -1117,17 +1188,32 @@
           "details": {
             "type": "object",
             "additionalProperties": true
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "description": "Trùng HTTP status của response",
+            "example": 404
           },
-          "requestId": {
-            "type": "string",
-            "example": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+          "error": {
+            "$ref": "#/components/schemas/ErrorBodyDto"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ResponseMetaDto"
           }
         },
         "required": [
           "statusCode",
-          "code",
-          "message",
-          "requestId"
+          "error",
+          "meta"
         ]
       },
       "LoginDto": {

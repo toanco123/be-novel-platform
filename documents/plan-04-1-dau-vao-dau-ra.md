@@ -73,3 +73,9 @@ Thay quyết định "không bọc response" của thiết kế tổng thể (m�
 - Thành công: `{ statusCode, data, meta: { requestId } }`. Lỗi: `{ statusCode, code, message, details?, requestId }`.
 - `statusCode` luôn trùng HTTP status: interceptor đọc `res.statusCode` (Nest đặt status, kể cả `@HttpCode`, trước khi chạy interceptor), filter lấy từ `toApiError`.
 - 204 vẫn body trống.
+
+## Bổ sung: lỗi cùng khuôn `{ statusCode, error, meta }` (người dùng chọn, 14/10/2026) ✅
+
+- Lỗi: `{ statusCode, error: { code, message, details? }, meta: { requestId } }`. Thành công vẫn `{ statusCode, data, meta }`: hai dạng chung `statusCode` và `meta.requestId`, khác nhau ở `data` / `error`.
+- `toErrorResponse` dựng body mới; Swagger: `ErrorResponseDto` + `ErrorBodyDto` (gom vào `common/errors/dto/`), ví dụ của `@ApiErrorResponses` theo dạng mới.
+- `ErrorLogger` không đổi (log vẫn có `error: { code, status, message, details? }`).

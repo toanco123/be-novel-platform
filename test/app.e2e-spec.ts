@@ -86,9 +86,8 @@ test('route không có: 404 not_found, requestId khớp header client gửi', as
   const res = await http().get('/v1/khong-co').set('x-request-id', 'req-123').expect(404)
   expect(res.body).toEqual({
     statusCode: 404,
-    code: 'not_found',
-    message: 'Resource not found',
-    requestId: 'req-123',
+    error: { code: 'not_found', message: 'Resource not found' },
+    meta: { requestId: 'req-123' },
   })
   expect(res.headers['x-request-id']).toBe('req-123')
 })
@@ -96,9 +95,12 @@ test('route không có: 404 not_found, requestId khớp header client gửi', as
 test('body sai: 400 validation_failed kèm issue; đúng thì qua', async () => {
   const bad = await http().post('/v1/test-only/echo').send({ name: 'a' }).expect(400)
   expect(bad.body).toMatchObject({
-    code: 'validation_failed',
-    details: { issues: [expect.objectContaining({ path: 'name', code: 'isLength' })] },
-    requestId: expect.any(String),
+    statusCode: 400,
+    error: {
+      code: 'validation_failed',
+      details: { issues: [expect.objectContaining({ path: 'name', code: 'isLength' })] },
+    },
+    meta: { requestId: expect.any(String) },
   })
   await http().post('/v1/test-only/echo').send({ name: 'Linh' }).expect(201, { name: 'Linh' })
   // Trường không khai báo trong DTO bị bỏ
@@ -123,27 +125,25 @@ test('JSON hỏng: 400 bad_request; body quá 1 MB: 413 payload_too_large', asyn
     .set('content-type', 'application/json')
     .send('{"name":')
     .expect(400)
-  expect(broken.body.code).toBe('bad_request')
+  expect(broken.body.error.code).toBe('bad_request')
   const big = await http()
     .post('/v1/test-only/echo')
     .send({ name: 'x'.repeat(1_100_000) })
     .expect(413)
-  expect(big.body.code).toBe('payload_too_large')
+  expect(big.body.error.code).toBe('payload_too_large')
 })
 
 test('AppException giữ mã và details; lỗi lạ thành 500 không lộ chi tiết', async () => {
   const conflict = await http().get('/v1/test-only/conflict').expect(409)
   expect(conflict.body).toMatchObject({
     statusCode: 409,
-    code: 'conflict',
-    details: { reason: 'test' },
+    error: { code: 'conflict', details: { reason: 'test' } },
   })
   const boom = await http().get('/v1/test-only/boom').expect(500)
   expect(boom.body).toEqual({
     statusCode: 500,
-    code: 'internal_error',
-    message: 'Internal server error',
-    requestId: expect.any(String),
+    error: { code: 'internal_error', message: 'Internal server error' },
+    meta: { requestId: expect.any(String) },
   })
 })
 

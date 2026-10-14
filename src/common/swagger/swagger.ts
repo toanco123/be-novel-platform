@@ -16,7 +16,7 @@ const DESCRIPTION = `Backend của nền tảng đọc truyện chữ.
 
 **Tên trường:** body / query nhận cả camelCase lẫn snake_case (\`displayName\` hay \`display_name\`); response luôn camelCase.
 
-**Lỗi** luôn có dạng \`{ statusCode, code, message, details?, requestId }\`; client hiển thị lời theo \`code\`.`
+**Lỗi** luôn có dạng \`{ statusCode, error: { code, message, details? }, meta: { requestId } }\`; client hiển thị lời theo \`code\`.`
 
 /** Tài liệu OpenAPI của app (schema lấy từ @ApiProperty của DTO) */
 export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {

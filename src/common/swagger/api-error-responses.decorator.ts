@@ -2,7 +2,7 @@ import { applyDecorators } from '@nestjs/common'
 import { ApiResponse } from '@nestjs/swagger'
 import type { ErrorCode } from '@/common/errors/errors.types'
 import { ERROR_CODES } from '../errors/error-code'
-import { ErrorResponseDto } from '../errors/error-response.dto'
+import { ErrorResponseDto } from '../errors/dto/error-response.dto'
 
 /** `details` mẫu của vài mã lỗi (hiện trong ví dụ của Swagger) */
 const EXAMPLE_DETAILS: Partial<Record<ErrorCode, Record<string, unknown>>> = {
@@ -21,7 +21,7 @@ const EXAMPLE_DETAILS: Partial<Record<ErrorCode, Record<string, unknown>>> = {
 
 /**
  * Ghi vào Swagger các mã lỗi một endpoint có thể trả (gộp theo HTTP status, mỗi mã một ví dụ),
- * dạng lỗi chung { code, message, details?, requestId }.
+ * dạng lỗi chung { statusCode, error: { code, message, details? }, meta }.
  * Vd @ApiErrorResponses('invalid_credentials', 'rate_limited')
  */
 export function ApiErrorResponses(...codes: ErrorCode[]) {
@@ -43,10 +43,12 @@ export function ApiErrorResponses(...codes: ErrorCode[]) {
               summary: code,
               value: {
                 statusCode: status,
-                code,
-                message: ERROR_CODES[code].message,
-                ...(EXAMPLE_DETAILS[code] && { details: EXAMPLE_DETAILS[code] }),
-                requestId: '0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22',
+                error: {
+                  code,
+                  message: ERROR_CODES[code].message,
+                  ...(EXAMPLE_DETAILS[code] && { details: EXAMPLE_DETAILS[code] }),
+                },
+                meta: { requestId: '0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22' },
               },
             },
           ]),

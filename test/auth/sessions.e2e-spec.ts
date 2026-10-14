@@ -78,7 +78,9 @@ describe('refresh (mobile, token trong body)', () => {
   it('dùng lại token cũ ngay (hai tab): token_reused, phiên vẫn còn', async () => {
     const user = await registerUser(app)
     const next = (await refreshMobile(user.refreshToken).expect(200)).body.data.refreshToken
-    expect((await refreshMobile(user.refreshToken).expect(401)).body.code).toBe('token_reused')
+    expect((await refreshMobile(user.refreshToken).expect(401)).body.error.code).toBe(
+      'token_reused',
+    )
     await refreshMobile(next).expect(200)
   })
 
@@ -88,9 +90,11 @@ describe('refresh (mobile, token trong body)', () => {
     const third = (await refreshMobile(second).expect(200)).body.data.refreshToken
     await ageRevocation(user.refreshToken, 60_000)
 
-    expect((await refreshMobile(user.refreshToken).expect(401)).body.code).toBe('token_reused')
+    expect((await refreshMobile(user.refreshToken).expect(401)).body.error.code).toBe(
+      'token_reused',
+    )
     // Token mới nhất cũng hết hiệu lực
-    expect((await refreshMobile(third).expect(401)).body.code).toBe('invalid_token')
+    expect((await refreshMobile(third).expect(401)).body.error.code).toBe('invalid_token')
   })
 
   it('phiên khác của cùng người không bị ảnh hưởng khi một phiên bị thu hồi', async () => {
@@ -108,17 +112,19 @@ describe('refresh (mobile, token trong body)', () => {
   })
 
   it('token rác, hết hạn → invalid_token; không gửi token → unauthenticated', async () => {
-    expect((await refreshMobile('khong-ton-tai').expect(401)).body.code).toBe('invalid_token')
+    expect((await refreshMobile('khong-ton-tai').expect(401)).body.error.code).toBe('invalid_token')
 
     const user = await registerUser(app)
     await db
       .update(refreshTokens)
       .set({ expiresAt: new Date(Date.now() - 1000) })
       .where(eq(refreshTokens.userId, user.id))
-    expect((await refreshMobile(user.refreshToken).expect(401)).body.code).toBe('invalid_token')
+    expect((await refreshMobile(user.refreshToken).expect(401)).body.error.code).toBe(
+      'invalid_token',
+    )
 
     const none = await http().post('/v1/auth/refresh').expect(401)
-    expect(none.body.code).toBe('unauthenticated')
+    expect(none.body.error.code).toBe('unauthenticated')
   })
 
   it('access token cũ (kể cả hết hạn) gửi kèm không chặn refresh', async () => {
@@ -153,14 +159,14 @@ describe('refresh (web, cookie)', () => {
       .post('/v1/auth/refresh')
       .set('Cookie', first.split(';')[0]!)
       .expect(401)
-    expect(reused.body.code).toBe('token_reused')
+    expect(reused.body.error.code).toBe('token_reused')
     // token_reused không xóa cookie (tab khác có thể vừa nhận cookie mới)
     expect(refreshCookieOf(reused)).toBeUndefined()
   })
 
   it('cookie không hợp lệ → invalid_token và xóa cookie', async () => {
     const res = await http().post('/v1/auth/refresh').set('Cookie', 'refresh_token=rac').expect(401)
-    expect(res.body.code).toBe('invalid_token')
+    expect(res.body.error.code).toBe('invalid_token')
     expect(refreshCookieOf(res)).toMatch(/Expires=Thu, 01 Jan 1970/)
   })
 })
@@ -169,7 +175,9 @@ describe('đăng xuất', () => {
   it('logout (body) thu hồi phiên; refresh sau đó → invalid_token', async () => {
     const user = await registerUser(app)
     await http().post('/v1/auth/logout').send({ refreshToken: user.refreshToken }).expect(204)
-    expect((await refreshMobile(user.refreshToken).expect(401)).body.code).toBe('invalid_token')
+    expect((await refreshMobile(user.refreshToken).expect(401)).body.error.code).toBe(
+      'invalid_token',
+    )
   })
 
   it('logout (cookie) xóa cookie; token sai hoặc không có token vẫn 204', async () => {
@@ -197,6 +205,6 @@ describe('đăng xuất', () => {
 
   it('logout-all cần đăng nhập', async () => {
     const res = await http().post('/v1/auth/logout-all').expect(401)
-    expect(res.body.code).toBe('unauthenticated')
+    expect(res.body.error.code).toBe('unauthenticated')
   })
 })

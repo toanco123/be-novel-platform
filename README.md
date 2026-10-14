@@ -276,54 +276,58 @@ Response thành công có dạng chung **`{ statusCode, data, meta }`** (chốt 
 }
 ```
 
-| Trường hợp                   | Trả về                                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Thành công, có dữ liệu       | `{ statusCode, data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`) |
-| Danh sách (từ phần 7)        | `{ statusCode, data: [...], meta: { total, page, pageCount, requestId } }`                           |
-| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                       |
-| Lỗi                          | `{ statusCode, code, message, details?, requestId }`, status 4xx / 5xx (xem [Lỗi](#lỗi))             |
-| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc               |
+| Trường hợp                   | Trả về                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Thành công, có dữ liệu       | `{ statusCode, data: <DTO>, meta: { requestId } }`, status 200 / 201 (route gắn `@ResponseDto(Dto)`)          |
+| Danh sách (từ phần 7)        | `{ statusCode, data: [...], meta: { total, page, pageCount, requestId } }`                                    |
+| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                                |
+| Lỗi                          | `{ statusCode, error: { code, message, details? }, meta: { requestId } }`, status 4xx / 5xx (xem [Lỗi](#lỗi)) |
+| `/health/*`                  | Dạng của terminus (`{ status, info, ... }`), không bọc, cho Docker / load balancer đọc                        |
 
 - Bọc và lọc làm tự động ở `ResponseInterceptor` (`common/response/`) cho route có `@ResponseDto`; controller, service chỉ trả DTO.
-- Mọi response có header `x-request-id`, trùng `meta.requestId` hoặc `requestId` của lỗi.
+- Thành công hay lỗi đều có `statusCode` (trùng HTTP status) và `meta.requestId` (trùng header `x-request-id`); thành công có `data`, lỗi có `error`.
 - Test e2e quét `openapi.json`: route `/v1` nào trả 200 / 201 mà không có dạng `{ statusCode, data, meta }` (quên `@ResponseDto`) thì test lỗi.
 
 ## Lỗi
 
 Mọi thứ về lỗi nằm ở `src/common/errors/`, dùng chung cho API và worker:
 
-| File                                  | Việc                                                                           |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| `error-code.ts`                       | Bảng mã lỗi `ERROR_CODES` (`code → { status, message }`); mã mới thêm ở đây    |
-| `app.exception.ts`                    | `AppException(code, details?)`: lỗi nghiệp vụ service ném ra                   |
-| `constraint-codes.ts`                 | Tên constraint unique → mã lỗi riêng (vd `users_email_unique` → `email_taken`) |
-| `pg-error.ts`                         | Lỗi Postgres → mã lỗi (`23505` trùng, `23503` khóa ngoại, `57014` quá giờ...)  |
-| `validation-exception.factory.ts`     | Lỗi class-validator → `validation_failed` kèm `details.issues`                 |
-| `to-api-error.ts`                     | Mọi loại lỗi → một dạng chung `{ status, code, message, details? }`            |
-| `to-error-response.ts`                | Dạng chung → body trả cho client (thêm `statusCode`, `requestId`)              |
-| `all-exceptions.filter.ts`            | Filter toàn cục: trả body lỗi, lỗi 5xx thì ghi log                             |
-| `error-logger.service.ts`             | `ErrorLogger`: ghi log lỗi theo cấu trúc chung                                 |
-| `error-response.dto.ts`               | `ErrorResponseDto` cho Swagger                                                 |
-| `errors.types.ts`, `errors.module.ts` | Kiểu của lỗi; module `@Global()` cung cấp `ErrorLogger`                        |
+| File                                                 | Việc                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `error-code.ts`                                      | Bảng mã lỗi `ERROR_CODES` (`code → { status, message }`); mã mới thêm ở đây    |
+| `app.exception.ts`                                   | `AppException(code, details?)`: lỗi nghiệp vụ service ném ra                   |
+| `constraint-codes.ts`                                | Tên constraint unique → mã lỗi riêng (vd `users_email_unique` → `email_taken`) |
+| `pg-error.ts`                                        | Lỗi Postgres → mã lỗi (`23505` trùng, `23503` khóa ngoại, `57014` quá giờ...)  |
+| `validation-exception.factory.ts`                    | Lỗi class-validator → `validation_failed` kèm `details.issues`                 |
+| `to-api-error.ts`                                    | Mọi loại lỗi → một dạng chung `{ status, code, message, details? }`            |
+| `to-error-response.ts`                               | Dạng chung → body trả cho client (thêm `statusCode`, `requestId`)              |
+| `all-exceptions.filter.ts`                           | Filter toàn cục: trả body lỗi, lỗi 5xx thì ghi log                             |
+| `error-logger.service.ts`                            | `ErrorLogger`: ghi log lỗi theo cấu trúc chung                                 |
+| `dto/error-response.dto.ts`, `dto/error-body.dto.ts` | `ErrorResponseDto`, `ErrorBodyDto` cho Swagger                                 |
+| `errors.types.ts`, `errors.module.ts`                | Kiểu của lỗi; module `@Global()` cung cấp `ErrorLogger`                        |
 
 ### Body lỗi trả cho client
+
+Cùng khuôn với response thành công: `statusCode`, `meta`; thay `data` bằng `error`.
 
 ```json
 {
   "statusCode": 400,
-  "code": "validation_failed",
-  "message": "Request validation failed",
-  "details": {
-    "issues": [{ "path": "password", "code": "isLength", "message": "..." }]
+  "error": {
+    "code": "validation_failed",
+    "message": "Request validation failed",
+    "details": {
+      "issues": [{ "path": "password", "code": "isLength", "message": "..." }]
+    }
   },
-  "requestId": "..."
+  "meta": { "requestId": "..." }
 }
 ```
 
 - `statusCode` trùng HTTP status.
-- `code` ổn định, client dựa vào đó để hiển thị lời tiếng Việt. Danh sách mã ở `src/common/errors/error-code.ts`.
-- `message` tiếng Anh, chỉ để dev đọc. Lỗi 5xx không lộ chi tiết (luôn là `Internal server error`).
-- Lỗi validate: `details.issues[].code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...), `path` là tên trường (trường lồng nhau nối bằng dấu chấm, vd `items.1.name`).
+- `error.code` ổn định, client dựa vào đó để hiển thị lời tiếng Việt. Danh sách mã ở `src/common/errors/error-code.ts`.
+- `error.message` tiếng Anh, chỉ để dev đọc. Lỗi 5xx không lộ chi tiết (luôn là `Internal server error`).
+- Lỗi validate: `error.details.issues[].code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...), `path` là tên trường (trường lồng nhau nối bằng dấu chấm, vd `items.1.name`).
 
 ### Ghi log lỗi
 
