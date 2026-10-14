@@ -1,4 +1,4 @@
-import { ApiField, ApiFieldOptional } from '@/common/response/api-field.decorator'
+import { ApiField, ApiFieldOptional } from '@/common/response/decorators/api-field.decorator'
 import { ERROR_CODES } from '../error-code'
 import type { ErrorCode } from '../errors.types'
 

@@ -1,4 +1,4 @@
-import { ApiField, ApiFieldOptional } from '@/common/response/api-field.decorator'
+import { ApiField, ApiFieldOptional } from '@/common/response/decorators/api-field.decorator'
 import { MeDto } from '@/modules/users/dto/me.dto'
 
 /** Phiên đăng nhập trả cho client (register, login, refresh) */

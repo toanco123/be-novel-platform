@@ -8,7 +8,7 @@ import { clearRefreshCookie, readRefreshToken } from '@/common/auth/refresh-cook
 import { RequireCaptcha } from '@/common/captcha/require-captcha.decorator'
 import { AppException } from '@/common/errors/app.exception'
 import { clientMeta } from '@/common/http/request-client'
-import { ResponseDto } from '@/common/response/response-dto.decorator'
+import { ResponseDto } from '@/common/response/decorators/response-dto.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
 import { AppConfig } from '@/config/app-config.service'
 import { ApiClientHeader, ApiRefreshTokenBody, ApiSessionOperation } from '../auth-api.decorator'

@@ -1,4 +1,5 @@
 import type { emailTokens } from './email-tokens'
+import type { genres } from './genres'
 import type { oauthAccounts } from './oauth-accounts'
 import type { profiles } from './profiles'
 import type { refreshTokens } from './refresh-tokens'
@@ -12,3 +13,4 @@ export type EmailTokenRow = typeof emailTokens.$inferSelect
 export type EmailTokenPurpose = EmailTokenRow['purpose']
 export type OAuthAccountRow = typeof oauthAccounts.$inferSelect
 export type OAuthProvider = OAuthAccountRow['provider']
+export type GenreRow = typeof genres.$inferSelect

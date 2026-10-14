@@ -30,6 +30,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     )
     .addTag('auth', 'Đăng ký, đăng nhập, refresh token, đăng xuất')
     .addTag('me', 'Tài khoản của người đang đăng nhập')
+    .addTag('genres', 'Thể loại truyện')
     .addTag('health', 'Kiểm tra app còn chạy (cho Docker / load balancer)')
     .build()
   return SwaggerModule.createDocument(app, config)

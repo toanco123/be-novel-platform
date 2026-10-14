@@ -2,7 +2,11 @@
 // (X-Forwarded-For, test bật TRUST_PROXY_HOPS=1) để hạn mức theo email / IP không đụng nhau.
 import { randomInt, randomUUID } from 'node:crypto'
 import type { INestApplication } from '@nestjs/common'
+import { eq } from 'drizzle-orm'
 import request from 'supertest'
+import { DB } from '@/infra/database/database.constants'
+import type { Db } from '@/infra/database/database.types'
+import { users } from '@/infra/database/schema'
 import type { RegisterUserInput, TestUser } from './helpers.types'
 
 export const uniqueEmail = () => `u-${randomUUID()}@example.test`
@@ -40,3 +44,23 @@ export function refreshCookieOf(res: request.Response) {
 
 /** Giá trị của cookie refresh_token */
 export const cookieValue = (cookie: string) => cookie.split(';')[0]!.slice('refresh_token='.length)
+
+/** Người dùng đã xác nhận email (thao tác viết): access token mới có ev = true */
+export async function verifiedUser(app: INestApplication, input: RegisterUserInput = {}) {
+  const user = await registerUser(app, input)
+  await app
+    .get<Db>(DB)
+    .update(users)
+    .set({ emailVerifiedAt: new Date() })
+    .where(eq(users.id, user.id))
+  const res = await request(app.getHttpServer())
+    .post('/v1/auth/refresh')
+    .set('X-Client', 'mobile')
+    .send({ refreshToken: user.refreshToken })
+    .expect(200)
+  return {
+    ...user,
+    accessToken: res.body.data.accessToken as string,
+    refreshToken: res.body.data.refreshToken as string,
+  }
+}
