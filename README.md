@@ -264,6 +264,19 @@ me(@CurrentUser() actor: Actor) {
 
 Chi tiết: [documents/plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md).
 
+## Dạng response
+
+Response thành công **không bọc** trong lớp ngoài (`{ data, success }`...): trả thẳng DTO, HTTP status cho biết thành công hay lỗi (đã chốt 14/10/2026).
+
+| Trường hợp                   | Trả về                                                                                                                 |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Thành công, có dữ liệu       | DTO của route (`@ResponseDto(Dto)`), status 200 / 201. Vd `GET /v1/me` → `{ "id": "...", "displayName": "Linh", ... }` |
+| Thành công, không có dữ liệu | 204, body trống (vd đăng xuất)                                                                                         |
+| Danh sách (từ phần 7)        | `{ items, total, page, pageCount }` (giống `Page<T>` của web)                                                          |
+| Lỗi                          | `{ code, message, details?, requestId }`, status 4xx / 5xx (xem [Lỗi](#lỗi))                                           |
+
+Mọi response có header `x-request-id`; body lỗi có thêm `requestId` để báo lỗi.
+
 ## Lỗi
 
 Mọi thứ về lỗi nằm ở `src/common/errors/`, dùng chung cho API và worker:

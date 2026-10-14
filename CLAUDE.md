@@ -20,6 +20,7 @@ Chi tiết và ví dụ: mục **Quy ước code** trong [README.md](README.md).
 - **Hằng số, token inject, hạn mức** trong `*.constants.ts`.
 - **Dùng chung thì vào `src/common/<mảng>/`** (`auth`, `context`, `crypto`, `errors`, `http`, `rate-limit`, `swagger`, `validation`, `utils`); chỉ một module dùng thì để trong module. Provider dùng chung khai báo trong module `@Global()` của mảng (`CryptoModule`, `ErrorsModule`).
 - **DTO kiểu chuẩn của Nest:** `email: string`, không dùng `!` (`strictPropertyInitialization` tắt).
+- **Response thành công không bọc** (`{ data }`...): trả thẳng DTO; danh sách `{ items, total, page, pageCount }`; lỗi `{ code, message, details?, requestId }`. Chi tiết: README mục **Dạng response**.
 - **Đầu vào** nhận cả camelCase lẫn snake_case (pipe đổi về camelCase trước khi validate); **đầu ra** luôn camelCase. DTO trả về dùng `@ApiField` cho mỗi trường; route trả dữ liệu dùng `@ResponseDto(Dto)` (response chỉ có trường có `@ApiField`, kể cả object con).
 - **Từ 2 file cùng loại trở lên trong một thư mục** thì gom vào thư mục con số nhiều: `services/`, `repositories/`, `types/`, `guards/`, `decorators/`, `dto/`. Ngoại lệ: `app.module.ts`, `worker.module.ts` ở `src/`.
 - **Import:** cùng thư mục hoặc lên một cấp trong cùng nhánh thì đường dẫn tương đối; xa hơn dùng `@/`. Test luôn dùng `@/`.
