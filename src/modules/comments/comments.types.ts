@@ -1,4 +1,4 @@
-import type { PublicationStatus, ReviewStatus } from '@/infra/database/schema'
+import type { CommentReportReason, PublicationStatus, ReviewStatus } from '@/infra/database/schema'
 
 /** Thứ tự bình luận gốc: mới nhất trước | nhiều lượt thích trước */
 export type CommentSort = 'newest' | 'top'
@@ -19,6 +19,8 @@ export type CommentRow = {
   parentId: string | null
   replyCount: number
   likeCount: number
+  /** Người xem đã thích chưa (khách: false) */
+  likedByMe: boolean
   editedAt: Date | null
   isAuthor: boolean
 }
@@ -30,6 +32,7 @@ export type CommentTargetRow = {
   storyId: string
   chapterNumber: number | null
   parentId: string | null
+  content: string
   storyVisibility: PublicationStatus
   storyOwnerId: string
   storyReviewStatus: ReviewStatus | null
@@ -42,4 +45,12 @@ export type NewComment = {
   userId: string
   content: string
   parentId: string | null
+}
+
+/** Báo cáo bình luận (đã chuẩn hóa) */
+export type CommentReportInput = {
+  reason: CommentReportReason
+  note: string
+  /** Nội dung bình luận lúc bị báo cáo */
+  contentSnapshot: string
 }

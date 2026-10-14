@@ -35,6 +35,9 @@ export class CommentDto {
   @ApiField()
   likeCount: number
 
+  @ApiField({ description: 'Người xem đã thích bình luận này chưa (khách: luôn false)' })
+  likedByMe: boolean
+
   @ApiField({ type: String, nullable: true, format: 'date-time', description: 'null: chưa sửa' })
   editedAt: string | null
 

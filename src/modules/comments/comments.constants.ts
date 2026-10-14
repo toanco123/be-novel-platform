@@ -16,4 +16,15 @@ export const REPLIES_LIMIT = 200
 /** Nội dung 1–1000 ký tự (check comments_content_check) */
 export const MAX_COMMENT_LENGTH = 1000
 
+/** Tối đa 300 lượt thích mới / giờ mỗi người (như trigger comment_likes_guard) */
+export const LIKE_RATE_LIMIT: RateLimitOptions = { limit: 300, windowSeconds: 3600 }
+
+/** Tối đa 10 báo cáo bình luận mới / giờ mỗi người (như RPC report_comment) */
+export const REPORT_RATE_LIMIT: RateLimitOptions = { limit: 10, windowSeconds: 3600 }
+
+/** Ghi chú của báo cáo tối đa 500 ký tự (check comment_reports_note_check) */
+export const MAX_REPORT_NOTE = 500
+
+export const COMMENT_REPORT_REASONS = ['spam', 'offensive', 'spoiler', 'other'] as const
+
 export const COMMENT_SORTS = ['newest', 'top'] as const satisfies CommentSort[]

@@ -39,14 +39,14 @@ Người đọc đăng nhập lưu lịch sử đọc, theo dõi truyện, chấ
 - **Cần xác nhận email** (quyết định ở phần 5): các thao tác người khác thấy hoặc làm đổi số liệu công khai. Gồm theo dõi, chấm điểm, bình luận, thích, báo cáo bình luận, báo lỗi chương.
 - **Không cần xác nhận email:** dữ liệu riêng của mình (lịch sử đọc, chặn người dùng). Liên hệ thì khách cũng gửi được.
 
-| Phần | Nội dung                                                                                                                                               | Plan                                                           | Trạng thái |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ---------- |
-| 13   | Lịch sử đọc: lưu chỗ đọc dở, danh sách, xóa, gộp lịch sử lúc còn là khách                                                                              | [plan-13-lich-su-doc.md](plan-13-lich-su-doc.md)               | ✅         |
-| 14   | Theo dõi truyện, tủ truyện (số chương mới, mốc đã thấy), số truyện có chương mới                                                                       | [plan-14-theo-doi-tu-truyen.md](plan-14-theo-doi-tu-truyen.md) | ✅         |
-| 15   | Chấm điểm truyện (1–5 sao, đổi, xóa; cập nhật phân bố sao)                                                                                             | [plan-15-cham-diem.md](plan-15-cham-diem.md)                   | ✅         |
-| 16   | Bình luận (gốc, trả lời một cấp, sửa, xóa, chủ truyện xóa, nhãn Tác giả, hạn mức, chống gửi trùng) và chặn người dùng (ẩn bình luận của người đã chặn) | [plan-16-binh-luan-chan.md](plan-16-binh-luan-chan.md)         | ✅         |
-| 17   | Thích bình luận (thứ tự Nổi bật), báo cáo bình luận vi phạm                                                                                            | viết khi bắt đầu phần                                          |            |
-| 18   | Báo lỗi chương (người đọc gửi), tin nhắn liên hệ (khách gửi được)                                                                                      | viết khi bắt đầu phần                                          |            |
+| Phần | Nội dung                                                                                                                                               | Plan                                                                     | Trạng thái |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | ---------- |
+| 13   | Lịch sử đọc: lưu chỗ đọc dở, danh sách, xóa, gộp lịch sử lúc còn là khách                                                                              | [plan-13-lich-su-doc.md](plan-13-lich-su-doc.md)                         | ✅         |
+| 14   | Theo dõi truyện, tủ truyện (số chương mới, mốc đã thấy), số truyện có chương mới                                                                       | [plan-14-theo-doi-tu-truyen.md](plan-14-theo-doi-tu-truyen.md)           | ✅         |
+| 15   | Chấm điểm truyện (1–5 sao, đổi, xóa; cập nhật phân bố sao)                                                                                             | [plan-15-cham-diem.md](plan-15-cham-diem.md)                             | ✅         |
+| 16   | Bình luận (gốc, trả lời một cấp, sửa, xóa, chủ truyện xóa, nhãn Tác giả, hạn mức, chống gửi trùng) và chặn người dùng (ẩn bình luận của người đã chặn) | [plan-16-binh-luan-chan.md](plan-16-binh-luan-chan.md)                   | ✅         |
+| 17   | Thích bình luận (thứ tự Nổi bật), báo cáo bình luận vi phạm                                                                                            | [plan-17-thich-bao-cao-binh-luan.md](plan-17-thich-bao-cao-binh-luan.md) | ✅         |
+| 18   | Báo lỗi chương (người đọc gửi), tin nhắn liên hệ (khách gửi được)                                                                                      | viết khi bắt đầu phần                                                    |            |
 
 Chủ truyện xem và xử lý báo lỗi làm ở đợt 3 (Sáng tác). Quản trị viên xử lý báo cáo bình luận, hộp thư làm ở đợt 5.
 

@@ -99,7 +99,7 @@ src/
     chapters/             #   chương cho người đọc: mục lục, đọc chương, tải nhiều chương, ghi lượt đọc
     library/              #   tủ truyện của người đọc: lịch sử đọc, theo dõi, tủ truyện
     ratings/              #   chấm điểm truyện
-    comments/             #   bình luận (gốc, trả lời, sửa, xóa)
+    comments/             #   bình luận (gốc, trả lời, sửa, xóa), thích, báo cáo
     blocks/               #   chặn người dùng
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
@@ -364,7 +364,7 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 ## Hoạt động người đọc
 
-Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md), [plan-14-theo-doi-tu-truyen.md](documents/plan-14-theo-doi-tu-truyen.md), [plan-15-cham-diem.md](documents/plan-15-cham-diem.md), [plan-16-binh-luan-chan.md](documents/plan-16-binh-luan-chan.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
+Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md), [plan-14-theo-doi-tu-truyen.md](documents/plan-14-theo-doi-tu-truyen.md), [plan-15-cham-diem.md](documents/plan-15-cham-diem.md), [plan-16-binh-luan-chan.md](documents/plan-16-binh-luan-chan.md), [plan-17-thich-bao-cao-binh-luan.md](documents/plan-17-thich-bao-cao-binh-luan.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
 
 Mốc "đã thấy" (`follows.seen_chapter`) và số người theo dõi do trigger của DB tính (migration `0012_follows_triggers`): theo dõi lấy chương mới nhất (hoặc chỗ đã đọc nếu xa hơn); lưu chỗ đọc xa hơn thì nâng mốc.
 
@@ -385,6 +385,8 @@ Mốc "đã thấy" (`follows.seen_chapter`) và số người theo dõi do trig
 | `GET /v1/comments/:id/replies`                            | Trả lời của một bình luận gốc, cũ trước, tối đa 200                                                                                                                        |
 | `POST /v1/stories/:slug/comments`                         | Viết bình luận / trả lời một cấp (cần xác nhận email; chống gửi lặp 10 phút; 3 / phút, 30 / giờ)                                                                           |
 | `PATCH /v1/comments/:id`, `DELETE ...`                    | Sửa (người viết) / xóa (người viết hoặc chủ truyện)                                                                                                                        |
+| `PUT` / `DELETE /v1/comments/:id/like`                    | Thích (cần xác nhận email; không tự thích; 300 lượt mới / giờ) / bỏ thích. Bình luận có `likeCount` (trigger DB đếm), `likedByMe`                                          |
+| `POST /v1/comments/:id/reports`                           | Báo cáo bình luận vi phạm `{ reason, note? }` (báo lại thì cập nhật; 10 báo cáo mới / giờ; lưu nội dung lúc báo cáo)                                                       |
 | `GET /v1/me/blocks`, `PUT` / `DELETE /v1/users/:id/block` | Danh sách đã chặn / chặn / bỏ chặn                                                                                                                                         |
 
 ## Đăng nhập mạng xã hội

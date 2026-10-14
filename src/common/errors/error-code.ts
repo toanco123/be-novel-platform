@@ -22,6 +22,8 @@ export const ERROR_CODES = {
   invalid_parent: { status: 400, message: 'Cannot reply to this comment' },
   duplicate_comment: { status: 409, message: 'The same comment was just posted' },
   cannot_block_self: { status: 400, message: 'You cannot block yourself' },
+  own_comment_like: { status: 400, message: 'You cannot like your own comment' },
+  own_comment_report: { status: 400, message: 'You cannot report your own comment' },
   forbidden: { status: 403, message: 'You are not allowed to do this' },
   not_found: { status: 404, message: 'Resource not found' },
   conflict: { status: 409, message: 'Conflict with the current state' },

@@ -7,10 +7,10 @@ import { RequireVerifiedEmail } from '@/common/auth/decorators/require-verified-
 import { ResponseDto } from '@/common/response/decorators/response-dto.decorator'
 import { ResponsePage } from '@/common/response/decorators/response-page.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
-import { CommentsService } from '../comments.service'
 import { CommentListQueryDto } from '../dto/comment-list-query.dto'
 import { CommentDto } from '../dto/comment.dto'
 import { CreateCommentDto } from '../dto/create-comment.dto'
+import { CommentsService } from '../services/comments.service'
 
 @ApiTags('comments')
 @Controller('stories/:slug/comments')
