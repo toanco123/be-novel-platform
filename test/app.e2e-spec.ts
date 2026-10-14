@@ -2,15 +2,17 @@
 // validate, định dạng lỗi và OpenAPI
 import { Body, Controller, Get, Module, Post } from '@nestjs/common'
 import type { NestExpressApplication } from '@nestjs/platform-express'
-import { createZodDto } from 'nestjs-zod'
 import request from 'supertest'
 import { z } from 'zod'
+import { createZodDto } from '@/core/http/zod-dto'
 import { AppModule } from '@/app.module'
+import { Public } from '@/core/auth/auth.decorators'
 import { AppError } from '@/core/errors/app-error'
 import { createTestApp } from './helpers/app'
 
 class EchoDto extends createZodDto(z.object({ name: z.string().min(2).max(20) })) {}
 
+@Public()
 @Controller('test-only')
 class TestOnlyController {
   @Post('echo')
@@ -98,6 +100,19 @@ test('/openapi.json có endpoint và schema DTO zod', async () => {
     expect.arrayContaining(['/health/live', '/v1/test-only/echo']),
   )
   expect(JSON.stringify(res.body.components.schemas)).toContain('"minLength":2')
+})
+
+test('/openapi.json: route cần đăng nhập có bearer, nullable đúng dạng OpenAPI 3.0', async () => {
+  const { body } = await http().get('/openapi.json').expect(200)
+  expect(body.components.securitySchemes.bearer).toMatchObject({ type: 'http', scheme: 'bearer' })
+  expect(body.paths['/v1/me'].get.security).toEqual([{ bearer: [] }])
+  expect(body.paths['/v1/auth/login'].post.security).toBeUndefined()
+  // zod sinh type: ['string', 'null'], Nest hiểu nhầm thành mảng (xem core/http/zod-dto.ts)
+  expect(body.components.schemas.MeDto.properties.avatarUrl).toEqual({
+    type: 'string',
+    nullable: true,
+  })
+  expect(JSON.stringify(body)).not.toMatch(/"type":\[/)
 })
 
 test('CORS: origin trong danh sách được phép, origin lạ không có header cho phép', async () => {

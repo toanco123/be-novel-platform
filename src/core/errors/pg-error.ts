@@ -9,7 +9,9 @@ type PgErrorLike = { name: 'PostgresError'; code: string; constraint_name?: stri
  * Tên constraint unique → mã lỗi riêng (vd `genres_pkey` → `genre_exists`). Module thêm vào đây khi
  * cần báo trùng rõ ràng hơn `conflict`
  */
-export const CONSTRAINT_CODES: Record<string, ErrorCode> = {}
+export const CONSTRAINT_CODES: Record<string, ErrorCode> = {
+  users_email_unique: 'email_taken',
+}
 
 const BY_SQLSTATE: Record<string, ErrorCode> = {
   '23505': 'conflict', // unique_violation

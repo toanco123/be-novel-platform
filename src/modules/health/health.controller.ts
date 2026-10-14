@@ -1,11 +1,13 @@
 import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common'
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger'
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus'
+import { Public } from '@/core/auth/auth.decorators'
 import { DbHealthIndicator } from '@/infra/database/db.health'
 import { RedisHealthIndicator } from '@/infra/redis/redis.module'
 
 /** Health check cho load balancer / Docker; không có tiền tố phiên bản (/health/...) */
 @ApiTags('health')
+@Public()
 @Controller({ path: 'health', version: VERSION_NEUTRAL })
 export class HealthController {
   constructor(

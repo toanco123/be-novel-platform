@@ -14,6 +14,11 @@ export class AppConfig {
   get isProduction() {
     return this.get('NODE_ENV') === 'production'
   }
+
+  /** Cookie refresh token có cờ Secure: theo COOKIE_SECURE, không đặt thì bật ở production */
+  get cookieSecure() {
+    return this.get('COOKIE_SECURE') ?? this.isProduction
+  }
 }
 
 @Global()

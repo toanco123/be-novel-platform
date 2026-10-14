@@ -18,6 +18,11 @@ test('mặc định hợp lý khi chỉ đặt biến bắt buộc', () => {
     REDIS_URL,
     THROTTLE_LIMIT: 300,
     THROTTLE_TTL_SECONDS: 60,
+    JWT_KEY_ID: 'dev',
+    JWT_ISSUER: 'novel-api',
+    JWT_AUDIENCE: 'novel-clients',
+    ACCESS_TOKEN_TTL_SECONDS: 900,
+    REFRESH_TOKEN_TTL_DAYS: 30,
   })
 })
 
@@ -48,4 +53,32 @@ test('biến sai thì dừng và báo rõ biến nào', () => {
   expect(() => validateEnv({ PORT: 'abc', NODE_ENV: 'staging' })).toThrow(
     /PORT[\s\S]*NODE_ENV|NODE_ENV[\s\S]*PORT/,
   )
+})
+
+test('production thiếu khóa JWT thì dừng; có đủ thì qua', () => {
+  expect(() => validateEnv({ DATABASE_URL, REDIS_URL, NODE_ENV: 'production' })).toThrow(
+    /JWT_PRIVATE_KEY/,
+  )
+  expect(
+    validateEnv({
+      DATABASE_URL,
+      REDIS_URL,
+      NODE_ENV: 'production',
+      JWT_PRIVATE_KEY: 'pem',
+      JWT_PUBLIC_KEY: 'pem',
+    }).NODE_ENV,
+  ).toBe('production')
+})
+
+test('biến để trống trong .env coi như không đặt', () => {
+  const env = validateEnv({
+    DATABASE_URL,
+    REDIS_URL,
+    COOKIE_SECURE: '',
+    JWT_PRIVATE_KEY: '',
+    PORT: '',
+  })
+  expect(env.COOKIE_SECURE).toBeUndefined()
+  expect(env.JWT_PRIVATE_KEY).toBeUndefined()
+  expect(env.PORT).toBe(4000)
 })

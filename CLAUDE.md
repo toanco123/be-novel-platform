@@ -23,6 +23,7 @@ npm test                 # unit (src/**/*.spec.ts)
 npm run test:e2e         # e2e (test/**/*.e2e-spec.ts)
 npx vitest run src/core/errors/to-api-error.spec.ts   # một file
 npm run openapi:export   # ghi openapi.json
+npm run keys:generate    # in cặp khóa ES256 cho JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
 npm run db:up            # Postgres 17 (cổng 5433) + Redis 7.4 (cổng 6380) bằng docker-compose; db:down để tắt
 npm run dev:worker       # process worker (hàng đợi BullMQ)
 npm run db:generate      # sinh migration từ schema Drizzle
@@ -39,7 +40,10 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - `AllExceptionsFilter` (toàn cục) đổi mọi lỗi qua `toApiError` thành `{ code, message, details?, requestId }`. Gồm: lỗi zod → `validation_failed` với `details.issues`, `HttpException` theo status, lỗi body-parser, lỗi lạ → 500 không lộ chi tiết.
   - `message` tiếng Anh cho dev; client hiển thị tiếng Việt theo `code`.
   - **Mã mới thêm vào `core/errors/error-codes.ts`.**
-- **Validate và OpenAPI:** DTO là `class X extends createZodDto(schema)` (nestjs-zod), `ZodValidationPipe` toàn cục; Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`).
+- **Validate và OpenAPI:**
+  - DTO là `class X extends createZodDto(schema)`, import từ `@/core/http/zod-dto` (lớp bọc nestjs-zod: sửa schema nullable mà Nest hiểu nhầm thành mảng; lint chặn import thẳng từ `nestjs-zod`). `ZodValidationPipe` toàn cục.
+  - Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`). Mỗi endpoint có `@ApiOperation({ summary })` tiếng Việt, `@ApiErrorResponses(...codes)` (`core/http/api-error-responses.ts`) liệt kê mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
+  - Trên `/docs`, gọi register / login / refresh xong thì access token tự điền vào nút Authorize.
 - **Database** (`src/infra/database`, plan `documents/plan-02-database.md`):
   - Một pool postgres.js; inject `@Inject(DB) db: Db` (Drizzle, `casing: 'snake_case'`). Kiểu `Tx` cho transaction, `Executor` (= `Db | Tx`) cho repository.
   - Chỉ `src/infra/database` (và test) được import `postgres` / `drizzle-orm/postgres-js` (luật `no-restricted-imports` của oxlint).
@@ -54,7 +58,19 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - **Hàng đợi** BullMQ (`infra/queue`): tên hàng đợi và job ở `queues.ts`; module đẩy job thì `BullModule.registerQueue` + `@InjectQueue`. Processor (`@Processor`, `extends WorkerHost`) **chỉ khai báo trong `WorkerModule`**, để API không tự xử lý job. Mặc định thử lại 3 lần, backoff mũ.
   - Worker: `src/worker.ts` (`createWorker()`, `createApplicationContext`, không có HTTP), tắt gọn bằng `enableShutdownHooks`.
   - `/health/ready` kiểm tra DB và Redis.
+- **Auth** (plan `documents/plan-04-auth-co-ban.md`):
+  - **Guard toàn cục** đăng ký ở `AppModule`, theo thứ tự `JwtAuthGuard` → `RolesGuard` → `AppThrottlerGuard`.
+    - Mặc định mọi route cần access token. `@Public()` cho khách; `@Public({ ignoreToken: true })` bỏ qua cả header Authorization (route của auth).
+    - Token sai hoặc hết hạn → 401 `invalid_token`, kể cả ở route `@Public()`.
+    - `@Roles('admin')` sai vai trò → 403 `forbidden`.
+  - **Người gọi:** `@CurrentUser() actor: Actor` (`{ id, role, sessionId }`), cũng có trong CLS (`actor`). Log có `userId`.
+  - **Access token:** JWT ES256 (`core/auth/token.service.ts`), không truy vấn DB mỗi request. Khóa tài khoản thì thu hồi refresh token, người bị khóa mất quyền chậm nhất sau 15 phút.
+  - **Refresh token** (`modules/auth`): DB chỉ lưu SHA-256; mỗi phiên là một họ token (`family_id` = `sessionId`), xoay vòng mỗi lần dùng, dùng lại token cũ thì thu hồi cả họ. Web nhận qua cookie `refresh_token`, mobile qua body (`X-Client: mobile`).
+  - **Mật khẩu:** argon2id; hash bcrypt cũ (Supabase) đăng nhập đúng thì băm lại.
+  - **Dữ liệu tài khoản:** `UsersRepository` (`modules/users`) là nơi duy nhất truy vấn `users`, `profiles`.
 - **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17 và Redis bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
+  - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.
+  - Controller chỉ dùng trong test cần `@Public()` nếu không muốn đăng nhập.
 - **Route:** controller thường có tiền tố `/v1` (URI versioning mặc định `1`); health check dùng `VERSION_NEUTRAL` (`/health/live`).
 - **Module domain** (`src/modules/<tên>`): controller (HTTP + Swagger), service (luật, quyền, transaction), repository (nơi duy nhất đụng DB, từ phần 2), mapper (dòng DB → DTO), `dto/` (zod). Test unit đặt cạnh code, e2e đặt ở `test/<tên>/`.
 

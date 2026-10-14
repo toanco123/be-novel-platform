@@ -1,6 +1,6 @@
-import { createZodDto } from 'nestjs-zod'
 import { z } from 'zod'
 import { ERROR_CODES, type ErrorCode } from '../errors/error-codes'
+import { createZodDto } from './zod-dto'
 
 /** Dạng lỗi chung của API (hiện trong Swagger) */
 export const apiErrorSchema = z.object({

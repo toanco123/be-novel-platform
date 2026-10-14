@@ -3,6 +3,7 @@
 import { type Type, VersioningType } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import type { NestExpressApplication } from '@nestjs/platform-express'
+import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import { Logger } from 'nestjs-pino'
 import { AppModule } from './app.module'
@@ -33,6 +34,8 @@ export function configureApp(app: NestExpressApplication) {
 
   app.useBodyParser('json', { limit: BODY_LIMIT })
   app.useBodyParser('urlencoded', { limit: BODY_LIMIT, extended: true })
+  // Refresh token của web nằm trong cookie HttpOnly
+  app.use(cookieParser())
   // API chỉ trả JSON; tắt CSP để trang /docs (Swagger UI) chạy được
   app.use(helmet({ contentSecurityPolicy: false }))
 

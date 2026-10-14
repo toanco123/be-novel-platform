@@ -191,24 +191,904 @@
           "health"
         ]
       }
+    },
+    "/v1/auth/register": {
+      "post": {
+        "description": "Web nhận refresh token trong cookie HttpOnly `refresh_token` (path /v1/auth); mobile gửi header `X-Client: mobile` để nhận trong body. Trên trang này, gọi xong thì access token được tự điền vào nút Authorize.",
+        "operationId": "AuthController_register_v1",
+        "parameters": [
+          {
+            "name": "X-Client",
+            "in": "header",
+            "description": "`mobile`: refresh token trả trong body thay vì cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mobile"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "code": "validation_failed",
+                      "message": "Request validation failed",
+                      "details": {
+                        "issues": [
+                          {
+                            "path": "password",
+                            "code": "too_small",
+                            "message": "Too small: expected string to have >=8 characters"
+                          }
+                        ]
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "code: `email_taken`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "email_taken": {
+                    "summary": "email_taken",
+                    "value": {
+                      "code": "email_taken",
+                      "message": "Email is already registered",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "code": "rate_limited",
+                      "message": "Too many requests, try again later",
+                      "details": {
+                        "retryAfterSeconds": 42
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Đăng ký bằng email + mật khẩu",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/login": {
+      "post": {
+        "description": "Web nhận refresh token trong cookie HttpOnly `refresh_token` (path /v1/auth); mobile gửi header `X-Client: mobile` để nhận trong body. Trên trang này, gọi xong thì access token được tự điền vào nút Authorize.",
+        "operationId": "AuthController_login_v1",
+        "parameters": [
+          {
+            "name": "X-Client",
+            "in": "header",
+            "description": "`mobile`: refresh token trả trong body thay vì cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mobile"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "code": "validation_failed",
+                      "message": "Request validation failed",
+                      "details": {
+                        "issues": [
+                          {
+                            "path": "password",
+                            "code": "too_small",
+                            "message": "Too small: expected string to have >=8 characters"
+                          }
+                        ]
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_credentials`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "invalid_credentials": {
+                    "summary": "invalid_credentials",
+                    "value": {
+                      "code": "invalid_credentials",
+                      "message": "Email or password is incorrect",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "code: `account_banned`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "account_banned": {
+                    "summary": "account_banned",
+                    "value": {
+                      "code": "account_banned",
+                      "message": "This account is banned",
+                      "details": {
+                        "bannedUntil": "2026-12-31T00:00:00.000Z"
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "code: `rate_limited`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "rate_limited": {
+                    "summary": "rate_limited",
+                    "value": {
+                      "code": "rate_limited",
+                      "message": "Too many requests, try again later",
+                      "details": {
+                        "retryAfterSeconds": 42
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Đăng nhập",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "description": "Refresh token lấy từ body (mobile) hoặc cookie (web). Token cũ hết hiệu lực ngay; gửi lại token cũ thì cả phiên bị thu hồi (`token_reused`).",
+        "operationId": "AuthController_refresh_v1",
+        "parameters": [
+          {
+            "name": "X-Client",
+            "in": "header",
+            "description": "`mobile`: refresh token trả trong body thay vì cookie",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mobile"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              },
+              "examples": {
+                "web": {
+                  "summary": "Web: để trống, dùng cookie refresh_token",
+                  "value": {}
+                },
+                "mobile": {
+                  "summary": "Mobile: gửi refresh token",
+                  "value": {
+                    "refreshToken": "<refreshToken>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSessionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`, `token_reused`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "code": "unauthenticated",
+                      "message": "Authentication required",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "code": "invalid_token",
+                      "message": "Token is invalid or expired",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  },
+                  "token_reused": {
+                    "summary": "token_reused",
+                    "value": {
+                      "code": "token_reused",
+                      "message": "Refresh token was already used",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "code: `account_banned`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "account_banned": {
+                    "summary": "account_banned",
+                    "value": {
+                      "code": "account_banned",
+                      "message": "This account is banned",
+                      "details": {
+                        "bannedUntil": "2026-12-31T00:00:00.000Z"
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Lấy access token mới (xoay vòng refresh token)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "description": "Thu hồi phiên của refresh token gửi lên và xóa cookie; token sai cũng trả 204.",
+        "operationId": "AuthController_logout_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              },
+              "examples": {
+                "web": {
+                  "summary": "Web: để trống, dùng cookie refresh_token",
+                  "value": {}
+                },
+                "mobile": {
+                  "summary": "Mobile: gửi refresh token",
+                  "value": {
+                    "refreshToken": "<refreshToken>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Đăng xuất phiên hiện tại",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/logout-all": {
+      "post": {
+        "operationId": "AuthController_logoutAll_v1",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "code": "unauthenticated",
+                      "message": "Authentication required",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "code": "invalid_token",
+                      "message": "Token is invalid or expired",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Đăng xuất mọi thiết bị",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "MeController_me_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "code": "unauthenticated",
+                      "message": "Authentication required",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "code": "invalid_token",
+                      "message": "Token is invalid or expired",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "code": "not_found",
+                      "message": "Resource not found",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Hồ sơ của tôi",
+        "tags": [
+          "me"
+        ]
+      },
+      "patch": {
+        "operationId": "MeController_update_v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "code: `validation_failed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "validation_failed": {
+                    "summary": "validation_failed",
+                    "value": {
+                      "code": "validation_failed",
+                      "message": "Request validation failed",
+                      "details": {
+                        "issues": [
+                          {
+                            "path": "password",
+                            "code": "too_small",
+                            "message": "Too small: expected string to have >=8 characters"
+                          }
+                        ]
+                      },
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "code": "unauthenticated",
+                      "message": "Authentication required",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "code": "invalid_token",
+                      "message": "Token is invalid or expired",
+                      "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Sửa tên hiển thị",
+        "tags": [
+          "me"
+        ]
+      }
     }
   },
   "info": {
     "title": "Novel Platform API",
-    "description": "Backend của nền tảng đọc truyện chữ. Lỗi luôn có dạng { code, message, details?, requestId }.",
+    "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Lỗi** luôn có dạng `{ code, message, details?, requestId }`; client hiển thị lời theo `code`.",
     "version": "0.0.5",
     "contact": {}
   },
-  "tags": [],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Đăng ký, đăng nhập, refresh token, đăng xuất"
+    },
+    {
+      "name": "me",
+      "description": "Tài khoản của người đang đăng nhập"
+    },
+    {
+      "name": "health",
+      "description": "Kiểm tra app còn chạy (cho Docker / load balancer)"
+    }
+  ],
   "servers": [],
   "components": {
     "securitySchemes": {
       "bearer": {
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "type": "http"
+        "type": "http",
+        "description": "Access token"
       }
     },
-    "schemas": {}
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 254,
+            "example": "linh@example.com",
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 72,
+            "example": "mat-khau-bi-mat"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "Linh"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "displayName"
+        ]
+      },
+      "AuthSessionDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+              },
+              "displayName": {
+                "type": "string",
+                "example": "Linh"
+              },
+              "avatarUrl": {
+                "type": "string",
+                "nullable": true
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "user",
+                  "admin"
+                ]
+              },
+              "emailVerified": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "displayName",
+              "avatarUrl",
+              "role",
+              "emailVerified",
+              "createdAt"
+            ]
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "JWT gửi kèm mọi request: Authorization: Bearer <accessToken>",
+            "example": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRldiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expiresIn": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Access token còn hiệu lực (giây)",
+            "example": 900
+          },
+          "refreshToken": {
+            "description": "Chỉ có khi gửi header X-Client: mobile; web nhận trong cookie HttpOnly",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user",
+          "accessToken",
+          "expiresIn"
+        ]
+      },
+      "ApiErrorDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "bad_request",
+              "validation_failed",
+              "unauthenticated",
+              "invalid_token",
+              "invalid_credentials",
+              "token_reused",
+              "account_banned",
+              "email_taken",
+              "forbidden",
+              "not_found",
+              "conflict",
+              "payload_too_large",
+              "rate_limited",
+              "internal_error",
+              "timeout",
+              "service_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "requestId"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 254,
+            "example": "linh@example.com",
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "example": "mat-khau-bi-mat"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "description": "Chỉ mobile gửi; web để trống, token nằm trong cookie refresh_token",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "default": {}
+      },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Linh"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "admin"
+            ]
+          },
+          "emailVerified": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "displayName",
+          "avatarUrl",
+          "role",
+          "emailVerified",
+          "createdAt"
+        ]
+      },
+      "UpdateMeDto": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 50,
+            "example": "Linh Nguyễn"
+          }
+        },
+        "required": [
+          "displayName"
+        ]
+      }
+    }
   }
 }

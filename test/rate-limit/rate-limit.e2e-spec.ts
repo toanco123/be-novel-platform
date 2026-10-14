@@ -5,10 +5,12 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import { Throttle } from '@nestjs/throttler'
 import request from 'supertest'
 import { AppModule } from '@/app.module'
+import { Public } from '@/core/auth/auth.decorators'
 import { AppError } from '@/core/errors/app-error'
 import { RateLimitService } from '@/core/rate-limit/rate-limit.service'
 import { createTestApp } from '../helpers/app'
 
+@Public()
 @Controller('test-throttle')
 class TestThrottleController {
   @Get()

@@ -1,14 +1,15 @@
 import { Global, Module } from '@nestjs/common'
-import { APP_GUARD } from '@nestjs/core'
 import { seconds, ThrottlerModule } from '@nestjs/throttler'
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import type { Redis } from 'ioredis'
 import { AppConfig } from '@/config/app-config'
 import { REDIS } from '@/infra/redis/redis.module'
-import { AppThrottlerGuard } from './app-throttler.guard'
 import { RateLimitService } from './rate-limit.service'
 
-/** Throttler toàn cục (lưu trên Redis, dùng chung giữa các instance) + RateLimitService */
+/**
+ * Cấu hình throttler (lưu trên Redis, dùng chung giữa các instance) + RateLimitService. Guard
+ * AppThrottlerGuard đăng ký ở AppModule, sau JwtAuthGuard
+ */
 @Global()
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { RateLimitService } from './rate-limit.service'
       }),
     }),
   ],
-  providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }, RateLimitService],
+  providers: [RateLimitService],
   exports: [RateLimitService],
 })
 export class RateLimitModule {}

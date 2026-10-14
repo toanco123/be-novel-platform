@@ -1,6 +1,25 @@
 # Phần 4: Auth cơ bản
 
-Trạng thái: chờ làm.
+Trạng thái: ✅ xong (14/10/2026).
+
+**Khác so với plan:**
+
+- **`sid` là id của phiên** (`family_id`), không phải id của refresh token (id này đổi mỗi lần xoay vòng).
+- **Route của auth bỏ qua header `Authorization`:** `register`, `login`, `refresh`, `logout` dùng `@Public({ ignoreToken: true })`. Client lỡ gửi kèm access token đã hết hạn vẫn refresh hay đăng xuất được, thay vì bị `invalid_token`.
+- **Refresh trả cả `user`** (giống đăng nhập): web tải lại trang chỉ cần một request.
+- **Mã lỗi khi refresh:**
+  - Không gửi token: `unauthenticated`.
+  - Token đã thu hồi do đăng xuất hay bị khóa (không có token thay): `invalid_token`, không phải `token_reused`.
+  - Tài khoản bị khóa: kiểm tra **trước** khi xoay vòng, trong cùng transaction. Thu hồi cả phiên và trả `account_banned`; `details.bannedUntil` cho client hiển thị.
+  - Web: lỗi `invalid_token`, `account_banned` thì xóa cookie. `token_reused` không xóa, vì tab khác có thể vừa nhận cookie mới.
+- **Mật khẩu khi đăng nhập** chỉ cần 1–128 ký tự: user chuyển từ Supabase có thể có mật khẩu ngắn hơn 8. Đăng ký vẫn 8–72.
+- **Thứ tự guard toàn cục:** đăng ký ở `AppModule` theo thứ tự `JwtAuthGuard` → `RolesGuard` → `AppThrottlerGuard`, để throttler đếm theo user. `RateLimitModule` không còn tự đăng ký guard.
+- **`createZodDto` bọc lại** ở `core/http/zod-dto.ts`:
+  - zod 4.6 sinh `type: ['string', 'null']` cho giá trị nullable, Nest hiểu nhầm thành mảng (`avatarUrl` thành `string[]` trong Swagger). Lớp bọc đổi về `type: 'string', nullable: true`.
+  - Luật lint chặn import `createZodDto` thẳng từ `nestjs-zod`.
+- **Log có `userId`** (`customProps` của pino-http).
+- **Test:** project unit có `DATABASE_URL` / `REDIS_URL` giả (module config kiểm tra env ngay khi nạp). e2e bật `TRUST_PROXY_HOPS=1` để giả nhiều IP bằng `X-Forwarded-For`.
+- **Cần nhớ khi chuyển web sang BE:** cookie `SameSite=Lax` chỉ được gửi khi web và API cùng "site" (vd `novel.vn` và `api.novel.vn`). Khác site thì phải đổi sang `SameSite=None` (kèm chống CSRF).
 
 ## Mục tiêu
 
@@ -84,6 +103,20 @@ Bám theo Supabase để chuyển dữ liệu sau này: `users` thay `auth.users
 - `token_reused` (401)
 - `account_banned` (403)
 - `email_taken` (409, map từ constraint `users_email_unique`)
+
+### Swagger (người dùng yêu cầu thêm, 14/10/2026)
+
+- Trang `/docs` dễ xem và thử API:
+  - Mỗi endpoint có tóm tắt tiếng Việt; schema request và response (từ DTO zod) kèm ví dụ.
+  - Liệt kê các mã lỗi có thể trả về (`@ApiErrorResponses(...)`, dùng chung dạng lỗi `ApiErrorDto`).
+- Nút **Authorize** (bearer JWT) để dán access token; `persistAuthorization` giữ token khi tải lại trang.
+- Nhóm theo tag (`auth`, `me`, `health`); bật "Try it out" sẵn.
+- Swagger UI gửi cookie cùng origin nên thử `/v1/auth/refresh` bằng cookie được ngay trên trang.
+- Đã làm thêm:
+  - Gọi `register`, `login`, `refresh` thành công thì access token **tự điền** vào nút Authorize và được lưu lại.
+  - Mỗi mã lỗi có một ví dụ riêng.
+  - Body của `refresh`, `logout` có sẵn hai ví dụ: web (`{}`, dùng cookie) và mobile (gửi `refreshToken`).
+  - Đã kiểm tra trên trình duyệt: đăng ký → tải lại trang → `/v1/me` → refresh bằng cookie → đăng xuất mọi thiết bị.
 
 ## Công việc
 

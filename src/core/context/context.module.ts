@@ -1,9 +1,10 @@
 // Ngữ cảnh theo request (nestjs-cls) và log (nestjs-pino). CLS giữ requestId để mọi nơi đọc được
-// (filter lỗi, service), không phải truyền tay; các phần sau thêm actor (người đang gọi API).
+// (filter lỗi, service), không phải truyền tay; JwtAuthGuard thêm actor (người đang gọi API).
 import { Global, Module } from '@nestjs/common'
 import { ClsModule } from 'nestjs-cls'
 import { LoggerModule } from 'nestjs-pino'
 import { AppConfig } from '@/config/app-config'
+import type { AuthenticatedRequest } from '../auth/actor'
 import type { RequestWithId } from './request-id'
 
 @Global()
@@ -29,6 +30,11 @@ import type { RequestWithId } from './request-id'
               : undefined,
           genReqId: (req) => (req as RequestWithId).id,
           customAttributeKeys: { reqId: 'requestId' },
+          // Người gọi (JwtAuthGuard gắn req.user); tính lại khi request xong nên có userId
+          customProps: (req) => {
+            const user = (req as AuthenticatedRequest).user
+            return user ? { userId: user.id } : {}
+          },
           // Không ghi token, cookie, mật khẩu vào log
           redact: {
             paths: [

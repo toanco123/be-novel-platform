@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { ThrottlerGuard } from '@nestjs/throttler'
 import type { Request } from 'express'
 
-/** Người đã đăng nhập (phần 4 gắn req.user) */
+/** Người đã đăng nhập (JwtAuthGuard gắn req.user, chạy trước guard này) */
 type RequestWithUser = Request & { user?: { id: string } }
 
 /**

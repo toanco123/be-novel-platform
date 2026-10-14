@@ -8,6 +8,8 @@ const testEnv = {
   LOG_LEVEL: 'silent',
   CORS_ORIGINS: 'http://allowed.test',
   SWAGGER_ENABLED: 'true',
+  // Test giả nhiều IP bằng X-Forwarded-For (rate limit theo IP)
+  TRUST_PROXY_HOPS: '1',
 }
 
 const shared = {
@@ -25,7 +27,12 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['src/**/*.spec.ts'],
-          env: testEnv,
+          // Unit test không kết nối DB / Redis; URL chỉ để module config (kiểm tra env khi nạp) chạy được
+          env: {
+            ...testEnv,
+            DATABASE_URL: 'postgres://unit:unit@127.0.0.1:1/unit',
+            REDIS_URL: 'redis://127.0.0.1:1',
+          },
         },
       },
       {
