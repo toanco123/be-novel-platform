@@ -11,6 +11,7 @@ import {
   storyGenres,
   storyStats,
 } from '@/infra/database/schema'
+import { cardCreatedAt, cardUpdatedAt } from '../story-columns'
 import { isPublicStory } from '../story-conditions'
 import {
   CARD_DESCRIPTION_LENGTH,
@@ -27,11 +28,6 @@ import type {
   StoryLength,
   StorySort,
 } from '../stories.types'
-
-/** createdAt của thẻ truyện: lần đầu công khai, chưa công khai thì lúc tạo (như story_cards) */
-const cardCreatedAt = sql<Date>`coalesce(${stories.publishedAt}, ${stories.createdAt})`
-/** updatedAt của thẻ truyện: mới nhất trong chương xuất bản gần nhất, lần đầu công khai, lúc tạo */
-const cardUpdatedAt = sql<Date>`greatest(${storyStats.lastChapterAt}, ${stories.publishedAt}, ${stories.createdAt})`
 
 /** Thứ tự (giảm dần) của từng kiểu sắp xếp; cuối cùng luôn theo id để phân trang ổn định */
 const SORT_ORDER: Record<StorySort, SQL[]> = {

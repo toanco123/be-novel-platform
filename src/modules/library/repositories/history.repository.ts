@@ -5,7 +5,13 @@ import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
 import { readingHistory, stories } from '@/infra/database/schema'
 import { isVisibleStory } from '@/modules/stories/story-conditions'
-import type { GuestHistoryEntry, HistoryRow, ProgressRow, SaveProgressInput } from './library.types'
+import type {
+  GuestHistoryEntry,
+  HistoryRow,
+  ProgressRow,
+  SaveProgressInput,
+  StoryProgressRow,
+} from '../library.types'
 
 const progressColumns = {
   chapterNumber: readingHistory.chapterNumber,
@@ -62,6 +68,19 @@ export class HistoryRepository {
       .where(and(eq(readingHistory.userId, userId), eq(readingHistory.storyId, storyId)))
       .limit(1)
     return row ?? null
+  }
+
+  /** Chỗ đọc dở của nhiều truyện (tủ truyện) */
+  async findMany(
+    userId: string,
+    storyIds: string[],
+    ex: Executor = this.db,
+  ): Promise<StoryProgressRow[]> {
+    if (!storyIds.length) return []
+    return ex
+      .select({ storyId: readingHistory.storyId, ...progressColumns })
+      .from(readingHistory)
+      .where(and(eq(readingHistory.userId, userId), inArray(readingHistory.storyId, storyIds)))
   }
 
   /** Lịch sử của người gọi, mới đọc trước; chỉ truyện người đó còn xem được */

@@ -4,12 +4,12 @@ import type { Actor } from '@/common/auth/auth.types'
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
 import { ResponseDto } from '@/common/response/decorators/response-dto.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
-import { HistoryItemDto } from './dto/history-item.dto'
-import { HistoryQueryDto } from './dto/history-query.dto'
-import { MergeHistoryDto } from './dto/merge-history.dto'
-import { ReadingProgressDto } from './dto/reading-progress.dto'
-import { SaveProgressDto } from './dto/save-progress.dto'
-import { HistoryService } from './history.service'
+import { HistoryItemDto } from '../dto/history-item.dto'
+import { HistoryQueryDto } from '../dto/history-query.dto'
+import { MergeHistoryDto } from '../dto/merge-history.dto'
+import { ReadingProgressDto } from '../dto/reading-progress.dto'
+import { SaveProgressDto } from '../dto/save-progress.dto'
+import { HistoryService } from '../services/history.service'
 
 @ApiTags('library')
 @ApiBearerAuth()

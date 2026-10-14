@@ -21,3 +21,15 @@ export type GuestHistoryEntry = {
   /** ISO, không sau thời điểm hiện tại */
   readAt: string
 }
+
+/** Chỗ đọc dở kèm truyện (tủ truyện lấy nhiều truyện một lần) */
+export type StoryProgressRow = ProgressRow & { storyId: string }
+
+/** Một truyện đang theo dõi */
+export type LibraryRow = {
+  storyId: string
+  followedAt: Date
+  seenChapter: number
+  /** Số chương đã xuất bản có số lớn hơn mốc "đã thấy" */
+  newChapters: number
+}
