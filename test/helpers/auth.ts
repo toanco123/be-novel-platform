@@ -64,3 +64,19 @@ export async function verifiedUser(app: INestApplication, input: RegisterUserInp
     refreshToken: res.body.data.refreshToken as string,
   }
 }
+
+/** Quản trị viên (đã xác nhận email): access token mới có role = admin */
+export async function adminUser(app: INestApplication, input: RegisterUserInput = {}) {
+  const user = await verifiedUser(app, input)
+  await app.get<Db>(DB).update(users).set({ role: 'admin' }).where(eq(users.id, user.id))
+  const res = await request(app.getHttpServer())
+    .post('/v1/auth/refresh')
+    .set('X-Client', 'mobile')
+    .send({ refreshToken: user.refreshToken })
+    .expect(200)
+  return {
+    ...user,
+    accessToken: res.body.data.accessToken as string,
+    refreshToken: res.body.data.refreshToken as string,
+  }
+}

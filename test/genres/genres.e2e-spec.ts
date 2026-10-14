@@ -1,13 +1,13 @@
 // Module mẫu genres: xem công khai, phân trang, tạo (đã xác nhận email), trùng, hạn mức, quản trị viên
 import { randomUUID } from 'node:crypto'
 import type { NestExpressApplication } from '@nestjs/platform-express'
-import { count, eq } from 'drizzle-orm'
+import { count } from 'drizzle-orm'
 import request from 'supertest'
 import { DB } from '@/infra/database/database.constants'
 import type { Db } from '@/infra/database/database.types'
-import { genres, users } from '@/infra/database/schema'
+import { genres } from '@/infra/database/schema'
 import { createTestApp } from '../helpers/app'
-import { registerUser, verifiedUser } from '../helpers/auth'
+import { adminUser, registerUser, verifiedUser } from '../helpers/auth'
 
 let app: NestExpressApplication
 let db: Db
@@ -41,6 +41,7 @@ describe('tạo thể loại', () => {
       name: raw.charAt(0).toUpperCase() + raw.slice(1),
       description: 'Mô tả',
       createdBy: { id: user.id, displayName: 'Tác giả A' },
+      storyCount: 0,
       createdAt: expect.any(String),
     })
   })
@@ -86,15 +87,9 @@ describe('tạo thể loại', () => {
   })
 
   it('quản trị viên không bị giới hạn', async () => {
-    const admin = await verifiedUser(app)
-    await db.update(users).set({ role: 'admin' }).where(eq(users.id, admin.id))
-    const refreshed = await http()
-      .post('/v1/auth/refresh')
-      .set('X-Client', 'mobile')
-      .send({ refreshToken: admin.refreshToken })
-      .expect(200)
+    const admin = await adminUser(app)
     for (let i = 0; i < 11; i++) {
-      await create(refreshed.body.data.accessToken, { name: uniqueName() }).expect(201)
+      await create(admin.accessToken, { name: uniqueName() }).expect(201)
     }
   })
 

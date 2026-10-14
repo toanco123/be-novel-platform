@@ -20,6 +20,7 @@ import { StorageModule } from './infra/storage/storage.module'
 import { AuthModule } from './modules/auth/auth.module'
 import { GenresModule } from './modules/genres/genres.module'
 import { HealthModule } from './modules/health/health.module'
+import { StoriesModule } from './modules/stories/stories.module'
 import { UsersModule } from './modules/users/users.module'
 
 @Module({
@@ -41,6 +42,7 @@ import { UsersModule } from './modules/users/users.module'
     AuthModule,
     UsersModule,
     GenresModule,
+    StoriesModule,
   ],
   // Guard toàn cục chạy theo thứ tự khai báo: xác thực trước để throttler đếm theo user
   providers: [

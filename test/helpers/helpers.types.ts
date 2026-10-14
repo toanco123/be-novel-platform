@@ -19,3 +19,31 @@ export type MailpitSearch = { messages: { ID: string; Created: string }[] }
 
 /** Thay một provider của app bằng bản giả khi dựng app test */
 export type ProviderOverride = { provide: unknown; useValue: unknown }
+
+/** Chương tạo thẳng vào DB cho test (mặc định đã xuất bản) */
+export type TestChapterInput = {
+  number: number
+  title?: string
+  content?: string
+  status?: 'draft' | 'published'
+  scheduledAt?: Date
+}
+
+/** Truyện tạo thẳng vào DB cho test; thiếu thì helper tự sinh (mặc định công khai, một chương) */
+export type TestStoryInput = {
+  ownerId: string
+  title?: string
+  description?: string
+  status?: 'ongoing' | 'completed'
+  visibility?: 'draft' | 'published'
+  reviewStatus?: 'pending' | 'approved' | 'rejected' | null
+  authorName?: string
+  coverPath?: string
+  coverThumbPath?: string
+  /** Slug thể loại đã có, theo thứ tự tác giả chọn */
+  genres?: string[]
+  chapters?: TestChapterInput[]
+}
+
+/** Truyện đã tạo */
+export type TestStory = { id: string; slug: string; title: string }

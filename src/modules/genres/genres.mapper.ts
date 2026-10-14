@@ -11,6 +11,7 @@ export function toGenre(row: GenreWithCreator): GenreDto {
       row.createdBy && row.createdByName
         ? { id: row.createdBy, displayName: row.createdByName }
         : null,
+    storyCount: row.storyCount,
     createdAt: row.createdAt.toISOString(),
   }
 }

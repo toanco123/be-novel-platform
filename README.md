@@ -95,6 +95,7 @@ src/
     auth/                 #   đăng ký, đăng nhập, refresh token, đăng xuất
     users/                #   /v1/me, dữ liệu tài khoản
     genres/               #   thể loại (module mẫu cho các module sau)
+    stories/              #   truyện cho người đọc (chi tiết; danh sách, tìm kiếm, xếp hạng ở các phần sau)
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
 test/
@@ -260,7 +261,7 @@ me(@CurrentUser() actor: Actor) {
 ### 8. Test
 
 - **Unit:** `test/unit/`, cùng cấu trúc thư mục với `src/`. Vd `src/common/crypto/password.service.ts` → `test/unit/common/crypto/password.service.spec.ts`.
-- **e2e:** `test/<tên module>/*.e2e-spec.ts`. Dựng app bằng `createTestApp()` và tạo người dùng bằng `registerUser(app)`. Mỗi test tự tạo dữ liệu riêng.
+- **e2e:** `test/<tên module>/*.e2e-spec.ts`. Dựng app bằng `createTestApp()`; tạo người dùng bằng `registerUser(app)` / `verifiedUser(app)` / `adminUser(app)` (`test/helpers/auth.ts`); tạo truyện, chương, thể loại thẳng vào DB bằng `createStory(db, {...})`, `createGenre(db)` (`test/helpers/stories.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
 - Tên test tiếng Việt, mô tả hành vi.
 
 ### 9. Khác
@@ -323,11 +324,26 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 `src/modules/genres` làm đủ mọi lớp; module mới làm theo khuôn này. Bảng `genres` lấy đúng từ Supabase.
 
-| Endpoint               | Việc                                                                                                                          |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `GET /v1/genres`       | Danh sách (công khai, phân trang): thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo                      |
-| `GET /v1/genres/:slug` | Một thể loại                                                                                                                  |
-| `POST /v1/genres`      | Tạo (đã xác nhận email): trùng tên → 409 `genre_exists` kèm thể loại đang có; tối đa 10 / ngày (quản trị viên không giới hạn) |
+| Endpoint               | Việc                                                                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/genres`       | Danh sách (công khai, phân trang): thể loại có sẵn trước, rồi thể loại người dùng tạo theo thời gian tạo. Mỗi thể loại có `storyCount` (số truyện công khai có chương) |
+| `GET /v1/genres/:slug` | Một thể loại                                                                                                                                                           |
+| `POST /v1/genres`      | Tạo (đã xác nhận email): trùng tên → 409 `genre_exists` kèm thể loại đang có; tối đa 10 / ngày (quản trị viên không giới hạn)                                          |
+
+## Truyện, chương (đọc công khai)
+
+Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md)).
+
+- **Bảng lấy đúng từ Supabase:** `stories`, `story_genres`, `chapters`, `story_stats`, `chapter_views`, `curated_stories` (cột, check, tên constraint, index).
+  - Khác: bỏ `default auth.uid()`; extension `unaccent`, `pg_trgm` ở schema `public`.
+  - Hàm SQL `slugify(text)` giống `slugify` TypeScript, dùng cho cột sinh `stories.search_title`.
+- **Số liệu `story_stats` do trigger của DB tính** (migration `0009_catalog_triggers`): tạo truyện thì có dòng số liệu; thêm / sửa / xóa chương thì tính lại số chương đã xuất bản, chương đầu, mới nhất, chương hẹn giờ sớm nhất.
+- **Luật nghiệp vụ** (công khai, duyệt, gỡ, số chương...) viết trong service ở đợt Sáng tác, không dùng trigger.
+- **Ai xem được truyện** (`stories.rules.ts`): truyện công khai thì mọi người; truyện nháp thì chủ truyện; truyện chờ duyệt thì thêm quản trị viên. Không xem được → 404.
+
+| Endpoint                | Việc                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GET /v1/stories/:slug` | Chi tiết truyện: tác giả (bút danh), thể loại theo thứ tự, URL bìa, số liệu, chương mới nhất, chương hẹn giờ |
 
 ## Đăng nhập mạng xã hội
 

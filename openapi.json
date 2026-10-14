@@ -2555,12 +2555,111 @@
           "genres"
         ]
       }
+    },
+    "/v1/stories/{slug}": {
+      "get": {
+        "description": "Truyện công khai: mọi người. Truyện nháp: chỉ chủ truyện (xem trước). Truyện chờ duyệt: thêm quản trị viên. Không xem được thì 404 như truyện không tồn tại.",
+        "operationId": "StoriesController_get_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/StoryDetailDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Chi tiết truyện",
+        "tags": [
+          "stories"
+        ]
+      }
     }
   },
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "contact": {}
   },
   "tags": [
@@ -3048,6 +3147,11 @@
               }
             ]
           },
+          "storyCount": {
+            "type": "number",
+            "example": 12,
+            "description": "Số truyện công khai có ít nhất một chương đã xuất bản"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -3058,6 +3162,7 @@
           "name",
           "description",
           "createdBy",
+          "storyCount",
           "createdAt"
         ]
       },
@@ -3114,6 +3219,235 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "StoryAuthorDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "example": "tac-gia-6f1c2d4e-0b7a-4c1e-9a55-2f3e8d9b1a20",
+            "description": "tac-gia-<ownerId>, thêm -<slugify(bút danh)> khi truyện có bút danh. Cùng slug = cùng tác giả"
+          },
+          "name": {
+            "type": "string",
+            "example": "Mặc Hương",
+            "description": "Bút danh, không có thì tên hiển thị của chủ truyện"
+          }
+        },
+        "required": [
+          "slug",
+          "name"
+        ]
+      },
+      "StoryGenreDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "example": "ngon-tinh"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ngôn tình"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "description"
+        ]
+      },
+      "ChapterRefDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number",
+            "example": 12
+          },
+          "title": {
+            "type": "string",
+            "example": "Gặp lại"
+          }
+        },
+        "required": [
+          "number",
+          "title"
+        ]
+      },
+      "NextChapterDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number",
+            "example": 13
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Giờ tự xuất bản"
+          }
+        },
+        "required": [
+          "number",
+          "at"
+        ]
+      },
+      "StoryDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "slug": {
+            "type": "string",
+            "example": "thanh-xuan-vuon-truong",
+            "description": "Không đổi sau khi tạo"
+          },
+          "title": {
+            "type": "string",
+            "example": "Thanh xuân vườn trường"
+          },
+          "author": {
+            "$ref": "#/components/schemas/StoryAuthorDto"
+          },
+          "genres": {
+            "description": "Theo thứ tự tác giả chọn",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryGenreDto"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ongoing",
+              "completed"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ],
+            "description": "draft chỉ chủ truyện (và quản trị viên với truyện chờ duyệt) thấy"
+          },
+          "description": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri"
+          },
+          "coverThumbUrl": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "description": "Bìa nhỏ 320×480; null: chưa có, dùng coverUrl"
+          },
+          "chapterCount": {
+            "type": "number",
+            "description": "Số chương đã xuất bản"
+          },
+          "firstChapterNumber": {
+            "type": "number",
+            "nullable": true,
+            "description": "null: chưa có chương nào xuất bản"
+          },
+          "latestChapter": {
+            "nullable": true,
+            "description": "Chương đã xuất bản mới nhất",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChapterRefDto"
+              }
+            ]
+          },
+          "nextChapter": {
+            "nullable": true,
+            "description": "Chương hẹn giờ sớm nhất",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NextChapterDto"
+              }
+            ]
+          },
+          "viewCount": {
+            "type": "number"
+          },
+          "ratingAvg": {
+            "type": "number",
+            "example": 4.25,
+            "description": "0 khi chưa có lượt chấm"
+          },
+          "ratingCount": {
+            "type": "number"
+          },
+          "ownerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Chủ truyện"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Lần đầu công khai (chưa công khai: lúc tạo)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Mới nhất trong: chương xuất bản gần nhất, lần đầu công khai, lúc tạo"
+          },
+          "followerCount": {
+            "type": "number"
+          },
+          "ratingCounts": {
+            "example": [
+              0,
+              1,
+              2,
+              5,
+              12
+            ],
+            "description": "Số lượt chấm 1..5 sao",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "author",
+          "genres",
+          "status",
+          "visibility",
+          "description",
+          "coverUrl",
+          "coverThumbUrl",
+          "chapterCount",
+          "firstChapterNumber",
+          "latestChapter",
+          "nextChapter",
+          "viewCount",
+          "ratingAvg",
+          "ratingCount",
+          "ownerId",
+          "createdAt",
+          "updatedAt",
+          "followerCount",
+          "ratingCounts"
         ]
       }
     }

@@ -3,7 +3,8 @@ import { asc, count, eq, sql } from 'drizzle-orm'
 import type { PageWindow } from '@/common/pagination/pagination.types'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
-import { genres, profiles } from '@/infra/database/schema'
+import { genres, profiles, stories, storyGenres, storyStats } from '@/infra/database/schema'
+import { isPublicStory } from '@/modules/stories/public-story'
 import type { GenreWithCreator, NewGenre } from './genres.types'
 
 /** Nơi duy nhất truy vấn bảng genres */
@@ -46,6 +47,12 @@ export class GenresRepository {
         createdBy: genres.createdBy,
         createdAt: genres.createdAt,
         createdByName: profiles.displayName,
+        storyCount: sql<number>`(
+          select count(*) from ${storyGenres}
+          join ${stories} on ${stories.id} = ${storyGenres.storyId}
+          join ${storyStats} on ${storyStats.storyId} = ${stories.id}
+          where ${storyGenres.genreSlug} = ${genres.slug} and ${isPublicStory()}
+        )`.mapWith(Number),
       })
       .from(genres)
       .leftJoin(profiles, eq(profiles.id, genres.createdBy))
