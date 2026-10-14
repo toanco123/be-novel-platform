@@ -19,16 +19,16 @@ Cách làm: chia thành từng phần nhỏ. Mỗi phần có plan riêng trong 
 | 7    | Module mẫu `genres` (đủ mọi lớp, làm khuôn cho các module sau) và phân trang dùng chung                                                                              | [plan-07-genres.md](plan-07-genres.md)                                 | ✅         |
 | 8    | Lưu ảnh S3 (RustFS ở máy, R2 production), Dockerfile, docker-compose profile app, build và chạy thử Docker trong CI; README, CLAUDE.md hoàn chỉnh                    | [plan-08-storage-docker.md](plan-08-storage-docker.md)                 | ✅         |
 
-## Đợt 1: đọc công khai 🚧
+## Đợt 1: đọc công khai ✅ (xong 14/10/2026)
 
 Người đọc (kể cả khách) xem truyện, chương, danh sách, tìm kiếm, xếp hạng; ghi lượt đọc. Bảng lấy đúng từ Supabase. Chưa có API ghi truyện / chương (đợt 3, Sáng tác): test tạo dữ liệu thẳng vào DB.
 
-| Phần | Nội dung                                                                                                                                                                  | Plan                                                       | Trạng thái |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------- |
-| 9    | Bảng truyện, thể loại của truyện, chương, số liệu, lượt đọc, truyện chọn tay (đúng Supabase); trigger tự tính số liệu; `GET /v1/stories/:slug`; `storyCount` cho thể loại | [plan-09-truyen-chuong.md](plan-09-truyen-chuong.md)       | ✅         |
-| 10   | Chương cho người đọc: mục lục, đọc một chương (kèm chương trước / sau), tải nhiều chương (đọc offline), ghi lượt đọc (1 / người hoặc IP / chương / ngày)                  | [plan-10-chuong-nguoi-doc.md](plan-10-chuong-nguoi-doc.md) | ✅         |
-| 11   | Danh sách truyện: lọc (trạng thái, thể loại, độ dài, tác giả), sắp xếp; truyện chọn tay cho trang chủ (danh sách trống thì tự chọn như web)                               | [plan-11-danh-sach-truyen.md](plan-11-danh-sach-truyen.md) | ✅         |
-| 12   | Tìm kiếm không dấu (chấm điểm như web, kèm thể loại khớp), bảng xếp hạng (lượt đọc theo tuần / tháng / tất cả, điểm, người theo dõi), truyện liên quan                    | viết khi bắt đầu phần                                      |            |
+| Phần | Nội dung                                                                                                                                                                  | Plan                                                         | Trạng thái |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------- |
+| 9    | Bảng truyện, thể loại của truyện, chương, số liệu, lượt đọc, truyện chọn tay (đúng Supabase); trigger tự tính số liệu; `GET /v1/stories/:slug`; `storyCount` cho thể loại | [plan-09-truyen-chuong.md](plan-09-truyen-chuong.md)         | ✅         |
+| 10   | Chương cho người đọc: mục lục, đọc một chương (kèm chương trước / sau), tải nhiều chương (đọc offline), ghi lượt đọc (1 / người hoặc IP / chương / ngày)                  | [plan-10-chuong-nguoi-doc.md](plan-10-chuong-nguoi-doc.md)   | ✅         |
+| 11   | Danh sách truyện: lọc (trạng thái, thể loại, độ dài, tác giả), sắp xếp; truyện chọn tay cho trang chủ (danh sách trống thì tự chọn như web)                               | [plan-11-danh-sach-truyen.md](plan-11-danh-sach-truyen.md)   | ✅         |
+| 12   | Tìm kiếm không dấu (chấm điểm như web, kèm thể loại khớp), bảng xếp hạng (lượt đọc theo tuần / tháng / tất cả, điểm, người theo dõi), truyện liên quan                    | [plan-12-tim-kiem-xep-hang.md](plan-12-tim-kiem-xep-hang.md) | ✅         |
 
 Xếp hạng theo phiếu đề cử làm ở đợt 4 (cần bảng `story_votes`).
 

@@ -5,10 +5,11 @@ import type { Actor } from '@/common/auth/auth.types'
 import { AppException } from '@/common/errors/app.exception'
 import { pgErrorCode } from '@/common/errors/pg-error'
 import { pageWindow } from '@/common/pagination/page'
-import type { PageQueryDto } from '@/common/pagination/page-query.dto'
 import type { Page } from '@/common/pagination/pagination.types'
 import { RateLimitService } from '@/common/rate-limit/rate-limit.service'
+import { slugify } from '@/common/utils/slugify'
 import type { CreateGenreDto } from './dto/create-genre.dto'
+import type { GenreListQueryDto } from './dto/genre-list-query.dto'
 import type { GenreDto } from './dto/genre.dto'
 import { normalizeGenreName } from './genre-name'
 import { CREATE_GENRE_LIMIT } from './genres.constants'
@@ -22,12 +23,16 @@ export class GenresService {
     private readonly rateLimit: RateLimitService,
   ) {}
 
-  async list(query: PageQueryDto): Promise<Page<GenreDto>> {
+  /** Có `q` thì chỉ thể loại có slug chứa slugify(q); q chỉ có ký tự đặc biệt → trang rỗng */
+  async list(query: GenreListQueryDto): Promise<Page<GenreDto>> {
+    const page = { page: query.page, pageSize: query.pageSize }
+    const slugPart = query.q === undefined ? undefined : slugify(query.q)
+    if (slugPart === '') return { items: [], total: 0, ...page }
     const [rows, total] = await Promise.all([
-      this.genres.list(pageWindow(query)),
-      this.genres.count(),
+      this.genres.list(pageWindow(query), slugPart),
+      this.genres.count(slugPart),
     ])
-    return { items: rows.map(toGenre), total, page: query.page, pageSize: query.pageSize }
+    return { items: rows.map(toGenre), total, ...page }
   }
 
   async get(slug: string): Promise<GenreDto> {

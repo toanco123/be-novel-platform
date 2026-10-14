@@ -6,6 +6,7 @@ import { Public } from '@/common/auth/decorators/public.decorator'
 import { ResponseDto } from '@/common/response/decorators/response-dto.decorator'
 import { ResponsePage } from '@/common/response/decorators/response-page.decorator'
 import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
+import { RelatedQueryDto } from '../dto/related-query.dto'
 import { StoryDetailDto } from '../dto/story-detail.dto'
 import { StoryListQueryDto } from '../dto/story-list-query.dto'
 import { StoryDto } from '../dto/story.dto'
@@ -44,5 +45,23 @@ export class StoriesController {
   @ApiErrorResponses('not_found', 'invalid_token')
   get(@Param('slug') slug: string, @CurrentUser() actor: Actor | undefined) {
     return this.stories.get(slug, actor)
+  }
+
+  @Get(':slug/related')
+  @Public()
+  @ApiOperation({
+    summary: 'Truyện liên quan',
+    description:
+      'Truyện công khai nhiều thể loại trùng nhất, rồi nhiều lượt đọc nhất; bỏ truyện cùng chủ ' +
+      'truyện. Truyện gốc không xem được → 404.',
+  })
+  @ResponseDto(StoryDto, { isArray: true })
+  @ApiErrorResponses('not_found', 'validation_failed', 'invalid_token')
+  related(
+    @Param('slug') slug: string,
+    @Query() query: RelatedQueryDto,
+    @CurrentUser() actor: Actor | undefined,
+  ) {
+    return this.stories.related(slug, query, actor)
   }
 }
