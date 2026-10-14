@@ -11,7 +11,7 @@ import {
   storyGenres,
   storyStats,
 } from '@/infra/database/schema'
-import { isPublicStory } from '../public-story'
+import { isPublicStory } from '../story-conditions'
 import {
   CARD_DESCRIPTION_LENGTH,
   LONG_STORY_MIN_CHAPTERS,

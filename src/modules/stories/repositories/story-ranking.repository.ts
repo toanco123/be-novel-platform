@@ -6,7 +6,7 @@ import { alias } from 'drizzle-orm/pg-core'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
 import { chapterViews, stories, storyGenres, storyStats } from '@/infra/database/schema'
-import { isPublicStory } from '../public-story'
+import { isPublicStory } from '../story-conditions'
 import { RANKING_PERIOD_DAYS, RATING_PRIOR } from '../stories.constants'
 import type { RankedStoryRow, RankingCriterion, RankingPeriod } from '../stories.types'
 

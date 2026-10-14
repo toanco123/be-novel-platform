@@ -21,6 +21,7 @@ import { AuthModule } from './modules/auth/auth.module'
 import { ChaptersModule } from './modules/chapters/chapters.module'
 import { GenresModule } from './modules/genres/genres.module'
 import { HealthModule } from './modules/health/health.module'
+import { LibraryModule } from './modules/library/library.module'
 import { StoriesModule } from './modules/stories/stories.module'
 import { UsersModule } from './modules/users/users.module'
 
@@ -45,6 +46,7 @@ import { UsersModule } from './modules/users/users.module'
     GenresModule,
     StoriesModule,
     ChaptersModule,
+    LibraryModule,
   ],
   // Guard toàn cục chạy theo thứ tự khai báo: xác thực trước để throttler đếm theo user
   providers: [

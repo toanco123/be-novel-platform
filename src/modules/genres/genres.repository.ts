@@ -4,7 +4,7 @@ import type { PageWindow } from '@/common/pagination/pagination.types'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
 import { genres, profiles, stories, storyGenres, storyStats } from '@/infra/database/schema'
-import { isPublicStory } from '@/modules/stories/public-story'
+import { isPublicStory } from '@/modules/stories/story-conditions'
 import type { GenreWithCreator, NewGenre } from './genres.types'
 
 /** Nơi duy nhất truy vấn bảng genres */

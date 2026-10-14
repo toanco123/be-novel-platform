@@ -84,7 +84,7 @@ src/
     swagger/              #   dựng /docs, @ApiErrorResponses
     response/             #   đầu ra: lọc theo DTO và bọc { statusCode, data, meta } (@ResponseDto, @ApiField)
     validation/           #   kiểm tra đầu vào: ValidationPipe, @Trim, @NormalizeEmail
-    utils/                #   hàm tiện ích thuần (withTimeout, slugify, vietnamDate)
+    utils/                #   hàm tiện ích thuần (withTimeout, slugify, vietnamDate, truncateChars)
   infra/                  # hạ tầng
     database/             #   Postgres + Drizzle, schema/, migration, health
     redis/                #   client Redis dùng chung, health
@@ -97,6 +97,7 @@ src/
     genres/               #   thể loại (module mẫu cho các module sau)
     stories/              #   truyện cho người đọc: chi tiết, danh sách có lọc, truyện chọn tay, tìm kiếm, xếp hạng, liên quan
     chapters/             #   chương cho người đọc: mục lục, đọc chương, tải nhiều chương, ghi lượt đọc
+    library/              #   tủ truyện của người đọc: lịch sử đọc (theo dõi ở phần sau)
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
 test/
@@ -234,7 +235,7 @@ export class LoginDto {
 
 - Response bọc `{ statusCode, data, meta }` (xem [Dạng response](#dạng-response)); `data` **chỉ có các trường có `@ApiField`**: service lỡ trả thừa (vd `passwordHash`) cũng không lộ ra ngoài. Object con và mảng cũng được lọc: `@ApiField({ type: MeDto })`, `@ApiField({ type: [ItemDto] })`.
 - Swagger ghi luôn schema response; status khác 200 thì truyền thêm, vd `@ResponseDto(AuthSessionDto, { status: 201 })`.
-- Service trả mảng không phân trang: `@ResponseDto(ChapterDto, { isArray: true })` → `data: [...]`, `meta: { requestId }`.
+- Service trả mảng không phân trang: `@ResponseDto(ChapterDto, { isArray: true })` → `data: [...]`, `meta: { requestId }`. Có thể chưa có dữ liệu: `@ResponseDto(Dto, { nullable: true })` → `data: null`.
 - Giá trị có thể null: `@ApiField({ type: String, nullable: true })`.
 
 ```ts
@@ -357,6 +358,18 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 | `GET /v1/stories/:slug/chapters/:number`               | Một chương: nội dung, thông tin truyện, chương trước / sau                                                                                                                                                                                    |
 | `GET /v1/stories/:slug/chapters/contents?from=&count=` | Tối đa 20 chương liên tiếp từ `from` (tải trước, đọc offline)                                                                                                                                                                                 |
 | `POST /v1/stories/:slug/chapters/:number/views`        | Ghi lượt đọc, luôn 204 nếu chương đọc được                                                                                                                                                                                                    |
+
+## Hoạt động người đọc
+
+Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
+
+| Endpoint                                               | Việc                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/me/history?limit=`                            | Lịch sử đọc, mới đọc trước (tối đa 100), chỉ truyện còn xem được                                              |
+| `GET /v1/me/history/:slug`                             | Chỗ đọc dở của một truyện (`data: null` nếu chưa đọc)                                                         |
+| `PUT /v1/me/history/:slug`                             | Lưu chỗ đọc dở `{ chapter, chapterTitle?, progress? }`; không gửi `progress` mà vẫn chương cũ thì giữ tiến độ |
+| `DELETE /v1/me/history/:slug`, `DELETE /v1/me/history` | Xóa một truyện / xóa hết                                                                                      |
+| `POST /v1/me/history/merge`                            | Gộp lịch sử lúc còn là khách (tối đa 100 dòng; mỗi truyện lấy lần đọc mới nhất, chỉ ghi đè khi mới hơn)       |
 
 ## Đăng nhập mạng xã hội
 
