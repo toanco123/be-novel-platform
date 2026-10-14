@@ -99,6 +99,8 @@ src/
     chapters/             #   chương cho người đọc: mục lục, đọc chương, tải nhiều chương, ghi lượt đọc
     library/              #   tủ truyện của người đọc: lịch sử đọc, theo dõi, tủ truyện
     ratings/              #   chấm điểm truyện
+    comments/             #   bình luận (gốc, trả lời, sửa, xóa)
+    blocks/               #   chặn người dùng
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
 test/
@@ -362,23 +364,28 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 ## Hoạt động người đọc
 
-Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md), [plan-14-theo-doi-tu-truyen.md](documents/plan-14-theo-doi-tu-truyen.md), [plan-15-cham-diem.md](documents/plan-15-cham-diem.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
+Đợt 2 của lộ trình ([plan-13-lich-su-doc.md](documents/plan-13-lich-su-doc.md), [plan-14-theo-doi-tu-truyen.md](documents/plan-14-theo-doi-tu-truyen.md), [plan-15-cham-diem.md](documents/plan-15-cham-diem.md), [plan-16-binh-luan-chan.md](documents/plan-16-binh-luan-chan.md)). Bảng lấy đúng từ Supabase. Thao tác người khác thấy hoặc làm đổi số liệu công khai cần xác nhận email; dữ liệu riêng (lịch sử đọc) thì không.
 
 Mốc "đã thấy" (`follows.seen_chapter`) và số người theo dõi do trigger của DB tính (migration `0012_follows_triggers`): theo dõi lấy chương mới nhất (hoặc chỗ đã đọc nếu xa hơn); lưu chỗ đọc xa hơn thì nâng mốc.
 
-| Endpoint                                               | Việc                                                                                                                                                                       |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /v1/me/history?limit=`                            | Lịch sử đọc, mới đọc trước (tối đa 100), chỉ truyện còn xem được                                                                                                           |
-| `GET /v1/me/history/:slug`                             | Chỗ đọc dở của một truyện (`data: null` nếu chưa đọc)                                                                                                                      |
-| `PUT /v1/me/history/:slug`                             | Lưu chỗ đọc dở `{ chapter, chapterTitle?, progress? }`; không gửi `progress` mà vẫn chương cũ thì giữ tiến độ                                                              |
-| `DELETE /v1/me/history/:slug`, `DELETE /v1/me/history` | Xóa một truyện / xóa hết                                                                                                                                                   |
-| `POST /v1/me/history/merge`                            | Gộp lịch sử lúc còn là khách (tối đa 100 dòng; mỗi truyện lấy lần đọc mới nhất, chỉ ghi đè khi mới hơn)                                                                    |
-| `GET /v1/stories/:slug/follow`                         | `{ following }`                                                                                                                                                            |
-| `PUT /v1/stories/:slug/follow`, `DELETE ...`           | Theo dõi (cần xác nhận email) / bỏ theo dõi; gọi lặp vẫn 204                                                                                                               |
-| `GET /v1/me/library`                                   | Tủ truyện: truyện đang theo dõi còn xem được, có chương mới trước; kèm `seenChapter`, `newChapters`, chỗ đọc dở                                                            |
-| `GET /v1/me/library/update-count`                      | `{ count }`: số truyện đang theo dõi có chương mới                                                                                                                         |
-| `GET /v1/stories/:slug/rating`                         | Điểm mình đã chấm (`score: null` nếu chưa chấm)                                                                                                                            |
-| `PUT /v1/stories/:slug/rating`, `DELETE ...`           | Chấm / chấm lại 1–5 sao (cần xác nhận email; truyện chưa công khai → 409 `story_not_public`) / xóa điểm. Phân bố sao do trigger DB cập nhật, xem ở `GET /v1/stories/:slug` |
+| Endpoint                                                  | Việc                                                                                                                                                                       |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/me/history?limit=`                               | Lịch sử đọc, mới đọc trước (tối đa 100), chỉ truyện còn xem được                                                                                                           |
+| `GET /v1/me/history/:slug`                                | Chỗ đọc dở của một truyện (`data: null` nếu chưa đọc)                                                                                                                      |
+| `PUT /v1/me/history/:slug`                                | Lưu chỗ đọc dở `{ chapter, chapterTitle?, progress? }`; không gửi `progress` mà vẫn chương cũ thì giữ tiến độ                                                              |
+| `DELETE /v1/me/history/:slug`, `DELETE /v1/me/history`    | Xóa một truyện / xóa hết                                                                                                                                                   |
+| `POST /v1/me/history/merge`                               | Gộp lịch sử lúc còn là khách (tối đa 100 dòng; mỗi truyện lấy lần đọc mới nhất, chỉ ghi đè khi mới hơn)                                                                    |
+| `GET /v1/stories/:slug/follow`                            | `{ following }`                                                                                                                                                            |
+| `PUT /v1/stories/:slug/follow`, `DELETE ...`              | Theo dõi (cần xác nhận email) / bỏ theo dõi; gọi lặp vẫn 204                                                                                                               |
+| `GET /v1/me/library`                                      | Tủ truyện: truyện đang theo dõi còn xem được, có chương mới trước; kèm `seenChapter`, `newChapters`, chỗ đọc dở                                                            |
+| `GET /v1/me/library/update-count`                         | `{ count }`: số truyện đang theo dõi có chương mới                                                                                                                         |
+| `GET /v1/stories/:slug/rating`                            | Điểm mình đã chấm (`score: null` nếu chưa chấm)                                                                                                                            |
+| `PUT /v1/stories/:slug/rating`, `DELETE ...`              | Chấm / chấm lại 1–5 sao (cần xác nhận email; truyện chưa công khai → 409 `story_not_public`) / xóa điểm. Phân bố sao do trigger DB cập nhật, xem ở `GET /v1/stories/:slug` |
+| `GET /v1/stories/:slug/comments?chapter=&sort=`           | Bình luận gốc (của truyện hoặc chương), `newest` / `top`, phân trang; ẩn bình luận của người mình đã chặn                                                                  |
+| `GET /v1/comments/:id/replies`                            | Trả lời của một bình luận gốc, cũ trước, tối đa 200                                                                                                                        |
+| `POST /v1/stories/:slug/comments`                         | Viết bình luận / trả lời một cấp (cần xác nhận email; chống gửi lặp 10 phút; 3 / phút, 30 / giờ)                                                                           |
+| `PATCH /v1/comments/:id`, `DELETE ...`                    | Sửa (người viết) / xóa (người viết hoặc chủ truyện)                                                                                                                        |
+| `GET /v1/me/blocks`, `PUT` / `DELETE /v1/users/:id/block` | Danh sách đã chặn / chặn / bỏ chặn                                                                                                                                         |
 
 ## Đăng nhập mạng xã hội
 
