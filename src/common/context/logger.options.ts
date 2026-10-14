@@ -9,9 +9,10 @@ export function loggerOptions(config: AppConfig): Params {
   return {
     pinoHttp: {
       level: config.get('LOG_LEVEL'),
-      // Dev: log dễ đọc; production: JSON một dòng
+      // Dev: log dễ đọc; production: JSON một dòng. Image Docker không có devDependency pino-pretty
+      // nên chạy image với NODE_ENV=development (docker compose --profile app) vẫn ghi JSON
       transport:
-        config.get('NODE_ENV') === 'development'
+        config.get('NODE_ENV') === 'development' && isInstalled('pino-pretty')
           ? { target: 'pino-pretty', options: { singleLine: true, colorize: true } }
           : undefined,
       genReqId: (req) => (req as RequestWithId).id,
@@ -36,5 +37,15 @@ export function loggerOptions(config: AppConfig): Params {
       // Health check gọi liên tục: không ghi log mỗi lần
       autoLogging: { ignore: (req) => req.url?.startsWith('/health') ?? false },
     },
+  }
+}
+
+/** Gói có cài trong node_modules không */
+function isInstalled(name: string) {
+  try {
+    require.resolve(name)
+    return true
+  } catch {
+    return false
   }
 }

@@ -87,6 +87,19 @@ export const envSchema = z
     FACEBOOK_APP_SECRET: z.string().optional(),
     /** Đăng nhập Apple (app iOS): bundle id được phép là `aud` của id token (csv); trống thì tắt */
     APPLE_CLIENT_IDS: csv.default([]),
+
+    /** Lưu ảnh S3-compatible: dev là RustFS của docker-compose, production là Cloudflare R2 */
+    S3_ENDPOINT: z.url().default('http://localhost:9010'),
+    /** R2 dùng `auto` */
+    S3_REGION: z.string().min(1).default('us-east-1'),
+    S3_ACCESS_KEY_ID: z.string().min(1).default('novel'),
+    S3_SECRET_ACCESS_KEY: z.string().min(1).default('novel-secret'),
+    S3_BUCKET: z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, 'Tên bucket S3 không hợp lệ')
+      .default('novel'),
+    /** Gốc URL công khai của ảnh: `<S3_PUBLIC_URL>/<key>` (R2: domain công khai của bucket) */
+    S3_PUBLIC_URL: z.url().default('http://localhost:9010/novel'),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && (!env.JWT_PRIVATE_KEY || !env.JWT_PUBLIC_KEY)) {
@@ -97,7 +110,13 @@ export const envSchema = z
       })
     }
     // Production không được dùng mặc định của dev (Mailpit, localhost)
-    for (const key of ['SMTP_URL', 'APP_WEB_URL', 'API_PUBLIC_URL'] as const) {
+    for (const key of [
+      'SMTP_URL',
+      'APP_WEB_URL',
+      'API_PUBLIC_URL',
+      'S3_ENDPOINT',
+      'S3_PUBLIC_URL',
+    ] as const) {
       if (env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/.test(env[key])) {
         ctx.addIssue({
           code: 'custom',

@@ -30,6 +30,12 @@ test('mặc định hợp lý khi chỉ đặt biến bắt buộc', () => {
     API_PUBLIC_URL: 'http://localhost:4000',
     OAUTH_REDIRECT_URLS: [],
     APPLE_CLIENT_IDS: [],
+    S3_ENDPOINT: 'http://localhost:9010',
+    S3_REGION: 'us-east-1',
+    S3_ACCESS_KEY_ID: 'novel',
+    S3_SECRET_ACCESS_KEY: 'novel-secret',
+    S3_BUCKET: 'novel',
+    S3_PUBLIC_URL: 'http://localhost:9010/novel',
   })
 })
 
@@ -72,6 +78,8 @@ test('production thiếu khóa JWT, SMTP, link web thì dừng; có đủ thì q
     SMTP_URL: 'smtps://user:pass@smtp.example.com:465',
     APP_WEB_URL: 'https://novel.example.com',
     API_PUBLIC_URL: 'https://api.novel.example.com',
+    S3_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
+    S3_PUBLIC_URL: 'https://img.novel.example.com',
   }
   expect(validateEnv(production).NODE_ENV).toBe('production')
   const { JWT_PRIVATE_KEY: _key, ...noJwt } = production

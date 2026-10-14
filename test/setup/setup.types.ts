@@ -8,5 +8,7 @@ declare module 'vitest' {
     smtpUrl: string
     /** API của Mailpit (đọc thư app gửi) */
     mailpitUrl: string
+    /** RustFS (S3) */
+    s3Endpoint: string
   }
 }
