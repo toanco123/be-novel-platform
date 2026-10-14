@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { AppError } from '@/core/errors/app-error'
+import { AppException } from '@/common/errors/app.exception'
 import type { MeDto } from './dto/me.dto'
 import { toMe } from './user.mapper'
 import { UsersRepository } from './users.repository'
@@ -11,7 +11,7 @@ export class UsersService {
   async getMe(userId: string): Promise<MeDto> {
     const row = await this.users.findWithProfile(userId)
     // Token còn hạn nhưng tài khoản đã bị xóa
-    if (!row) throw new AppError('not_found')
+    if (!row) throw new AppException('not_found')
     return toMe(row)
   }
 

@@ -1,19 +1,20 @@
 // Đăng ký, đăng nhập, refresh, đăng xuất. Trả access token kèm refresh token; controller quyết
 // định refresh token đi qua cookie (web) hay body (mobile).
 import { Inject, Injectable } from '@nestjs/common'
-import { TokenService } from '@/core/auth/token.service'
-import { AppError } from '@/core/errors/app-error'
-import { RateLimitService } from '@/core/rate-limit/rate-limit.service'
+import { TokenService } from '@/common/auth/token.service'
+import { PasswordService } from '@/common/crypto/password.service'
+import { AppException } from '@/common/errors/app.exception'
+import type { ClientMeta } from '@/common/http/http.types'
+import { RateLimitService } from '@/common/rate-limit/rate-limit.service'
 import { DB } from '@/infra/database/database.constants'
 import type { Db } from '@/infra/database/database.types'
 import { toMe } from '@/modules/users/user.mapper'
 import { accountBanned, isBanned } from '@/modules/users/user.rules'
 import { UsersRepository } from '@/modules/users/users.repository'
+import { LOGIN_FAILED_EMAIL_LIMIT, LOGIN_FAILED_IP_LIMIT, REGISTER_LIMIT } from '../auth.constants'
+import type { AuthResult, IssuedSession } from '../auth.types'
 import type { LoginDto } from '../dto/login.dto'
 import type { RegisterDto } from '../dto/register.dto'
-import { LOGIN_FAILED_EMAIL_LIMIT, LOGIN_FAILED_IP_LIMIT, REGISTER_LIMIT } from '../auth.constants'
-import type { AuthResult, ClientMeta, IssuedSession } from '../auth.types'
-import { PasswordService } from './password.service'
 import { SessionService } from './session.service'
 
 @Injectable()
@@ -53,7 +54,7 @@ export class AuthService {
       [ipKey, LOGIN_FAILED_IP_LIMIT],
     ] as const) {
       const { allowed, retryAfterSeconds } = await this.rateLimit.peek(key, limit)
-      if (!allowed) throw new AppError('rate_limited', { retryAfterSeconds })
+      if (!allowed) throw new AppException('rate_limited', { retryAfterSeconds })
     }
 
     const user = await this.users.findByEmail(input.email)
@@ -65,7 +66,7 @@ export class AuthService {
         this.rateLimit.consume(emailKey, LOGIN_FAILED_EMAIL_LIMIT),
         this.rateLimit.consume(ipKey, LOGIN_FAILED_IP_LIMIT),
       ])
-      throw new AppError('invalid_credentials')
+      throw new AppException('invalid_credentials')
     }
     await this.rateLimit.reset(emailKey)
     // Chỉ báo bị khóa khi đã đúng mật khẩu
@@ -85,7 +86,7 @@ export class AuthService {
   async refresh(refreshToken: string, meta: ClientMeta): Promise<AuthResult> {
     const session = await this.sessions.rotate(refreshToken, meta, async (userId, tx) => {
       const user = await this.users.findById(userId, tx)
-      if (!user) return new AppError('invalid_token')
+      if (!user) return new AppException('invalid_token')
       return isBanned(user) ? accountBanned(user.bannedUntil!) : null
     })
     return this.issue(session)
@@ -102,7 +103,7 @@ export class AuthService {
   /** Ký access token cho phiên (vai trò lấy mới từ DB) */
   private async issue(session: IssuedSession): Promise<AuthResult> {
     const user = await this.users.findWithProfile(session.userId)
-    if (!user) throw new AppError('invalid_token')
+    if (!user) throw new AppException('invalid_token')
     if (isBanned(user)) {
       await this.sessions.revokeSession(session.sessionId)
       throw accountBanned(user.bannedUntil!)

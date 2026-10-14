@@ -1,6 +1,6 @@
 import { HealthIndicatorService } from '@nestjs/terminus'
-import type { Db } from '@/infra/database/database.types'
 import { DbHealthIndicator } from '@/infra/database/database.health'
+import type { Db } from '@/infra/database/database.types'
 
 const indicator = (execute: () => Promise<unknown>) =>
   new DbHealthIndicator({ execute } as unknown as Db, new HealthIndicatorService())

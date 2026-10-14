@@ -2,8 +2,8 @@
 // Chạy: npm run openapi:export (build trước rồi chạy bản dist).
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { buildOpenApiDocument } from '@/common/swagger/swagger'
 import { createApp } from '../bootstrap'
-import { buildOpenApiDocument } from '../core/http/swagger'
 
 async function main() {
   const app = await createApp()

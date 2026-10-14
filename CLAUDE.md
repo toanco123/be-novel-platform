@@ -18,6 +18,8 @@ Chi tiết và ví dụ: mục **Quy ước code** trong [README.md](README.md).
 - **Mỗi file chỉ làm một việc**, mỗi file một class. Tên file theo hậu tố: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `*.repository.ts`, `*.mapper.ts`, `*.rules.ts`, `*.dto.ts` (một DTO), `*.types.ts`, `*.constants.ts`, `*.decorator.ts`, `*.guard.ts`, `*.pipe.ts`, `*.health.ts`, `*.lifecycle.ts`...
 - **Type / interface** chỉ nằm trong `<tên thư mục>.types.ts`; file khác `import type`. Không khai báo type trong service, controller, repository.
 - **Hằng số, token inject, hạn mức** trong `*.constants.ts`.
+- **Dùng chung thì vào `src/common/<mảng>/`** (`auth`, `context`, `crypto`, `errors`, `http`, `rate-limit`, `swagger`, `validation`, `utils`); chỉ một module dùng thì để trong module. Provider dùng chung khai báo trong module `@Global()` của mảng (`CryptoModule`, `ErrorsModule`).
+- **DTO kiểu chuẩn của Nest:** `email: string`, không dùng `!` (`strictPropertyInitialization` tắt).
 - **Từ 2 file cùng loại trở lên trong một thư mục** thì gom vào thư mục con số nhiều: `services/`, `repositories/`, `types/`, `guards/`, `decorators/`, `dto/`. Ngoại lệ: `app.module.ts`, `worker.module.ts` ở `src/`.
 - **Import:** cùng thư mục hoặc lên một cấp trong cùng nhánh thì đường dẫn tương đối; xa hơn dùng `@/`. Test luôn dùng `@/`.
 - **Test unit** ở `test/unit/`, cùng cấu trúc thư mục với `src/`; e2e ở `test/<tên module>/`.
@@ -32,7 +34,7 @@ npm run lint             # oxlint
 npm run format           # prettier --write .
 npm test                 # unit (test/unit/**/*.spec.ts)
 npm run test:e2e         # e2e (test/**/*.e2e-spec.ts)
-npx vitest run test/unit/core/errors/to-api-error.spec.ts   # một file
+npx vitest run test/unit/common/errors/to-api-error.spec.ts   # một file
 npm run openapi:export   # ghi openapi.json
 npm run keys:generate    # in cặp khóa ES256 cho JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
 npm run db:up            # Postgres 17 (cổng 5433) + Redis 7.4 (cổng 6380) bằng docker-compose; db:down để tắt
@@ -45,30 +47,30 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
 
 - **Khởi động:** `src/bootstrap.ts` (`createApp`, `configureApp`) gom mọi cấu hình app: requestId, body limit 1 MB, helmet, CORS, versioning `/v1`, Swagger. `main.ts`, test e2e và `cli/export-openapi.ts` đều đi qua đây để test chạy đúng như production.
 - **Cấu hình:** schema `config/env.schema.ts` (zod), kiểm tra ở `config/validate-env.ts`, sai env thì dừng khi khởi động. Đọc qua `AppConfig.get('KEY')` (`config/app-config.service.ts`), không đọc `process.env` trực tiếp. Thêm biến thì sửa cả schema, `.env.example` và test của schema. Khi `NODE_ENV=test` không đọc file `.env` (biến test đặt trong `vitest.config.ts`).
-- **Ngữ cảnh request:** `core/context`: `requestIdMiddleware` (`request-id.middleware.ts`) đặt `req.id` (nhận `x-request-id` hợp lệ của client hoặc tự sinh) và trả lại header; `nestjs-cls` giữ id cho filter và service; `nestjs-pino` ghi log JSON có `requestId`, `userId` (cấu hình ở `logger.options.ts`), ẩn `authorization`, cookie, mật khẩu, token.
-- **Lỗi:**
-  - Service ném `AppError(code, details?)`.
-  - `AllExceptionsFilter` (toàn cục) đổi mọi lỗi qua `toApiError` thành `{ code, message, details?, requestId }`. Gồm: lỗi validate → `validation_failed` với `details.issues`, `HttpException` theo status, lỗi body-parser, lỗi lạ → 500 không lộ chi tiết.
+- **Ngữ cảnh request:** `common/context`: `requestIdMiddleware` (`request-id.middleware.ts`) đặt `req.id` (nhận `x-request-id` hợp lệ của client hoặc tự sinh) và trả lại header; `nestjs-cls` giữ id cho filter và service; `nestjs-pino` ghi log JSON có `requestId`, `userId` (cấu hình ở `logger.options.ts`), ẩn `authorization`, cookie, mật khẩu, token.
+- **Lỗi** (mọi thứ ở `common/errors/`, bảng file trong README mục **Lỗi**):
+  - Service ném `AppException(code, details?)`. **Mã mới thêm vào `common/errors/error-code.ts`**; trùng unique của bảng mới thì thêm tên constraint vào `constraint-codes.ts`.
+  - `AllExceptionsFilter` (toàn cục) đổi mọi lỗi qua `toApiError` → `toErrorResponse` thành `{ code, message, details?, requestId }`. Gồm: lỗi validate → `validation_failed` với `details.issues` (`validation-exception.factory.ts`), `HttpException` theo status, lỗi body-parser, lỗi Postgres (`pg-error.ts`), lỗi lạ → 500 không lộ chi tiết.
   - `message` tiếng Anh cho dev; client hiển thị tiếng Việt theo `code`.
-  - **Mã mới thêm vào `core/errors/error-codes.ts`.**
+  - **Ghi log lỗi luôn qua `ErrorLogger.log(error, context?)`** (filter, worker, service): cùng cấu trúc `{ error: { code, status, message, details? }, err, requestId, userId, ...context }`; 5xx mức error, còn lại warn.
 - **Validate và OpenAPI:**
-  - **DTO là class dùng class-validator + class-transformer:** mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger (không dùng plugin CLI của Nest vì build bằng SWC). Trường bắt buộc khai báo `name!: string`.
-  - `ValidationPipe` toàn cục (`core/http/validation.pipe.ts`): bỏ trường lạ (`whitelist`), chạy `@Transform` (`Trim()`, `NormalizeEmail()` trong `core/http/decorators/transform.decorator.ts`), **không** đổi kiểu ngầm. Lỗi → 400 `validation_failed`, `details.issues = [{ path, code, message }]` với `code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...).
+  - **DTO là class dùng class-validator + class-transformer:** mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger (không dùng plugin CLI của Nest vì build bằng SWC). Khai báo `email: string`, không có `!`.
+  - `ValidationPipe` toàn cục (`common/validation/validation.pipe.ts`): bỏ trường lạ (`whitelist`), chạy `@Transform` (`Trim()`, `NormalizeEmail()` trong `common/validation/transform.decorator.ts`), **không** đổi kiểu ngầm. Lỗi → 400 `validation_failed`, `details.issues = [{ path, code, message }]` với `code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...).
   - zod chỉ còn dùng cho biến môi trường (`config/env.schema.ts`).
-  - Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`). Mỗi endpoint có `@ApiOperation({ summary })` tiếng Việt, `@ApiErrorResponses(...codes)` (`core/http/decorators/api-error-responses.decorator.ts`) liệt kê mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
+  - Swagger ở `/docs`, `/openapi.json` (`SWAGGER_ENABLED`). Mỗi endpoint có `@ApiOperation({ summary })` tiếng Việt, `@ApiErrorResponses(...codes)` (`common/swagger/api-error-responses.decorator.ts`) liệt kê mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
   - Trên `/docs`, gọi register / login / refresh xong thì access token tự điền vào nút Authorize.
 - **Database** (`src/infra/database`, plan `documents/plan-02-database.md`):
   - Một pool postgres.js; inject `@Inject(DB) db: Db` (Drizzle, `casing: 'snake_case'`). Token `DB` ở `database.constants.ts`; kiểu `Db`, `Tx` (transaction), `Executor` (= `Db | Tx`, cho repository) ở `database.types.ts`.
   - Chỉ `src/infra/database` (và test) được import `postgres` / `drizzle-orm/postgres-js` (luật `no-restricted-imports` của oxlint).
   - **Schema code-first:** mỗi bảng một file `schema/<bảng>.ts`, export ở `schema/index.ts`; kiểu dòng (`UserRow`...) ở `schema/schema.types.ts`. Dùng `timestamps` cho bảng có sửa.
   - **Migration:** `npm run db:generate` rồi review SQL trong `drizzle/migrations` (hàm, trigger thì `drizzle-kit generate --custom`). Bảng có `updated_at` thêm trigger `set_updated_at()` trong migration. `db:migrate` là bước riêng khi deploy, app không tự migrate. Sửa schema mà quên generate thì `drizzle-kit generate` sẽ ra file mới (CI kiểm tra).
-  - Lỗi Postgres đi qua `pg-error.ts`: `23505` → `conflict` (hoặc mã riêng theo tên constraint trong `core/errors/constraint-codes.ts`), `23503` → `not_found`, `23514`/`22001` → `validation_failed`, `57014` → `timeout`.
+  - Lỗi Postgres đi qua `pg-error.ts`: `23505` → `conflict` (hoặc mã riêng theo tên constraint trong `common/errors/constraint-codes.ts`), `23503` → `not_found`, `23514`/`22001` → `validation_failed`, `57014` → `timeout`.
   - `/health/ready` kiểm tra DB (503 `service_unavailable` khi hỏng).
 - **Redis, rate limit, hàng đợi** (plan `documents/plan-03-redis-rate-limit-queue.md`):
   - `infra/redis`: client `@Inject(REDIS) redis: Redis` (ioredis) dùng chung cho rate limit và health check.
   - **Throttler toàn cục** (`AppThrottlerGuard`, lưu trên Redis): chặn spam thô, `THROTTLE_LIMIT` request mỗi `THROTTLE_TTL_SECONDS` giây. Đếm theo `req.user.id`, khách thì theo IP; bỏ qua `/health`. Route cần giới hạn riêng dùng `@Throttle({ default: { limit, ttl } })` hoặc `@SkipThrottle()`.
-  - **Hạn mức nghiệp vụ** dùng `RateLimitService.consume(key, { limit, windowSeconds })`: cửa sổ trượt bằng script Lua; hết lượt thì ném `AppError('rate_limited', { retryAfterSeconds })`. Có thêm `peek` (xem, không tính) và `reset`. Key đặt theo `<domain>:<hành động>:<id>`.
-  - **Hàng đợi** BullMQ (`infra/queue`): tên hàng đợi và job ở `queue.constants.ts`; module đẩy job thì `BullModule.registerQueue` + `@InjectQueue`. Processor (`@Processor`, `extends WorkerHost`) **chỉ khai báo trong `WorkerModule`**, để API không tự xử lý job. Mặc định thử lại 3 lần, backoff mũ.
+  - **Hạn mức nghiệp vụ** dùng `RateLimitService.consume(key, { limit, windowSeconds })`: cửa sổ trượt bằng script Lua; hết lượt thì ném `AppException('rate_limited', { retryAfterSeconds })`. Có thêm `peek` (xem, không tính) và `reset`. Key đặt theo `<domain>:<hành động>:<id>`.
+  - **Hàng đợi** BullMQ (`infra/queue`): processor ghi log job lỗi bằng `@OnWorkerEvent('failed')` + `ErrorLogger`; tên hàng đợi và job ở `queue.constants.ts`; module đẩy job thì `BullModule.registerQueue` + `@InjectQueue`. Processor (`@Processor`, `extends WorkerHost`) **chỉ khai báo trong `WorkerModule`**, để API không tự xử lý job. Mặc định thử lại 3 lần, backoff mũ.
   - Worker: `src/worker.ts` (`createWorker()`, `createApplicationContext`, không có HTTP), tắt gọn bằng `enableShutdownHooks`.
   - `/health/ready` kiểm tra DB và Redis.
 - **Auth** (plan `documents/plan-04-auth-co-ban.md`):
@@ -77,9 +79,9 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
     - Token sai hoặc hết hạn → 401 `invalid_token`, kể cả ở route `@Public()`.
     - `@Roles('admin')` sai vai trò → 403 `forbidden`.
   - **Người gọi:** `@CurrentUser() actor: Actor` (`{ id, role, sessionId }`), cũng có trong CLS (`actor`). Log có `userId`.
-  - **Access token:** JWT ES256 (`core/auth/token.service.ts`), không truy vấn DB mỗi request. Khóa tài khoản thì thu hồi refresh token, người bị khóa mất quyền chậm nhất sau 15 phút.
+  - **Access token:** JWT ES256 (`common/auth/token.service.ts`, khóa ở `common/crypto/jwt-keys.ts`), không truy vấn DB mỗi request. Khóa tài khoản thì thu hồi refresh token, người bị khóa mất quyền chậm nhất sau 15 phút.
   - **Refresh token** (`modules/auth`): DB chỉ lưu SHA-256; mỗi phiên là một họ token (`family_id` = `sessionId`), xoay vòng mỗi lần dùng, dùng lại token cũ thì thu hồi cả họ. Web nhận qua cookie `refresh_token`, mobile qua body (`X-Client: mobile`).
-  - **Mật khẩu:** argon2id; hash bcrypt cũ (Supabase) đăng nhập đúng thì băm lại.
+  - **Mật khẩu:** `PasswordService` (`common/crypto`): argon2id; hash bcrypt cũ (Supabase) đăng nhập đúng thì băm lại. Token bí mật gửi cho client (refresh token, sau này link email) sinh bằng `randomToken()`, DB lưu `hashToken()` (`common/crypto/secure-token.ts`).
   - **Dữ liệu tài khoản:** `UsersRepository` (`modules/users`) là nơi duy nhất truy vấn `users`, `profiles`.
 - **Test e2e:** `test/setup/global-setup.ts` bật Postgres 17 và Redis bằng Testcontainers (cần Docker), chạy migration, đưa URL qua `provide`/`inject` (`test/setup/env.ts`). Test hàng đợi dựng worker trong cùng test bằng `createWorker()`. Dựng app bằng `createTestApp()` (`test/helpers/app.ts`). Mỗi test tự tạo dữ liệu riêng, không đếm cả bảng.
   - Tạo người dùng bằng `registerUser(app)` (`test/helpers/auth.ts`): email và IP riêng mỗi lần. Test bật `TRUST_PROXY_HOPS=1`, nên giả IP bằng `X-Forwarded-For` để hạn mức theo IP không đụng nhau.

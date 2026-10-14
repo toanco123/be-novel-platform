@@ -2,12 +2,14 @@
 // mở họ mới; refresh xoay vòng trong họ; dùng lại token cũ thì thu hồi cả họ.
 import { randomUUID } from 'node:crypto'
 import { Inject, Injectable } from '@nestjs/common'
+import { hashToken, randomToken } from '@/common/crypto/secure-token'
+import { AppException } from '@/common/errors/app.exception'
+import type { ClientMeta } from '@/common/http/http.types'
 import { AppConfig } from '@/config/app-config.service'
-import { AppError } from '@/core/errors/app-error'
 import { DB } from '@/infra/database/database.constants'
 import type { Db, Executor } from '@/infra/database/database.types'
-import type { ClientMeta, IssuedSession, RotateCheck, RotateResult } from '../auth.types'
-import { hashRefreshToken, newRefreshToken, refreshTokenState } from '../refresh-token'
+import type { IssuedSession, RotateCheck, RotateResult } from '../auth.types'
+import { refreshTokenState } from '../refresh-token-state'
 import { SessionsRepository } from '../sessions.repository'
 
 @Injectable()
@@ -21,12 +23,12 @@ export class SessionService {
   /** Mở phiên mới (đăng nhập, đăng ký) */
   async create(userId: string, meta: ClientMeta, ex: Executor = this.db): Promise<IssuedSession> {
     const ttlMs = this.config.get('REFRESH_TOKEN_TTL_DAYS') * 86_400_000
-    const refreshToken = newRefreshToken()
+    const refreshToken = randomToken()
     const row = await this.sessions.insert(
       {
         userId,
         familyId: randomUUID(),
-        tokenHash: hashRefreshToken(refreshToken),
+        tokenHash: hashToken(refreshToken),
         expiresAt: new Date(Date.now() + ttlMs),
         ...meta,
       },
@@ -46,28 +48,28 @@ export class SessionService {
     check?: RotateCheck,
   ): Promise<IssuedSession> {
     const result = await this.db.transaction(async (tx): Promise<RotateResult> => {
-      const row = await this.sessions.findByHashForUpdate(hashRefreshToken(refreshToken), tx)
-      if (!row) return { error: new AppError('invalid_token') }
+      const row = await this.sessions.findByHashForUpdate(hashToken(refreshToken), tx)
+      if (!row) return { error: new AppException('invalid_token') }
       const state = refreshTokenState(row)
       if (state === 'expired' || state === 'revoked')
-        return { error: new AppError('invalid_token') }
-      if (state === 'grace') return { error: new AppError('token_reused') }
+        return { error: new AppException('invalid_token') }
+      if (state === 'grace') return { error: new AppException('token_reused') }
       // Ghi việc thu hồi rồi mới báo lỗi: ném trong transaction sẽ rollback
       if (state === 'reused') {
         await this.sessions.revokeFamily(row.familyId, tx)
-        return { error: new AppError('token_reused') }
+        return { error: new AppException('token_reused') }
       }
       const denied = await check?.(row.userId, tx)
       if (denied) {
         await this.sessions.revokeFamily(row.familyId, tx)
         return { error: denied }
       }
-      const next = newRefreshToken()
+      const next = randomToken()
       const created = await this.sessions.insert(
         {
           userId: row.userId,
           familyId: row.familyId,
-          tokenHash: hashRefreshToken(next),
+          tokenHash: hashToken(next),
           expiresAt: row.expiresAt,
           ...meta,
         },
@@ -89,7 +91,7 @@ export class SessionService {
 
   /** Đăng xuất phiên của refresh token này; token không hợp lệ thì bỏ qua */
   async revokeByToken(refreshToken: string) {
-    const row = await this.sessions.findByHash(hashRefreshToken(refreshToken))
+    const row = await this.sessions.findByHash(hashToken(refreshToken))
     if (row) await this.sessions.revokeFamily(row.familyId)
   }
 

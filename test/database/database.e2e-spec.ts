@@ -1,11 +1,11 @@
 // Database thật (Testcontainers): health, migration đầu, transaction, lỗi Postgres qua filter
 import { Body, Controller, Inject, Module, Post } from '@nestjs/common'
 import type { NestExpressApplication } from '@nestjs/platform-express'
-import { sql } from 'drizzle-orm'
 import { IsString, MinLength } from 'class-validator'
+import { sql } from 'drizzle-orm'
 import request from 'supertest'
 import { AppModule } from '@/app.module'
-import { Public } from '@/core/auth/decorators/public.decorator'
+import { Public } from '@/common/auth/decorators/public.decorator'
 import { DB } from '@/infra/database/database.constants'
 import type { Db } from '@/infra/database/database.types'
 import { createTestApp } from '../helpers/app'
@@ -13,7 +13,7 @@ import { createTestApp } from '../helpers/app'
 class ItemDto {
   @IsString()
   @MinLength(1)
-  name!: string
+  name: string
 }
 
 /** Bảng chỉ dùng trong test này (không nằm trong schema của app) */

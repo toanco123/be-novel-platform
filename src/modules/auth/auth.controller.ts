@@ -8,21 +8,21 @@ import {
   ApiTags,
 } from '@nestjs/swagger'
 import type { Request, Response } from 'express'
+import type { Actor } from '@/common/auth/auth.types'
+import { CurrentUser } from '@/common/auth/decorators/current-user.decorator'
+import { Public } from '@/common/auth/decorators/public.decorator'
+import { AppException } from '@/common/errors/app.exception'
+import { clientMeta, isMobileClient } from '@/common/http/request-client'
+import { ApiErrorResponses } from '@/common/swagger/api-error-responses.decorator'
 import { AppConfig } from '@/config/app-config.service'
-import type { Actor } from '@/core/auth/auth.types'
-import { CurrentUser } from '@/core/auth/decorators/current-user.decorator'
-import { Public } from '@/core/auth/decorators/public.decorator'
-import { AppError } from '@/core/errors/app-error'
-import { ApiErrorResponses } from '@/core/http/decorators/api-error-responses.decorator'
 import { ApiClientHeader, ApiRefreshTokenBody, ApiSessionOperation } from './auth-api.decorator'
-import { AuthService } from './services/auth.service'
 import type { AuthResult } from './auth.types'
 import { AuthSessionDto } from './dto/auth-session.dto'
 import { LoginDto } from './dto/login.dto'
 import { RefreshTokenDto } from './dto/refresh-token.dto'
 import { RegisterDto } from './dto/register.dto'
 import { clearRefreshCookie, readRefreshToken, setRefreshCookie } from './refresh-cookie'
-import { clientMeta, isMobileClient } from './request-client'
+import { AuthService } from './services/auth.service'
 
 @ApiTags('auth')
 @Controller('auth')
@@ -80,13 +80,16 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const token = readRefreshToken(req, body.refreshToken)
-    if (!token) throw new AppError('unauthenticated')
+    if (!token) throw new AppException('unauthenticated')
     try {
       return this.respond(req, res, await this.auth.refresh(token, clientMeta(req)))
     } catch (error) {
       // Cookie không còn dùng được thì xóa. token_reused không xóa: có thể tab khác vừa nhận
       // cookie mới
-      if (error instanceof AppError && ['invalid_token', 'account_banned'].includes(error.code)) {
+      if (
+        error instanceof AppException &&
+        ['invalid_token', 'account_banned'].includes(error.code)
+      ) {
         clearRefreshCookie(res, this.config.cookieSecure)
       }
       throw error

@@ -6,6 +6,8 @@
     "lib": ["ES2023"],
     "types": ["node", "vitest/globals"],
     "strict": true,
+    // DTO viết kiểu chuẩn của Nest (`email: string`): class-validator gán giá trị, không cần `!`
+    "strictPropertyInitialization": false,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,

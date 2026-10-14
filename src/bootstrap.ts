@@ -8,10 +8,10 @@ import helmet from 'helmet'
 import { Logger } from 'nestjs-pino'
 import { BODY_LIMIT } from './app.constants'
 import { AppModule } from './app.module'
+import { REQUEST_ID_HEADER } from './common/context/context.constants'
+import { requestIdMiddleware } from './common/context/request-id.middleware'
+import { setupSwagger } from './common/swagger/swagger'
 import { AppConfig } from './config/app-config.service'
-import { requestIdMiddleware } from './core/context/request-id.middleware'
-import { REQUEST_ID_HEADER } from './core/context/context.constants'
-import { setupSwagger } from './core/http/swagger'
 
 export async function createApp(rootModule: Type = AppModule) {
   const app = await NestFactory.create<NestExpressApplication>(rootModule, {

@@ -2,10 +2,10 @@
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { eq } from 'drizzle-orm'
 import request from 'supertest'
+import { hashToken } from '@/common/crypto/secure-token'
 import { DB } from '@/infra/database/database.constants'
 import type { Db } from '@/infra/database/database.types'
 import { refreshTokens } from '@/infra/database/schema'
-import { hashRefreshToken } from '@/modules/auth/refresh-token'
 import { createTestApp } from '../helpers/app'
 import { cookieValue, refreshCookieOf, registerUser, uniqueIp } from '../helpers/auth'
 
@@ -28,7 +28,7 @@ const ageRevocation = (refreshToken: string, ms: number) =>
   db
     .update(refreshTokens)
     .set({ revokedAt: new Date(Date.now() - ms) })
-    .where(eq(refreshTokens.tokenHash, hashRefreshToken(refreshToken)))
+    .where(eq(refreshTokens.tokenHash, hashToken(refreshToken)))
 
 describe('refresh (mobile, token trong body)', () => {
   it('xoay vòng: token mới khác token cũ, access token dùng được', async () => {
@@ -51,8 +51,8 @@ describe('refresh (mobile, token trong body)', () => {
       .orderBy(refreshTokens.createdAt)
     expect(rows).toHaveLength(2)
     expect(rows.map((r) => r.tokenHash)).toEqual([
-      hashRefreshToken(user.refreshToken),
-      hashRefreshToken(res.body.refreshToken),
+      hashToken(user.refreshToken),
+      hashToken(res.body.refreshToken),
     ])
     expect(rows[1]!.familyId).toBe(rows[0]!.familyId)
     expect(rows[1]!.expiresAt).toEqual(rows[0]!.expiresAt)

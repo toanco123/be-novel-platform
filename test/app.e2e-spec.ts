@@ -5,14 +5,14 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import { IsString, Length } from 'class-validator'
 import request from 'supertest'
 import { AppModule } from '@/app.module'
-import { Public } from '@/core/auth/decorators/public.decorator'
-import { AppError } from '@/core/errors/app-error'
+import { Public } from '@/common/auth/decorators/public.decorator'
+import { AppException } from '@/common/errors/app.exception'
 import { createTestApp } from './helpers/app'
 
 class EchoDto {
   @IsString()
   @Length(2, 20)
-  name!: string
+  name: string
 }
 
 @Public()
@@ -30,7 +30,7 @@ class TestOnlyController {
 
   @Get('conflict')
   conflict() {
-    throw new AppError('conflict', { reason: 'test' })
+    throw new AppException('conflict', { reason: 'test' })
   }
 }
 
@@ -91,7 +91,7 @@ test('JSON hỏng: 400 bad_request; body quá 1 MB: 413 payload_too_large', asyn
   expect(big.body.code).toBe('payload_too_large')
 })
 
-test('AppError giữ mã và details; lỗi lạ thành 500 không lộ chi tiết', async () => {
+test('AppException giữ mã và details; lỗi lạ thành 500 không lộ chi tiết', async () => {
   const conflict = await http().get('/v1/test-only/conflict').expect(409)
   expect(conflict.body).toMatchObject({ code: 'conflict', details: { reason: 'test' } })
   const boom = await http().get('/v1/test-only/boom').expect(500)

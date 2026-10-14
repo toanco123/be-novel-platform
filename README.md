@@ -67,12 +67,16 @@ src/
   worker.module.ts        # module gốc của worker
   app.constants.ts
   config/                 # biến môi trường: schema (zod), kiểm tra, AppConfig
-  core/                   # dùng chung cho mọi module
-    auth/                 #   access token, guard, decorator (@Public, @Roles, @CurrentUser)
-    context/              #   request id, log, CLS
-    errors/               #   mã lỗi, AppError, đổi lỗi về một dạng
-    http/                 #   ValidationPipe, Swagger, decorator dùng chung
+  common/                 # mọi thứ dùng chung cho nhiều module
+    auth/                 #   access token, guards/, decorators/ (@Public, @Roles, @CurrentUser)
+    context/              #   request id, cấu hình log, CLS
+    crypto/               #   băm mật khẩu, token ngẫu nhiên + SHA-256, khóa JWT
+    errors/               #   bố cục lỗi chung: mã lỗi, AppException, filter, ErrorLogger
+    http/                 #   thông tin client gọi API (web / mobile, IP, user agent)
     rate-limit/           #   throttler toàn cục, RateLimitService
+    swagger/              #   dựng /docs, @ApiErrorResponses
+    validation/           #   ValidationPipe, @Trim, @NormalizeEmail
+    utils/                #   hàm tiện ích thuần (withTimeout)
   infra/                  # hạ tầng
     database/             #   Postgres + Drizzle, schema/, migration, health
     redis/                #   client Redis dùng chung, health
@@ -101,11 +105,9 @@ auth/
   auth-api.decorator.ts   # decorator Swagger dùng chung trong module
   sessions.repository.ts  # nơi duy nhất truy vấn bảng refresh_tokens
   refresh-cookie.ts       # đặt / xóa / đọc cookie refresh token
-  refresh-token.ts        # sinh, băm, xét trạng thái refresh token
-  request-client.ts       # web hay mobile, IP, user agent
-  services/               # có 3 service nên gom vào thư mục
+  refresh-token-state.ts  # xét trạng thái refresh token (còn dùng được, bị dùng lại...)
+  services/               # có 2 service nên gom vào thư mục
     auth.service.ts
-    password.service.ts
     session.service.ts
   dto/                    # mỗi DTO một file
     register.dto.ts
@@ -143,7 +145,7 @@ Không viết lẫn nhiều việc trong một file. Tên file nói rõ file đ�
 
 ### 2. Type và interface để file riêng
 
-- Mọi `type` / `interface` của một thư mục nằm trong `<tên thư mục>.types.ts` (vd `modules/auth/auth.types.ts`, `core/errors/errors.types.ts`). File khác chỉ `import type`.
+- Mọi `type` / `interface` của một thư mục nằm trong `<tên thư mục>.types.ts` (vd `modules/auth/auth.types.ts`, `common/errors/errors.types.ts`). File khác chỉ `import type`.
 - Không khai báo type trong service, controller, repository... Kể cả kiểu tham số nhiều trường: đặt tên rồi đưa vào `*.types.ts` (vd `NewUserWithProfile`).
 - Kiểu dòng DB của Drizzle nằm ở `infra/database/schema/schema.types.ts` (`UserRow`, `RefreshTokenRow`...).
 
@@ -160,36 +162,60 @@ Trong một thư mục, **loại file nào có từ 2 file trở lên** thì gom
 | decorator  | `decorators/`    |
 | DTO        | `dto/` (luôn có) |
 
-Ví dụ: `modules/auth/services/`, `core/auth/guards/`, `core/auth/decorators/`, `core/http/decorators/`. Còn một file thì để ngay trong thư mục. Ngoại lệ: `app.module.ts` và `worker.module.ts` ở `src/` là module gốc của hai process, để nguyên.
+Ví dụ: `modules/auth/services/`, `common/auth/guards/`, `common/auth/decorators/`. Còn một file thì để ngay trong thư mục. Ngoại lệ: `app.module.ts` và `worker.module.ts` ở `src/` là module gốc của hai process, để nguyên.
 
-### 4. Import
+### 4. Dùng chung thì đưa vào `common/`
+
+- Thứ gì **nhiều module dùng được** (hoặc sẽ dùng) thì đặt trong `src/common/<mảng>/`, không để trong module nghiệp vụ. Vd băm mật khẩu và token ngẫu nhiên ở `common/crypto/` (auth dùng, phần xác nhận email sau này cũng dùng), thông tin client ở `common/http/`.
+- Chia theo mảng: `auth`, `context`, `crypto`, `errors`, `http`, `rate-limit`, `swagger`, `validation`, `utils` (sau này thêm `pagination`...).
+- Chỉ dùng trong một module thì để trong module đó (vd cookie refresh token ở `modules/auth/`).
+- Provider dùng chung (vd `PasswordService`, `ErrorLogger`) khai báo trong module `@Global()` của mảng đó (`CryptoModule`, `ErrorsModule`), module nghiệp vụ chỉ việc inject.
+- Hạ tầng (Postgres, Redis, hàng đợi) ở `src/infra/`, cấu hình ở `src/config/`.
+
+### 5. Import
 
 - Alias `@/` → `src/`.
-- Cùng thư mục, hoặc lên một cấp trong cùng nhánh: đường dẫn tương đối (`./auth.types`, `../errors/app-error`).
-- Xa hơn (từ hai cấp `../` trở lên, hoặc sang nhánh khác như `modules` → `core`): dùng `@/` (vd `@/core/auth/auth.types`).
+- Cùng thư mục, hoặc lên một cấp trong cùng nhánh: đường dẫn tương đối (`./auth.types`, `../errors/app.exception`).
+- Xa hơn (từ hai cấp `../` trở lên, hoặc sang nhánh khác như `modules` → `common`): dùng `@/` (vd `@/common/auth/auth.types`).
 - Test luôn import bằng `@/`.
+- Thứ tự import: thư viện Node (`node:`), package, `@/`, `../`, `./`; trong mỗi nhóm theo bảng chữ cái.
 
-### 5. DTO và validate
+### 6. DTO và validate
 
-- DTO là class, mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger. Trường bắt buộc khai báo `name!: string`.
-- Chuẩn hóa trước khi kiểm tra: `@Trim()`, `@NormalizeEmail()` (`core/http/decorators/transform.decorator.ts`).
-- `ValidationPipe` toàn cục: bỏ trường lạ, không tự đổi kiểu ngầm (`"5"` không thành số). Sai thì 400 `validation_failed` (xem [Định dạng lỗi](#định-dạng-lỗi)).
+- DTO là class theo kiểu chuẩn của Nest, mỗi trường có decorator kiểm tra (`@IsEmail()`, `@Length(2, 50)`...) và `@ApiProperty({...})` cho Swagger. Trường khai báo `email: string`, **không** dùng `!`; trường tùy chọn `refreshToken?: string` kèm `@IsOptional()` và `@ApiPropertyOptional()`. (`tsconfig` tắt `strictPropertyInitialization` để viết được như vậy.)
+
+  ```ts
+  export class LoginDto {
+    @ApiProperty({ format: 'email', example: 'linh@example.com' })
+    @NormalizeEmail()
+    @IsEmail()
+    email: string
+
+    @ApiProperty({ minLength: 1, maxLength: 128 })
+    @IsString()
+    @Length(1, 128)
+    password: string
+  }
+  ```
+
+- Chuẩn hóa trước khi kiểm tra: `@Trim()`, `@NormalizeEmail()` (`common/validation/transform.decorator.ts`).
+- `ValidationPipe` toàn cục: bỏ trường lạ, không tự đổi kiểu ngầm (`"5"` không thành số). Sai thì 400 `validation_failed` (xem [Body lỗi trả cho client](#body-lỗi-trả-cho-client)).
 - DTO trả về (vd `MeDto`) cũng là class có `@ApiProperty`; giá trị có thể null khai báo `@ApiProperty({ type: String, nullable: true })`.
 
-### 6. Module domain
+### 7. Module domain
 
 - Controller → service → repository. Controller không truy vấn DB, service không đụng `req` / `res`.
 - Chỉ repository import bảng Drizzle (`@/infra/database/schema`). Chỉ `infra/database` được import `postgres` / `drizzle-orm/postgres-js` (luật lint).
-- Service ném `AppError('<mã>', details?)`; mã mới thêm vào `core/errors/error-codes.ts`. Trùng unique của bảng mới thì thêm tên constraint vào `core/errors/constraint-codes.ts`.
+- Service ném `AppException('<mã>', details?)` (xem [Lỗi](#lỗi)).
 - Swagger: mỗi route có `@ApiOperation({ summary })` tiếng Việt, `@ApiErrorResponses(...codes)` cho các mã lỗi có thể trả, route cần đăng nhập có `@ApiBearerAuth()`.
 
-### 7. Test
+### 8. Test
 
-- **Unit:** `test/unit/`, cùng cấu trúc thư mục với `src/`. Vd `src/modules/auth/services/password.service.ts` → `test/unit/modules/auth/services/password.service.spec.ts`.
+- **Unit:** `test/unit/`, cùng cấu trúc thư mục với `src/`. Vd `src/common/crypto/password.service.ts` → `test/unit/common/crypto/password.service.spec.ts`.
 - **e2e:** `test/<tên module>/*.e2e-spec.ts`. Dựng app bằng `createTestApp()` và tạo người dùng bằng `registerUser(app)`. Mỗi test tự tạo dữ liệu riêng.
 - Tên test tiếng Việt, mô tả hành vi.
 
-### 8. Khác
+### 9. Khác
 
 - Prettier: không chấm phẩy, nháy đơn, `printWidth` 100.
 - Tên nhánh git tiếng Anh (kebab-case); commit message, comment và tài liệu tiếng Việt.
@@ -213,9 +239,25 @@ Ví dụ: `modules/auth/services/`, `core/auth/guards/`, `core/auth/decorators/`
 
 Chi tiết: [documents/plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md).
 
-## Định dạng lỗi
+## Lỗi
 
-Mọi lỗi trả về:
+Mọi thứ về lỗi nằm ở `src/common/errors/`, dùng chung cho API và worker:
+
+| File                                  | Việc                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------ |
+| `error-code.ts`                       | Bảng mã lỗi `ERROR_CODES` (`code → { status, message }`); mã mới thêm ở đây    |
+| `app.exception.ts`                    | `AppException(code, details?)`: lỗi nghiệp vụ service ném ra                   |
+| `constraint-codes.ts`                 | Tên constraint unique → mã lỗi riêng (vd `users_email_unique` → `email_taken`) |
+| `pg-error.ts`                         | Lỗi Postgres → mã lỗi (`23505` trùng, `23503` khóa ngoại, `57014` quá giờ...)  |
+| `validation-exception.factory.ts`     | Lỗi class-validator → `validation_failed` kèm `details.issues`                 |
+| `to-api-error.ts`                     | Mọi loại lỗi → một dạng chung `{ status, code, message, details? }`            |
+| `to-error-response.ts`                | Dạng chung → body trả cho client (thêm `requestId`)                            |
+| `all-exceptions.filter.ts`            | Filter toàn cục: trả body lỗi, lỗi 5xx thì ghi log                             |
+| `error-logger.service.ts`             | `ErrorLogger`: ghi log lỗi theo cấu trúc chung                                 |
+| `error-response.dto.ts`               | `ErrorResponseDto` cho Swagger                                                 |
+| `errors.types.ts`, `errors.module.ts` | Kiểu của lỗi; module `@Global()` cung cấp `ErrorLogger`                        |
+
+### Body lỗi trả cho client
 
 ```json
 {
@@ -228,6 +270,37 @@ Mọi lỗi trả về:
 }
 ```
 
-- `code` ổn định, client dựa vào đó để hiển thị lời tiếng Việt. Danh sách mã ở `src/core/errors/error-codes.ts`.
-- `message` tiếng Anh, chỉ để dev đọc.
+- `code` ổn định, client dựa vào đó để hiển thị lời tiếng Việt. Danh sách mã ở `src/common/errors/error-code.ts`.
+- `message` tiếng Anh, chỉ để dev đọc. Lỗi 5xx không lộ chi tiết (luôn là `Internal server error`).
 - Lỗi validate: `details.issues[].code` là tên ràng buộc của class-validator (`isEmail`, `isLength`...), `path` là tên trường (trường lồng nhau nối bằng dấu chấm, vd `items.1.name`).
+
+### Ghi log lỗi
+
+Chỗ nào cần ghi log lỗi (filter, worker xử lý job, service bắt lỗi rồi xử lý tiếp) đều dùng `ErrorLogger`, để mọi dòng log lỗi cùng một cấu trúc:
+
+```ts
+constructor(private readonly errors: ErrorLogger) {}
+
+try {
+  await this.mailer.send(...)
+} catch (error) {
+  this.errors.log(error, { queue: 'mail', jobId: job.id }) // context tùy ý
+}
+```
+
+Mỗi dòng log có:
+
+```json
+{
+  "error": { "code": "internal_error", "status": 500, "message": "Internal server error" },
+  "err": { "type": "Error", "message": "thông điệp gốc", "stack": "..." },
+  "requestId": "...",
+  "userId": "...",
+  "queue": "mail",
+  "jobId": "42"
+}
+```
+
+- Lỗi 5xx ghi mức `error`, lỗi khác mức `warn`.
+- `err` (thông điệp gốc, stack) chỉ có với lỗi ngoài dự kiến; `AppException` 4xx là lỗi đã biết nên không kèm stack.
+- `requestId`, `userId` tự gắn khi đang trong một request; worker không có thì truyền thêm context (vd `queue`, `jobId`).

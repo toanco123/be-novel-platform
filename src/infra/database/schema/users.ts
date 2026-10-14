@@ -1,8 +1,8 @@
 // Tài khoản (thay auth.users của Supabase): giữ tên cột, UUID để chuyển dữ liệu từ Supabase bằng
 // script sau này.
 import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { timestamps } from './columns'
 import { citext } from './citext'
+import { timestamps } from './columns'
 
 export const userRole = pgEnum('user_role', ['user', 'admin'])
 

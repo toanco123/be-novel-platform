@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
+import { AuthCoreModule } from './common/auth/auth-core.module'
+import { JwtAuthGuard } from './common/auth/guards/jwt-auth.guard'
+import { RolesGuard } from './common/auth/guards/roles.guard'
+import { CommonModule } from './common/common.module'
+import { ContextModule } from './common/context/context.module'
+import { CryptoModule } from './common/crypto/crypto.module'
+import { ErrorsModule } from './common/errors/errors.module'
+import { AppThrottlerGuard } from './common/rate-limit/app-throttler.guard'
+import { RateLimitModule } from './common/rate-limit/rate-limit.module'
 import { AppConfigModule } from './config/app-config.module'
-import { AuthCoreModule } from './core/auth/auth-core.module'
-import { JwtAuthGuard } from './core/auth/guards/jwt-auth.guard'
-import { RolesGuard } from './core/auth/guards/roles.guard'
-import { ContextModule } from './core/context/context.module'
-import { CoreModule } from './core/core.module'
-import { AppThrottlerGuard } from './core/rate-limit/app-throttler.guard'
-import { RateLimitModule } from './core/rate-limit/rate-limit.module'
 import { DatabaseModule } from './infra/database/database.module'
 import { QueueModule } from './infra/queue/queue.module'
 import { RedisModule } from './infra/redis/redis.module'
@@ -19,12 +21,14 @@ import { UsersModule } from './modules/users/users.module'
   imports: [
     AppConfigModule,
     ContextModule,
-    CoreModule,
+    ErrorsModule,
+    CommonModule,
     DatabaseModule,
     RedisModule,
     RateLimitModule,
     QueueModule,
     AuthCoreModule,
+    CryptoModule,
     HealthModule,
     AuthModule,
     UsersModule,

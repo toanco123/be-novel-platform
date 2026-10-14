@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsString, Length } from 'class-validator'
-import { Trim } from '@/core/http/decorators/transform.decorator'
+import { Trim } from '@/common/validation/transform.decorator'
 
 export class UpdateMeDto {
   @ApiProperty({
@@ -12,5 +12,5 @@ export class UpdateMeDto {
   @Trim()
   @IsString()
   @Length(2, 50)
-  displayName!: string
+  displayName: string
 }

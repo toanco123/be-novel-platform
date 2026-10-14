@@ -236,7 +236,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "validation_failed": {
@@ -265,7 +265,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "email_taken": {
@@ -285,7 +285,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "rate_limited": {
@@ -354,7 +354,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "validation_failed": {
@@ -383,7 +383,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "invalid_credentials": {
@@ -403,7 +403,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "account_banned": {
@@ -426,7 +426,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "rate_limited": {
@@ -507,7 +507,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "unauthenticated": {
@@ -543,7 +543,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "account_banned": {
@@ -619,7 +619,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "unauthenticated": {
@@ -674,7 +674,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "unauthenticated": {
@@ -702,7 +702,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "not_found": {
@@ -757,7 +757,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "validation_failed": {
@@ -786,7 +786,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorDto"
+                  "$ref": "#/components/schemas/ErrorResponseDto"
                 },
                 "examples": {
                   "unauthenticated": {
@@ -825,7 +825,7 @@
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Lỗi** luôn có dạng `{ code, message, details?, requestId }`; client hiển thị lời theo `code`.",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "contact": {}
   },
   "tags": [
@@ -977,7 +977,7 @@
           "service_unavailable"
         ]
       },
-      "ApiErrorDto": {
+      "ErrorResponseDto": {
         "type": "object",
         "properties": {
           "code": {

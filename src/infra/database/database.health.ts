@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { HealthIndicatorService } from '@nestjs/terminus'
 import { sql } from 'drizzle-orm'
+import { withTimeout } from '@/common/utils/with-timeout'
 import { DB, DB_HEALTH_TIMEOUT_MS } from './database.constants'
 import type { Db } from './database.types'
 
@@ -14,19 +15,11 @@ export class DbHealthIndicator {
 
   async check(key = 'database') {
     const indicator = this.health.check(key)
-    let timer: NodeJS.Timeout | undefined
     try {
-      await Promise.race([
-        this.db.execute(sql`select 1`),
-        new Promise((_, reject) => {
-          timer = setTimeout(() => reject(new Error('timeout')), DB_HEALTH_TIMEOUT_MS)
-        }),
-      ])
+      await withTimeout(this.db.execute(sql`select 1`), DB_HEALTH_TIMEOUT_MS)
       return indicator.up()
     } catch (error) {
       return indicator.down({ message: error instanceof Error ? error.message : 'unknown' })
-    } finally {
-      clearTimeout(timer)
     }
   }
 }

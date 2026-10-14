@@ -5,9 +5,9 @@ import type { NestExpressApplication } from '@nestjs/platform-express'
 import { Throttle } from '@nestjs/throttler'
 import request from 'supertest'
 import { AppModule } from '@/app.module'
-import { Public } from '@/core/auth/decorators/public.decorator'
-import { AppError } from '@/core/errors/app-error'
-import { RateLimitService } from '@/core/rate-limit/rate-limit.service'
+import { Public } from '@/common/auth/decorators/public.decorator'
+import { AppException } from '@/common/errors/app.exception'
+import { RateLimitService } from '@/common/rate-limit/rate-limit.service'
 import { createTestApp } from '../helpers/app'
 
 @Public()
@@ -46,7 +46,7 @@ test('đủ lượt thì qua, lượt thứ limit + 1 thì rate_limited kèm ret
     })
   }
   const error = await limits.consume(k, opts).catch((e: unknown) => e)
-  expect(error).toBeInstanceOf(AppError)
+  expect(error).toBeInstanceOf(AppException)
   expect(error).toMatchObject({ code: 'rate_limited', details: { retryAfterSeconds: 60 } })
 })
 

@@ -1,7 +1,7 @@
 import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common'
 import { ApiOkResponse, ApiServiceUnavailableResponse, ApiTags } from '@nestjs/swagger'
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus'
-import { Public } from '@/core/auth/decorators/public.decorator'
+import { Public } from '@/common/auth/decorators/public.decorator'
 import { DbHealthIndicator } from '@/infra/database/database.health'
 import { RedisHealthIndicator } from '@/infra/redis/redis.health'
 

@@ -1,9 +1,6 @@
-import type { AppError } from '@/core/errors/app-error'
+import type { AppException } from '@/common/errors/app.exception'
 import type { Tx } from '@/infra/database/database.types'
 import type { MeDto } from '../users/dto/me.dto'
-
-/** Kết quả so mật khẩu; needsRehash: hash cũ (bcrypt) đúng, cần băm lại bằng argon2id */
-export type PasswordCheck = { ok: boolean; needsRehash: boolean }
 
 /**
  * Trạng thái của refresh token client gửi lên:
@@ -25,9 +22,6 @@ export type NewRefreshToken = {
   ip: string | null
 }
 
-/** Thông tin thiết bị lưu kèm phiên */
-export type ClientMeta = { ip: string | null; userAgent: string | null }
-
 /** Phiên vừa mở hoặc vừa xoay vòng */
 export type IssuedSession = {
   userId: string
@@ -39,10 +33,10 @@ export type IssuedSession = {
 }
 
 /** Kết quả transaction xoay vòng: lỗi được ném sau khi transaction ghi xong */
-export type RotateResult = { error: AppError } | { session: IssuedSession }
+export type RotateResult = { error: AppException } | { session: IssuedSession }
 
 /** Kiểm tra chủ phiên trước khi xoay (vd tài khoản bị khóa); trả lỗi thì thu hồi cả phiên */
-export type RotateCheck = (userId: string, tx: Tx) => Promise<AppError | null>
+export type RotateCheck = (userId: string, tx: Tx) => Promise<AppException | null>
 
 /** Kết quả đăng ký / đăng nhập / refresh; controller quyết định refresh token đi cookie hay body */
 export type AuthResult = {
