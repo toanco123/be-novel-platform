@@ -120,6 +120,7 @@ npm run db:migrate       # chạy migration (build rồi node dist/cli/migrate.j
   - Cần `@RequireVerifiedEmail()` cho thao tác người khác thấy / đổi số liệu công khai (theo dõi, chấm điểm, bình luận, thích, báo cáo, báo lỗi chương); dữ liệu riêng (lịch sử đọc, chặn) thì không.
   - "Truyện người gọi xem được" trong SQL: `isVisibleStory(actor)` (`modules/stories/story-conditions.ts`, cùng luật với `canViewStory`).
   - Lịch sử đọc (`reading_history`): ghi bằng upsert giữ tiến độ cũ khi cùng chương; gộp lịch sử khách bằng một câu `insert ... select distinct on ... from jsonb_to_recordset(...) on conflict ... where excluded.read_at > h.read_at`. Cắt chuỗi theo ký tự thật: `truncateChars` (`common/utils/truncate.ts`).
+  - Theo dõi (`follows`): mốc "đã thấy" và `story_stats.follower_count` do trigger DB (`follows_set_seen_chapter`, `follows_count`, `reading_history_bump_seen`). Biểu thức thời gian của thẻ truyện dùng chung ở `modules/stories/story-columns.ts` (`cardCreatedAt`, `cardUpdatedAt`).
   - Test tạo dữ liệu thẳng vào DB: `createStory(db, {...})`, `createGenre(db)` (`test/helpers/stories.ts`); quản trị viên: `adminUser(app)`.
 - **Chương cho người đọc** (plan `documents/plan-10-chuong-nguoi-doc.md`, module `src/modules/chapters`, import `StoriesModule` để dùng `StoriesRepository` / `StoriesMapper`):
   - Ai xem được truyện thì đọc được chương **đã xuất bản**; chương nháp không bao giờ hiện cho người đọc. Không đọc được → 404.

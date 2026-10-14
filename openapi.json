@@ -4664,12 +4664,503 @@
           "library"
         ]
       }
+    },
+    "/v1/stories/{slug}/follow": {
+      "get": {
+        "operationId": "FollowsController_status_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FollowStatusDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Có đang theo dõi truyện không",
+        "tags": [
+          "library"
+        ]
+      },
+      "put": {
+        "description": "Cần đã xác nhận email. Mốc \"đã thấy\" là chương mới nhất hiện có (hoặc chương đã đọc tới nếu xa hơn). Đã theo dõi rồi cũng 204.",
+        "operationId": "FollowsController_follow_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Đang theo dõi"
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "code: `email_not_verified`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "email_not_verified": {
+                    "summary": "email_not_verified",
+                    "value": {
+                      "statusCode": 403,
+                      "error": {
+                        "code": "email_not_verified",
+                        "message": "Email address is not verified"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Theo dõi truyện",
+        "tags": [
+          "library"
+        ]
+      },
+      "delete": {
+        "description": "Chưa theo dõi cũng 204.",
+        "operationId": "FollowsController_unfollow_v1",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Không còn theo dõi"
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "code: `not_found`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "not_found": {
+                    "summary": "not_found",
+                    "value": {
+                      "statusCode": 404,
+                      "error": {
+                        "code": "not_found",
+                        "message": "Resource not found"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bỏ theo dõi truyện",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/v1/me/library": {
+      "get": {
+        "description": "Truyện đang theo dõi còn xem được: có chương mới trước, rồi mới cập nhật. Kèm số chương mới và chỗ đọc dở.",
+        "operationId": "LibraryController_list_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LibraryItemDto"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Tủ truyện",
+        "tags": [
+          "library"
+        ]
+      }
+    },
+    "/v1/me/library/update-count": {
+      "get": {
+        "operationId": "LibraryController_updateCount_v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "statusCode",
+                    "data",
+                    "meta"
+                  ],
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UpdateCountDto"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/ResponseMetaDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "code: `unauthenticated`, `invalid_token`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                },
+                "examples": {
+                  "unauthenticated": {
+                    "summary": "unauthenticated",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "unauthenticated",
+                        "message": "Authentication required"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  },
+                  "invalid_token": {
+                    "summary": "invalid_token",
+                    "value": {
+                      "statusCode": 401,
+                      "error": {
+                        "code": "invalid_token",
+                        "message": "Token is invalid or expired"
+                      },
+                      "meta": {
+                        "requestId": "0b8e7f7e-2d51-4d1a-a1f3-5f0f6a8c9d22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Số truyện đang theo dõi có chương mới",
+        "tags": [
+          "library"
+        ]
+      }
     }
   },
   "info": {
     "title": "Novel Platform API",
     "description": "Backend của nền tảng đọc truyện chữ.\n\n**Thử nhanh:** gọi `POST /v1/auth/register` hoặc `/v1/auth/login` → access token tự điền vào nút\n**Authorize** (giữ lại khi tải lại trang) → gọi các route có ổ khóa. Hết hạn (15 phút) thì gọi\n`POST /v1/auth/refresh` (cookie refresh token đã có sẵn trên trình duyệt).\n\n**Response thành công** có dạng `{ statusCode, data, meta: { requestId } }`.\n\n**Tên trường:** body / query nhận cả camelCase lẫn snake_case (`displayName` hay `display_name`); response luôn camelCase.\n\n**Lỗi** luôn có dạng `{ statusCode, error: { code, message, details? }, meta: { requestId } }`; client hiển thị lời theo `code`.",
-    "version": "0.0.26",
+    "version": "0.0.27",
     "contact": {}
   },
   "tags": [
@@ -5868,6 +6359,68 @@
         },
         "required": [
           "chapter"
+        ]
+      },
+      "FollowStatusDto": {
+        "type": "object",
+        "properties": {
+          "following": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "following"
+        ]
+      },
+      "LibraryItemDto": {
+        "type": "object",
+        "properties": {
+          "story": {
+            "$ref": "#/components/schemas/StoryDto"
+          },
+          "followedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seenChapter": {
+            "type": "number",
+            "example": 12,
+            "description": "Chương mới nhất người dùng đã thấy / đọc tới"
+          },
+          "newChapters": {
+            "type": "number",
+            "example": 2,
+            "description": "Số chương đã xuất bản sau mốc \"đã thấy\""
+          },
+          "progress": {
+            "nullable": true,
+            "description": "null: chưa đọc",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReadingProgressDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "story",
+          "followedAt",
+          "seenChapter",
+          "newChapters",
+          "progress"
+        ]
+      },
+      "UpdateCountDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "count"
         ]
       }
     }

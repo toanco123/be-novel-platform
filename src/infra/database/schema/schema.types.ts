@@ -2,6 +2,7 @@ import type { chapterViews } from './chapter-views'
 import type { chapters } from './chapters'
 import type { curatedStories } from './curated-stories'
 import type { emailTokens } from './email-tokens'
+import type { follows } from './follows'
 import type { genres } from './genres'
 import type { oauthAccounts } from './oauth-accounts'
 import type { profiles } from './profiles'
@@ -31,3 +32,4 @@ export type StoryStatsRow = typeof storyStats.$inferSelect
 export type ChapterViewRow = typeof chapterViews.$inferSelect
 export type CuratedStoryRow = typeof curatedStories.$inferSelect
 export type ReadingHistoryRow = typeof readingHistory.$inferSelect
+export type FollowRow = typeof follows.$inferSelect
