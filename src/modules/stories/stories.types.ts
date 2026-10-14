@@ -48,3 +48,24 @@ export type StoryCardRow = StoryAccess & {
 
 /** Đổi đường dẫn ảnh bìa (trong thư mục bìa) sang URL công khai */
 export type CoverUrlOf = (path: string) => string
+
+/** Độ dài truyện theo số chương đã xuất bản */
+export type StoryLength = 'short' | 'medium' | 'long'
+
+/** Thứ tự danh sách truyện (giảm dần) */
+export type StorySort = 'updated' | 'views' | 'rating' | 'newest'
+
+/** Danh sách truyện chọn tay trên trang chủ: banner nổi bật | truyện đề cử */
+export type CuratedList = 'featured' | 'editor_pick'
+
+/** Tác giả tách từ author.slug: chủ truyện và slug bút danh (null: truyện không bút danh) */
+export type AuthorRef = { ownerId: string; authorKey: string | null }
+
+/** Lọc danh sách truyện công khai */
+export type StoryListFilter = {
+  status?: StoryStatus
+  genre?: string
+  length?: StoryLength
+  author?: AuthorRef
+  sort: StorySort
+}

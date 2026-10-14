@@ -95,7 +95,7 @@ src/
     auth/                 #   đăng ký, đăng nhập, refresh token, đăng xuất
     users/                #   /v1/me, dữ liệu tài khoản
     genres/               #   thể loại (module mẫu cho các module sau)
-    stories/              #   truyện cho người đọc (chi tiết; danh sách, tìm kiếm, xếp hạng ở các phần sau)
+    stories/              #   truyện cho người đọc: chi tiết, danh sách có lọc, truyện chọn tay (tìm kiếm, xếp hạng ở phần sau)
     chapters/             #   chương cho người đọc: mục lục, đọc chương, tải nhiều chương, ghi lượt đọc
     health/               #   /health/live, /health/ready
   cli/                    # script chạy bằng node (migrate, xuất OpenAPI, sinh khóa)
@@ -334,7 +334,7 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 
 ## Truyện, chương (đọc công khai)
 
-Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md), [plan-10-chuong-nguoi-doc.md](documents/plan-10-chuong-nguoi-doc.md)).
+Đợt 1 của lộ trình, làm từng phần ([plan-09-truyen-chuong.md](documents/plan-09-truyen-chuong.md), [plan-10-chuong-nguoi-doc.md](documents/plan-10-chuong-nguoi-doc.md), [plan-11-danh-sach-truyen.md](documents/plan-11-danh-sach-truyen.md)).
 
 - **Bảng lấy đúng từ Supabase:** `stories`, `story_genres`, `chapters`, `story_stats`, `chapter_views`, `curated_stories` (cột, check, tên constraint, index).
   - Khác: bỏ `default auth.uid()`; extension `unaccent`, `pg_trgm` ở schema `public`.
@@ -345,13 +345,15 @@ Chi tiết: [plan-04-auth-co-ban.md](documents/plan-04-auth-co-ban.md), [plan-05
 - **Chương:** ai xem được truyện thì đọc được chương **đã xuất bản** (chương nháp không hiện ở trang đọc, mục lục, kể cả với chủ truyện). Chương trước / sau là chương đã xuất bản liền kề.
 - **Lượt đọc:** mỗi người (khách: mỗi IP, băm SHA-256) 1 lượt / chương / ngày giờ Việt Nam, chống đếm lặp bằng khóa Redis sống 2 ngày; không tính chủ truyện và truyện chưa công khai. Lượt mới cộng `chapter_views` (theo ngày) và `story_stats.view_count` trong một transaction.
 
-| Endpoint                                               | Việc                                                                                                         |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `GET /v1/stories/:slug`                                | Chi tiết truyện: tác giả (bút danh), thể loại theo thứ tự, URL bìa, số liệu, chương mới nhất, chương hẹn giờ |
-| `GET /v1/stories/:slug/chapters`                       | Mục lục (phân trang): `order=asc\|desc`, `from` (chỉ chương có số ≥ `from`; `meta.total` là số chương từ đó) |
-| `GET /v1/stories/:slug/chapters/:number`               | Một chương: nội dung, thông tin truyện, chương trước / sau                                                   |
-| `GET /v1/stories/:slug/chapters/contents?from=&count=` | Tối đa 20 chương liên tiếp từ `from` (tải trước, đọc offline)                                                |
-| `POST /v1/stories/:slug/chapters/:number/views`        | Ghi lượt đọc, luôn 204 nếu chương đọc được                                                                   |
+| Endpoint                                               | Việc                                                                                                                                                                                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /v1/stories`                                      | Danh sách truyện công khai có chương (phân trang, `Cache-Control: public, max-age=60`): lọc `status`, `genre`, `length` (`short` < 50, `medium` 50–200, `long` > 200 chương), `author` (`author.slug`); `sort=updated\|views\|rating\|newest` |
+| `GET /v1/curated-stories?list=featured\|editor_pick`   | Truyện chọn tay cho trang chủ; chưa chọn thì tự chọn (4 truyện đọc nhiều nhất / 8 truyện điểm cao nhất)                                                                                                                                       |
+| `GET /v1/stories/:slug`                                | Chi tiết truyện: tác giả (bút danh), thể loại theo thứ tự, URL bìa, số liệu, chương mới nhất, chương hẹn giờ                                                                                                                                  |
+| `GET /v1/stories/:slug/chapters`                       | Mục lục (phân trang): `order=asc\|desc`, `from` (chỉ chương có số ≥ `from`; `meta.total` là số chương từ đó)                                                                                                                                  |
+| `GET /v1/stories/:slug/chapters/:number`               | Một chương: nội dung, thông tin truyện, chương trước / sau                                                                                                                                                                                    |
+| `GET /v1/stories/:slug/chapters/contents?from=&count=` | Tối đa 20 chương liên tiếp từ `from` (tải trước, đọc offline)                                                                                                                                                                                 |
+| `POST /v1/stories/:slug/chapters/:number/views`        | Ghi lượt đọc, luôn 204 nếu chương đọc được                                                                                                                                                                                                    |
 
 ## Đăng nhập mạng xã hội
 
